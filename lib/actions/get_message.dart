@@ -2,9 +2,17 @@ import 'package:nyxx/nyxx.dart';
 import 'package:bot_creator_shared/utils/global.dart';
 
 Snowflake? _toSnowflake(dynamic value) {
-  final parsed = int.tryParse(value?.toString() ?? '');
-  if (parsed == null) return null;
-  return Snowflake(parsed);
+  if (value == null) return null;
+  if (value is Snowflake) return value;
+  final s = value.toString();
+  final parsedInt = int.tryParse(s);
+  if (parsedInt != null) return Snowflake(parsedInt);
+  try {
+    final big = BigInt.parse(s);
+    return Snowflake(big.toInt());
+  } catch (_) {
+    return null;
+  }
 }
 
 /// Fetches a message from [channelId] by [messageId].
@@ -33,11 +41,16 @@ Future<Map<String, String>> getMessageAction(
     }
 
     final message = await channel.messages.get(messageId);
+    final content = message.content ?? '';
+    final author = message.author;
+    final authorId = author?.id.toString() ?? '';
+    final authorUsername = author?.username ?? '';
+
     return {
       'messageId': message.id.toString(),
-      'content': message.content,
-      'authorId': message.author.id.toString(),
-      'authorUsername': message.author.username,
+      'content': content,
+      'authorId': authorId,
+      'authorUsername': authorUsername,
       'timestamp': message.timestamp.toIso8601String(),
     };
   } catch (e) {
