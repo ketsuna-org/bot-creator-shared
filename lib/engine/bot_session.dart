@@ -78,7 +78,7 @@ class BotSession {
       
       // Cache metadata
       try {
-        final app = await (_gateway! as dynamic).client.applications.fetchCurrentApplication();
+        final app = await ((_gateway! as dynamic).client as dynamic).applications.fetchCurrentApplication();
         _ownerId = app.owner?.id.toString() ?? '';
       } catch (_) {}
 
@@ -172,7 +172,7 @@ class BotSession {
       _reportMetrics();
     });
     // Initial report
-    Timer(const Duration(seconds: 5), _reportMetrics);
+    Timer(const Duration(seconds: 5), () => _reportMetrics());
   }
 
   void _reportMetrics() {
