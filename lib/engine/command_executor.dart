@@ -31,6 +31,7 @@ class CommandExecutor {
   /// Handles an [InteractionCreateEvent] and routes it to the appropriate handler.
   Future<void> handleInteraction(
     InteractionCreateEvent event, {
+    required NyxxGateway gateway,
     required String botId,
     required DateTime? startedAt,
   }) async {
@@ -41,20 +42,20 @@ class CommandExecutor {
       await _handleAutocomplete(
         interaction,
         botId: botId,
-        gateway: event.gateway as dynamic,
+        gateway: gateway,
         startedAt: startedAt,
       );
     } else if (interaction is ApplicationCommandInteraction) {
       await _handleSlashCommand(
         interaction,
         botId: botId,
-        gateway: event.gateway as dynamic,
+        gateway: gateway,
         startedAt: startedAt,
       );
     } else if (interaction is MessageComponentInteraction) {
       callbacks.onDebugLog?.call('Component interaction: ${interaction.data.customId}', botId: botId);
       await handleComponentInteraction(
-        event.gateway as dynamic,
+        gateway,
         interaction,
         store,
         botId,
@@ -62,7 +63,7 @@ class CommandExecutor {
     } else if (interaction is ModalSubmitInteraction) {
       callbacks.onDebugLog?.call('Modal submit: ${interaction.data.customId}', botId: botId);
       await handleModalSubmitInteraction(
-        event.gateway as dynamic,
+        gateway,
         interaction,
         store,
         botId,
@@ -82,7 +83,16 @@ class CommandExecutor {
     );
 
     final commandData = interaction.data;
-    final allCommands = await store.listAppCommands(botId);
+
+    // Parallelize independent operations
+    final results = await Future.wait([
+      store.listAppCommands(botId),
+      shared_global.generateKeyValues(interaction),
+    ]);
+
+    final allCommands = results[0] as List<Map<String, dynamic>>;
+    final listOfArgs = results[1] as Map<String, String>;
+
     final action = allCommands.firstWhere(
       (c) => c['id'] == commandData.id.toString(),
       orElse: () => <String, dynamic>{},
@@ -97,7 +107,6 @@ class CommandExecutor {
 
     unawaited(store.recordCommandExecution(botId, interaction.data.name));
 
-    final listOfArgs = await shared_global.generateKeyValues(interaction);
     final runtimeVariables = <String, String>{...listOfArgs};
     runtimeVariables['bot.id'] = botId;
 

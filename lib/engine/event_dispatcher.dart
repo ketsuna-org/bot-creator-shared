@@ -44,6 +44,7 @@ class EventDispatcher {
           _safeRun(
             () => commandExecutor.handleInteraction(
               event,
+              gateway: gateway,
               botId: botId,
               startedAt: startedAt,
             ),
@@ -337,8 +338,17 @@ class EventDispatcher {
     callbacks.onDebugLog?.call('_handleMessageCreate started', botId: botId);
 
     final author = event.message.author;
-    final isBot = author is User ? author.isBot : false;
-    if (isBot || event.message.application != null) {
+    final isBot =
+        author is User
+            ? (author.isBot
+                ? true
+                : author is WebhookAuthor
+                ? true
+                : false)
+            : true;
+    if (isBot ||
+        event.message.application != null ||
+        event.message.author.id == gateway.application.id) {
       callbacks.onDebugLog?.call(
         'Message is from bot or application, returning early',
         botId: botId,
@@ -353,20 +363,9 @@ class EventDispatcher {
     runtimeVariables.addAll(shared_global.extractBotRuntimeDetails(gateway));
 
     // Handle Legacy Commands
-    callbacks.onDebugLog?.call(
-      'Fetching app data for bot: $botId',
-      botId: botId,
-    );
     final appData = await store.getApp(botId);
-    callbacks.onDebugLog?.call('App data received: $appData', botId: botId);
-
     final prefix = (appData['prefix'] ?? '!').toString().trim();
     final content = event.message.content.trim();
-
-    callbacks.onDebugLog?.call(
-      'Message content: "$content", prefix: "$prefix"',
-      botId: botId,
-    );
 
     if (content.startsWith(prefix)) {
       callbacks.onDebugLog?.call(
@@ -374,10 +373,7 @@ class EventDispatcher {
         botId: botId,
       );
       final commandBody = content.substring(prefix.length).trim();
-      callbacks.onDebugLog?.call(
-        'Command body: "$commandBody"',
-        botId: botId,
-      );
+      callbacks.onDebugLog?.call('Command body: "$commandBody"', botId: botId);
 
       if (commandBody.isNotEmpty) {
         callbacks.onDebugLog?.call(
@@ -416,10 +412,7 @@ class EventDispatcher {
     );
     callbacks.onDebugLog?.call('Finished event workflows', botId: botId);
 
-    callbacks.onDebugLog?.call(
-      '_handleMessageCreate completed',
-      botId: botId,
-    );
+    callbacks.onDebugLog?.call('_handleMessageCreate completed', botId: botId);
   }
 
   Future<void> _tryHandleLegacyCommand(
@@ -696,10 +689,7 @@ class EventDispatcher {
                 callbacks.onDebugLog?.call(msg, botId: botId),
       );
     }
-    callbacks.onDebugLog?.call(
-      '_executeEventWorkflow completed',
-      botId: botId,
-    );
+    callbacks.onDebugLog?.call('_executeEventWorkflow completed', botId: botId);
   }
 
   Future<void> _hydrateEventContext(
