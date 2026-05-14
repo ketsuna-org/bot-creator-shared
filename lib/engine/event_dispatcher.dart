@@ -36,8 +36,8 @@ class EventDispatcher {
     // Interaction handling (Slash, Autocomplete, Components)
     subscriptions.add(
       gateway.onInteractionCreate.listen((event) {
-        callbacks.onLog?.call(
-          'DEBUG: Interaction received: ${event.interaction.type}',
+        callbacks.onDebugLog?.call(
+          'Interaction received: ${event.interaction.type}',
           botId: botId,
         );
         unawaited(
@@ -57,8 +57,8 @@ class EventDispatcher {
     // Message Create (Workflows + Legacy Commands)
     subscriptions.add(
       gateway.onMessageCreate.listen((event) {
-        callbacks.onLog?.call(
-          'DEBUG: Message received from ${event.message.author.username}',
+        callbacks.onDebugLog?.call(
+          'Message received from ${event.message.author.username}',
           botId: botId,
         );
         unawaited(
@@ -79,8 +79,8 @@ class EventDispatcher {
     // Common event listeners
     subscriptions.add(
       gateway.onGuildMemberAdd.listen((event) {
-        callbacks.onLog?.call(
-          'DEBUG: Event received: guildMemberAdd',
+        callbacks.onDebugLog?.call(
+          'Event received: guildMemberAdd',
           botId: botId,
         );
         _dispatchEvent(
@@ -95,8 +95,8 @@ class EventDispatcher {
     );
     subscriptions.add(
       gateway.onGuildMemberRemove.listen((event) {
-        callbacks.onLog?.call(
-          'DEBUG: Event received: guildMemberRemove',
+        callbacks.onDebugLog?.call(
+          'Event received: guildMemberRemove',
           botId: botId,
         );
         _dispatchEvent(
@@ -111,8 +111,8 @@ class EventDispatcher {
     );
     subscriptions.add(
       gateway.onMessageUpdate.listen((event) {
-        callbacks.onLog?.call(
-          'DEBUG: Event received: messageUpdate',
+        callbacks.onDebugLog?.call(
+          'Event received: messageUpdate',
           botId: botId,
         );
         _dispatchEvent(
@@ -127,8 +127,8 @@ class EventDispatcher {
     );
     subscriptions.add(
       gateway.onMessageDelete.listen((event) {
-        callbacks.onLog?.call(
-          'DEBUG: Event received: messageDelete',
+        callbacks.onDebugLog?.call(
+          'Event received: messageDelete',
           botId: botId,
         );
         _dispatchEvent(
@@ -143,8 +143,8 @@ class EventDispatcher {
     );
     subscriptions.add(
       gateway.onChannelUpdate.listen((event) {
-        callbacks.onLog?.call(
-          'DEBUG: Event received: channelUpdate',
+        callbacks.onDebugLog?.call(
+          'Event received: channelUpdate',
           botId: botId,
         );
         _dispatchEvent(
@@ -159,8 +159,8 @@ class EventDispatcher {
     );
     subscriptions.add(
       gateway.onInviteCreate.listen((event) {
-        callbacks.onLog?.call(
-          'DEBUG: Event received: inviteCreate',
+        callbacks.onDebugLog?.call(
+          'Event received: inviteCreate',
           botId: botId,
         );
         _dispatchEvent(
@@ -205,8 +205,8 @@ class EventDispatcher {
     required NyxxGateway gateway,
     required DateTime? startedAt,
   }) async {
-    callbacks.onLog?.call(
-      'DEBUG: _handleEvent started for event: $eventName',
+    callbacks.onDebugLog?.call(
+      '_handleEvent started for event: $eventName',
       botId: botId,
     );
 
@@ -228,8 +228,8 @@ class EventDispatcher {
     }
 
     final workflows = await store.getWorkflows(botId);
-    callbacks.onLog?.call(
-      'DEBUG: Found ${workflows.length} workflows for bot: $botId',
+    callbacks.onDebugLog?.call(
+      'Found ${workflows.length} workflows for bot: $botId',
       botId: botId,
     );
 
@@ -240,22 +240,22 @@ class EventDispatcher {
               eventName.toLowerCase();
         }).toList();
 
-    callbacks.onLog?.call(
-      'DEBUG: Found ${matching.length} matching workflows for event: $eventName',
+    callbacks.onDebugLog?.call(
+      'Found ${matching.length} matching workflows for event: $eventName',
       botId: botId,
     );
 
     if (matching.isEmpty) {
-      callbacks.onLog?.call(
-        'DEBUG: No matching workflows found for event: $eventName',
+      callbacks.onDebugLog?.call(
+        'No matching workflows found for event: $eventName',
         botId: botId,
       );
       return;
     }
 
     final context = buildContext(event);
-    callbacks.onLog?.call(
-      'DEBUG: Built context for event: $eventName',
+    callbacks.onDebugLog?.call(
+      'Built context for event: $eventName',
       botId: botId,
     );
 
@@ -279,8 +279,8 @@ class EventDispatcher {
     );
 
     for (final workflow in matching) {
-      callbacks.onLog?.call(
-        'DEBUG: Executing workflow: ${workflow['name']}',
+      callbacks.onDebugLog?.call(
+        'Executing workflow: ${workflow['name']}',
         botId: botId,
       );
 
@@ -334,54 +334,54 @@ class EventDispatcher {
     required NyxxGateway gateway,
     required DateTime? startedAt,
   }) async {
-    callbacks.onLog?.call('DEBUG: _handleMessageCreate started', botId: botId);
+    callbacks.onDebugLog?.call('_handleMessageCreate started', botId: botId);
 
     final author = event.message.author;
     final isBot = author is User ? author.isBot : false;
     if (isBot || event.message.application != null) {
-      callbacks.onLog?.call(
-        'DEBUG: Message is from bot or application, returning early',
+      callbacks.onDebugLog?.call(
+        'Message is from bot or application, returning early',
         botId: botId,
       );
       return;
     }
 
-    callbacks.onLog?.call('DEBUG: Processing user message', botId: botId);
+    callbacks.onDebugLog?.call('Processing user message', botId: botId);
 
     final runtimeVariables = <String, String>{};
     _injectBaseVariables(runtimeVariables, botId: botId, startedAt: startedAt);
     runtimeVariables.addAll(shared_global.extractBotRuntimeDetails(gateway));
 
     // Handle Legacy Commands
-    callbacks.onLog?.call(
-      'DEBUG: Fetching app data for bot: $botId',
+    callbacks.onDebugLog?.call(
+      'Fetching app data for bot: $botId',
       botId: botId,
     );
     final appData = await store.getApp(botId);
-    callbacks.onLog?.call('DEBUG: App data received: $appData', botId: botId);
+    callbacks.onDebugLog?.call('App data received: $appData', botId: botId);
 
     final prefix = (appData['prefix'] ?? '!').toString().trim();
     final content = event.message.content.trim();
 
-    callbacks.onLog?.call(
-      'DEBUG: Message content: "$content", prefix: "$prefix"',
+    callbacks.onDebugLog?.call(
+      'Message content: "$content", prefix: "$prefix"',
       botId: botId,
     );
 
     if (content.startsWith(prefix)) {
-      callbacks.onLog?.call(
-        'DEBUG: Content starts with prefix, processing command',
+      callbacks.onDebugLog?.call(
+        'Content starts with prefix, processing command',
         botId: botId,
       );
       final commandBody = content.substring(prefix.length).trim();
-      callbacks.onLog?.call(
-        'DEBUG: Command body: "$commandBody"',
+      callbacks.onDebugLog?.call(
+        'Command body: "$commandBody"',
         botId: botId,
       );
 
       if (commandBody.isNotEmpty) {
-        callbacks.onLog?.call(
-          'DEBUG: Command body is not empty, calling _tryHandleLegacyCommand',
+        callbacks.onDebugLog?.call(
+          'Command body is not empty, calling _tryHandleLegacyCommand',
           botId: botId,
         );
         await _tryHandleLegacyCommand(
@@ -391,21 +391,21 @@ class EventDispatcher {
           gateway: gateway,
           runtimeVariables: runtimeVariables,
         );
-        callbacks.onLog?.call(
-          'DEBUG: Finished _tryHandleLegacyCommand',
+        callbacks.onDebugLog?.call(
+          'Finished _tryHandleLegacyCommand',
           botId: botId,
         );
       } else {
-        callbacks.onLog?.call('DEBUG: Command body is empty', botId: botId);
+        callbacks.onDebugLog?.call('Command body is empty', botId: botId);
       }
     } else {
-      callbacks.onLog?.call(
-        'DEBUG: Content does not start with prefix',
+      callbacks.onDebugLog?.call(
+        'Content does not start with prefix',
         botId: botId,
       );
     }
     // Handle Event Workflows
-    callbacks.onLog?.call('DEBUG: Processing event workflows', botId: botId);
+    callbacks.onDebugLog?.call('Processing event workflows', botId: botId);
     await _handleEvent(
       'messageCreate',
       event,
@@ -414,10 +414,10 @@ class EventDispatcher {
       gateway: gateway,
       startedAt: startedAt,
     );
-    callbacks.onLog?.call('DEBUG: Finished event workflows', botId: botId);
+    callbacks.onDebugLog?.call('Finished event workflows', botId: botId);
 
-    callbacks.onLog?.call(
-      'DEBUG: _handleMessageCreate completed',
+    callbacks.onDebugLog?.call(
+      '_handleMessageCreate completed',
       botId: botId,
     );
   }
@@ -429,21 +429,21 @@ class EventDispatcher {
     required NyxxGateway gateway,
     required Map<String, String> runtimeVariables,
   }) async {
-    callbacks.onLog?.call(
-      'DEBUG: _tryHandleLegacyCommand started with commandBody: $commandBody',
+    callbacks.onDebugLog?.call(
+      '_tryHandleLegacyCommand started with commandBody: $commandBody',
       botId: botId,
     );
 
     final allCommands = await store.listAppCommands(botId);
-    callbacks.onLog?.call(
-      'DEBUG: Found ${allCommands.length} commands for bot: $botId',
+    callbacks.onDebugLog?.call(
+      'Found ${allCommands.length} commands for bot: $botId',
       botId: botId,
     );
 
     final parts = commandBody.split(RegExp(r'\s+'));
     final commandName = parts[0].toLowerCase();
-    callbacks.onLog?.call(
-      'DEBUG: Looking for command with name: $commandName',
+    callbacks.onDebugLog?.call(
+      'Looking for command with name: $commandName',
       botId: botId,
     );
 
@@ -451,15 +451,15 @@ class EventDispatcher {
       (c) {
         final name = (c['name'] ?? '').toString().toLowerCase();
         final type = (c['type'] ?? '').toString().toLowerCase();
-        callbacks.onLog?.call(
-          'DEBUG: Checking command: name="$name", type="$type"',
+        callbacks.onDebugLog?.call(
+          'Checking command: name="$name", type="$type"',
           botId: botId,
         );
         return name == commandName && type == 'chatinput';
       },
       orElse: () {
-        callbacks.onLog?.call(
-          'DEBUG: No matching command found for: $commandName',
+        callbacks.onDebugLog?.call(
+          'No matching command found for: $commandName',
           botId: botId,
         );
         return <String, dynamic>{};
@@ -467,19 +467,19 @@ class EventDispatcher {
     );
 
     if (command.isEmpty) {
-      callbacks.onLog?.call(
-        'DEBUG: Command is empty, returning early',
+      callbacks.onDebugLog?.call(
+        'Command is empty, returning early',
         botId: botId,
       );
       return;
     }
 
-    callbacks.onLog?.call(
-      'DEBUG: Found matching command: ${command['name']}',
+    callbacks.onDebugLog?.call(
+      'Found matching command: ${command['name']}',
       botId: botId,
     );
 
-    callbacks.onLog?.call(
+    callbacks.onDebugLog?.call(
       'Legacy command triggered: $commandName',
       botId: botId,
     );
@@ -488,18 +488,18 @@ class EventDispatcher {
     // Prepare arguments ($1, $2, etc.)
     final args = parts.skip(1).toList();
     final argsString = args.join(' ');
-    callbacks.onLog?.call('DEBUG: Command arguments: $args', botId: botId);
+    callbacks.onDebugLog?.call('Command arguments: $args', botId: botId);
 
     for (var i = 0; i < args.length; i++) {
       runtimeVariables['${i + 1}'] = args[i];
-      callbacks.onLog?.call(
-        'DEBUG: Set runtime variable \'\${i + 1}\' to: ${args[i]}',
+      callbacks.onDebugLog?.call(
+        'Set runtime variable \'\${i + 1}\' to: ${args[i]}',
         botId: botId,
       );
     }
     runtimeVariables['0'] = commandName;
-    callbacks.onLog?.call(
-      'DEBUG: Set runtime variable \'0\' to: $commandName',
+    callbacks.onDebugLog?.call(
+      'Set runtime variable \'0\' to: $commandName',
       botId: botId,
     );
 
@@ -509,8 +509,8 @@ class EventDispatcher {
     // Override message content for legacy commands so $message returns only the arguments
     runtimeVariables['message.content'] = argsString;
     runtimeVariables['message.cleanContent'] = argsString;
-    callbacks.onLog?.call(
-      'DEBUG: Overrode message.content with arguments: "$argsString"',
+    callbacks.onDebugLog?.call(
+      'Overrode message.content with arguments: "$argsString"',
       botId: botId,
     );
 
@@ -550,8 +550,8 @@ class EventDispatcher {
     final shouldCompileFromBdfdSource =
         executionMode == 'bdfd_script' || scriptSource.trim().isNotEmpty;
 
-    callbacks.onLog?.call(
-      'DEBUG: Execution mode: $executionMode, shouldCompile: $shouldCompileFromBdfdSource',
+    callbacks.onDebugLog?.call(
+      'Execution mode: $executionMode, shouldCompile: $shouldCompileFromBdfdSource',
       botId: botId,
     );
 
@@ -572,8 +572,8 @@ class EventDispatcher {
         runtimeVariables: runtimeVariables,
       );
     }
-    callbacks.onLog?.call(
-      'DEBUG: Finished execution for command: $commandName',
+    callbacks.onDebugLog?.call(
+      'Finished execution for command: $commandName',
       botId: botId,
     );
   }
@@ -585,8 +585,8 @@ class EventDispatcher {
     required String botId,
     required Map<String, String> runtimeVariables,
   }) async {
-    callbacks.onLog?.call(
-      'DEBUG: _executeBdfdScriptInEvent started',
+    callbacks.onDebugLog?.call(
+      '_executeBdfdScriptInEvent started',
       botId: botId,
     );
 
@@ -601,8 +601,8 @@ class EventDispatcher {
     }
 
     final actions = compileResult.actions;
-    callbacks.onLog?.call(
-      'DEBUG: BDFD compiled into ${actions.length} actions',
+    callbacks.onDebugLog?.call(
+      'BDFD compiled into ${actions.length} actions',
       botId: botId,
     );
 
@@ -626,8 +626,8 @@ class EventDispatcher {
     required NyxxGateway gateway,
     required Map<String, String> runtimeVariables,
   }) async {
-    callbacks.onLog?.call(
-      'DEBUG: _executeEventWorkflow started for workflow: ${workflow['name']}',
+    callbacks.onDebugLog?.call(
+      '_executeEventWorkflow started for workflow: ${workflow['name']}',
       botId: botId,
     );
 
@@ -637,20 +637,20 @@ class EventDispatcher {
           ) ??
           const [],
     );
-    callbacks.onLog?.call(
-      'DEBUG: Found ${actionsJson.length} actions in workflow',
+    callbacks.onDebugLog?.call(
+      'Found ${actionsJson.length} actions in workflow',
       botId: botId,
     );
 
     final actions = actionsJson.map((e) => Action.fromJson(e)).toList();
-    callbacks.onLog?.call(
-      'DEBUG: Parsed ${actions.length} actions',
+    callbacks.onDebugLog?.call(
+      'Parsed ${actions.length} actions',
       botId: botId,
     );
 
     if (actions.isNotEmpty) {
-      callbacks.onLog?.call(
-        'DEBUG: Executing ${actions.length} actions',
+      callbacks.onDebugLog?.call(
+        'Executing ${actions.length} actions',
         botId: botId,
       );
       final actionResults = await _workflowExecutor.executeActions(
@@ -662,14 +662,14 @@ class EventDispatcher {
         fallbackChannelId: context.channelId,
         fallbackGuildId: context.guildId,
       );
-      callbacks.onLog?.call(
-        'DEBUG: Executed actions, got ${actionResults.length} results',
+      callbacks.onDebugLog?.call(
+        'Executed actions, got ${actionResults.length} results',
         botId: botId,
       );
       for (final entry in actionResults.entries) {
         runtimeVariables['action.${entry.key}'] = entry.value;
-        callbacks.onLog?.call(
-          'DEBUG: Set runtime variable \'action.${entry.key}\' to: ${entry.value}',
+        callbacks.onDebugLog?.call(
+          'Set runtime variable \'action.${entry.key}\' to: ${entry.value}',
           botId: botId,
         );
       }
@@ -678,10 +678,10 @@ class EventDispatcher {
     final response = Map<String, dynamic>.from(
       (workflow['response'] as Map?)?.cast<String, dynamic>() ?? const {},
     );
-    callbacks.onLog?.call('DEBUG: Response data: $response', botId: botId);
+    callbacks.onDebugLog?.call('Response data: $response', botId: botId);
 
     if (response.isNotEmpty) {
-      callbacks.onLog?.call('DEBUG: Workflow has response data', botId: botId);
+      callbacks.onDebugLog?.call('Workflow has response data', botId: botId);
       await sendWorkflowResponse(
         gateway: gateway,
         fallbackChannelId: context.channelId,
@@ -696,8 +696,8 @@ class EventDispatcher {
                 callbacks.onDebugLog?.call(msg, botId: botId),
       );
     }
-    callbacks.onLog?.call(
-      'DEBUG: _executeEventWorkflow completed',
+    callbacks.onDebugLog?.call(
+      '_executeEventWorkflow completed',
       botId: botId,
     );
   }
@@ -707,8 +707,8 @@ class EventDispatcher {
     EventExecutionContext context,
     Map<String, String> variables,
   ) async {
-    callbacks.onLog?.call(
-      'DEBUG: _hydrateEventContext started',
+    callbacks.onDebugLog?.call(
+      '_hydrateEventContext started',
       botId: gateway.application.id.toString(),
     );
     // Similar to logic in bot.event_workflows.dart lines 691-735
@@ -737,8 +737,8 @@ class EventDispatcher {
           );
         }
       } catch (e) {
-        callbacks.onLog?.call(
-          'DEBUG: Error hydrating guild context: $e',
+        callbacks.onDebugLog?.call(
+          'Error hydrating guild context: $e',
           botId: gateway.application.id.toString(),
         );
       }
@@ -749,14 +749,14 @@ class EventDispatcher {
         final channel = await gateway.channels.get(channelId);
         variables.addAll(shared_global.extractChannelRuntimeDetails(channel));
       } catch (e) {
-        callbacks.onLog?.call(
-          'DEBUG: Error hydrating channel context: $e',
+        callbacks.onDebugLog?.call(
+          'Error hydrating channel context: $e',
           botId: gateway.application.id.toString(),
         );
       }
     }
-    callbacks.onLog?.call(
-      'DEBUG: _hydrateEventContext completed',
+    callbacks.onDebugLog?.call(
+      '_hydrateEventContext completed',
       botId: gateway.application.id.toString(),
     );
   }

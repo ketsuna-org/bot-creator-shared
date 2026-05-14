@@ -96,7 +96,7 @@ class BotSession {
 
       await reload();
 
-      callbacks.onLog?.call('DEBUG: Registering event listeners...', botId: botId);
+      callbacks.onDebugLog?.call('Registering event listeners...', botId: botId);
       _subscriptions.addAll(
         _eventDispatcher.registerListeners(
           _gateway!,
@@ -104,7 +104,7 @@ class BotSession {
           startedAt: _startedAt,
         ),
       );
-      callbacks.onLog?.call('DEBUG: ${_subscriptions.length} listeners registered.', botId: botId);
+      callbacks.onDebugLog?.call('${_subscriptions.length} listeners registered.', botId: botId);
 
       _startMetricsReporting();
 
