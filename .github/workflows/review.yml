@@ -1,0 +1,34 @@
+name: CI Tests
+
+on:
+  pull_request:
+    branches: ["master", "main"]
+
+env:
+  FLUTTER_VERSION: "3.41.2"
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  analyze_and_test:
+    runs-on: vps01
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: "stable"
+          cache: true
+          pub-cache: false
+
+      - name: Install workspace dependencies
+        run: flutter pub get
+
+      - name: Analyze shared package
+        run: dart analyze
+
+      - name: Run shared tests
+        run: dart test
