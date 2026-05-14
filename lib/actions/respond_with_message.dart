@@ -4,13 +4,47 @@ import 'package:bot_creator_shared/actions/send_component_v2.dart';
 import 'package:bot_creator_shared/utils/component_workflow_bindings.dart';
 import 'package:bot_creator_shared/utils/embed_fields.dart';
 
+import 'package:bot_creator_shared/actions/send_message.dart';
+
 Future<Map<String, dynamic>> respondWithMessageAction(
-  Interaction interaction, {
+  Interaction? interaction, {
   required Map<String, dynamic> payload,
   required String Function(String) resolve,
   required String botId,
+  NyxxGateway? client,
+  Snowflake? fallbackChannelId,
 }) async {
   try {
+    if (interaction == null) {
+      if (client == null) {
+        return {
+          'error':
+              'respondWithMessage requires either an interaction or a client for fallback',
+        };
+      }
+
+      final channelIdRaw = resolve((payload['channelId'] ?? '').toString());
+      Snowflake? channelId;
+      if (channelIdRaw.isNotEmpty) {
+        final parsed = int.tryParse(channelIdRaw);
+        if (parsed != null) channelId = Snowflake(parsed);
+      }
+      channelId ??= fallbackChannelId;
+
+      if (channelId == null) {
+        return {'error': 'No channelId available for respondWithMessage fallback'};
+      }
+
+      return sendMessageToChannel(
+        client,
+        channelId,
+        content: resolve((payload['content'] ?? '').toString()),
+        payload: payload,
+        resolve: resolve,
+        botId: botId,
+      );
+    }
+
     if (interaction is! MessageResponse &&
         interaction is! ModalSubmitInteraction) {
       return {'error': 'Interaction does not support message responses'};

@@ -927,6 +927,7 @@ Future<bool> executeVariablesAction({
   required Snowflake? guildId,
   required Snowflake? fallbackChannelId,
   required Interaction? interaction,
+  void Function(String message)? onLog,
 }) async {
   switch (type) {
     case BotCreatorActionType.setTemporaryVariable:
@@ -1824,6 +1825,14 @@ Future<bool> executeVariablesAction({
         variables: variables,
         resolveValue: resolveValue,
       );
+      return true;
+
+    case BotCreatorActionType.log:
+      final message = resolveValue((payload['message'] ?? '').toString());
+      if (message.isNotEmpty) {
+        onLog?.call(message);
+      }
+      results[resultKey] = 'LOGGED';
       return true;
 
     default:

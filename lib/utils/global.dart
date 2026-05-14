@@ -31,14 +31,16 @@ Future<int> getGuildMemberCount(
     final dynamic dynGuild = guild;
     // memberCount is standard for bots, approximateMemberCount is for with_counts=true
     final count = dynGuild.memberCount ?? dynGuild.approximateMemberCount;
-    if (count != null && (count as int) > 0) return count;
+    if (count != null && count > 0) return count;
   } catch (_) {}
 
-  // If zero or missing, and we have the means to fetch, try a fresh API call with counts
+  // Try cache if client is provided
   if (client is NyxxRest && guildId != null) {
     try {
-      final fetchedGuild = await client.guilds.fetch(guildId, withCounts: true);
-      return fetchedGuild.approximateMemberCount ?? 0;
+      final cached = await client.guilds.get(guildId);
+      final dynamic dynCached = cached;
+      final count = dynCached.memberCount ?? dynCached.approximateMemberCount;
+      if (count != null && count > 0) return count;
     } catch (_) {}
   }
 
@@ -71,12 +73,13 @@ Future<Guild?> fetchGuildCached(dynamic client, Snowflake guildId) async {
   try {
     // Try cache first
     final cached = await client.guilds.get(guildId);
-    // Only return cached if it's a full Guild object AND has member count info
-    if (cached is Guild && (await getGuildMemberCount(cached)) > 0) {
+    
+    // Only return cached if it's a full Guild object
+    if (cached is Guild) {
       return cached;
     }
 
-    // Fallback to fetch if not in cache, partial, or missing member count
+    // Fallback to fetch if not in cache or partial
     return await client.guilds.fetch(guildId);
   } catch (_) {
     return null;
@@ -529,60 +532,58 @@ Future<Map<String, String>> extractGuildRuntimeDetails(
 Future<Map<String, String>> generateKeyValues(
   Interaction<ApplicationCommandInteractionData> interaction,
 ) async {
-  PartialGuild? guild = interaction.guild;
-  final guildId = _asSnowflake((interaction as dynamic).guildId) ?? guild?.id;
-  final count = await getGuildMemberCount(
-    guild,
-    client: interaction.manager.client,
-    guildId: guildId,
-  );
-  if (guildId != null && (guild == null || guild is! Guild || count <= 0)) {
-    final fetched = await fetchGuildCached(interaction.manager.client, guildId);
-    if (fetched != null) {
-      guild = fetched;
-    }
-  }
+  final client = interaction.manager.client;
+  final guildId = _asSnowflake((interaction as dynamic).guildId) ?? interaction.guild?.id;
+  final channelId = _asSnowflake((interaction as dynamic).channelId) ?? interaction.channel?.id;
+  final invokingUserId = _asSnowflake(interaction.user?.id) ?? _asSnowflake(interaction.member?.id);
 
-  PartialChannel? channel = interaction.channel;
-  final channelId =
-      _asSnowflake((interaction as dynamic).channelId) ?? channel?.id;
-  if (channel is! Channel && channelId != null) {
-    final fetched = await fetchChannelCached(
-      interaction.manager.client,
-      channelId,
-    );
-    if (fetched != null) {
-      channel = fetched;
-    }
-  }
+  // Parallelize data fetching
+  final results = await Future.wait([
+    if (guildId != null)
+      fetchGuildCached(client, guildId)
+    else
+      Future.value(null),
+    if (channelId != null)
+      fetchChannelCached(client, channelId)
+    else
+      Future.value(null),
+    if (guildId != null && invokingUserId != null)
+      _fetchMemberCached(interaction, guildId: guildId, userId: invokingUserId)
+    else
+      Future.value(null),
+  ]);
 
-  Member? user = interaction.member;
-  final invokingUserId =
-      _asSnowflake(interaction.user?.id) ??
-      _asSnowflake(interaction.member?.id);
-  if (user == null && guildId != null && invokingUserId != null) {
-    user = await _fetchMemberCached(
-      interaction,
-      guildId: guildId,
-      userId: invokingUserId,
-    );
-  }
+  Guild? guild = results[0] as Guild?;
+  Channel? channel = results[1] as Channel?;
+  Member? user = results[2] as Member?;
+
+  // Fallback to interaction data if fetch failed
   if (user == null && interaction.member != null) {
     user = interaction.member;
   }
+
   final invokingUserIdText = invokingUserId?.toString() ?? '';
   final guildIdText = guildId?.toString() ?? '';
   final channelIdText = channelId?.toString() ?? '';
-  final guildName = (guild is Guild) ? guild.name : "DM";
-  final userName = user?.user?.username ?? "Unknown User";
-  final guildCount = await getGuildMemberCount(
-    guild,
-    client: interaction.manager.client,
+  final guildName = guild?.name ?? (guildId != null ? "Unknown Guild" : "DM");
+  final userName = user?.user?.username ?? interaction.user?.username ?? "Unknown User";
+
+  final count = await getGuildMemberCount(
+    guild ?? interaction.guild,
+    client: client,
     guildId: guildId,
   );
-  String channelName = getChannelName(channel);
-  String channelType = channel is Channel ? channel.type.value.toString() : "0";
-  String channelMention = channel is PartialChannel ? "<#${channel.id}>" : "";
+
+  String channelName = getChannelName(channel ?? interaction.channel);
+  String channelType = "0";
+  try {
+    if (channel != null) {
+      channelType = (channel as dynamic).type.value.toString();
+    } else if (interaction.channel != null) {
+      channelType = (interaction.channel as dynamic).type.value.toString();
+    }
+  } catch (_) {}
+  String channelMention = (channel ?? interaction.channel) != null ? "<#${(channel ?? interaction.channel)!.id}>" : "";
 
   String userAvatarUrl = "https://cdn.discordapp.com/embed/avatars/0.png";
   String userBannerUrl = '';
@@ -676,8 +677,8 @@ Future<Map<String, String>> generateKeyValues(
     "guild.id": guildIdText,
     "channelId": channelIdText,
     "channel.id": channelIdText,
-    "guildCount": guildCount.toString(),
-    "guild.count": guildCount.toString(),
+    "guildCount": count.toString(),
+    "guild.count": count.toString(),
     "interaction.guild.id": guildIdText,
     "interaction.guild.name": guildName,
     "interaction.guild.icon": makeGuildIcon(

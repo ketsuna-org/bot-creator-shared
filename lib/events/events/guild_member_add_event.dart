@@ -10,6 +10,7 @@ EventExecutionContext buildGuildMemberAddEventContext(
     guildId: event.guildId,
     channelId: null,
     userId: member.id,
+    member: member,
     extra: {
       ..._memberBasicExtra(
         member.id.toString(),

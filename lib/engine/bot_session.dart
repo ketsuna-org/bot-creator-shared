@@ -136,11 +136,15 @@ class BotSession {
 
       await reload();
 
+      callbacks.onDebugLog?.call('Registering event listeners...', botId: botId);
       final listeners = _eventDispatcher.registerListeners(
         gateway,
         botId: botId,
         startedAt: _startedAt,
+     );
+     _subscriptions.addAll(listeners);
       );
+      callbacks.onDebugLog?.call('${_subscriptions.length} listeners registered.', botId: botId);
 
       _subscriptions.addAll(listeners);
 

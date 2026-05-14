@@ -110,16 +110,13 @@ Future<bool> executeComponentsInteractionsAction({
       return true;
 
     case BotCreatorActionType.respondWithMessage:
-      if (interaction == null) {
-        results[resultKey] =
-            'Error: respondWithMessage requires an interaction context';
-        return true;
-      }
       final messageResult = await respondWithMessageAction(
         interaction,
         payload: payload,
         resolve: resolveValue,
         botId: botId,
+        client: client,
+        fallbackChannelId: fallbackChannelId,
       );
       if (messageResult['error'] != null) {
         throw Exception(messageResult['error']);
