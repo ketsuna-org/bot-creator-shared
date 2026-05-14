@@ -1,4 +1,4 @@
-﻿import 'package:nyxx/nyxx.dart';
+import 'package:nyxx/nyxx.dart';
 import 'package:bot_creator_shared/actions/permission_checks.dart';
 import 'package:bot_creator_shared/utils/global.dart';
 
@@ -32,14 +32,25 @@ Future<Map<String, String>> kickUserAction(
       requiredPermission: Permissions.kickMembers,
       actionLabel: 'kick',
     );
+
     if (permError != null) {
       return {'error': permError, 'userId': ''};
     }
 
-    final reason = payload['reason']?.toString().trim();
+    final reasonRaw = payload['reason'];
+    final reason = reasonRaw?.toString().trim();
+
     final guild = await fetchGuildCached(client, guildId);
-    if (guild == null) return {'error': 'Guild not found', 'userId': ''};
-    await guild.members[userId].delete(
+    if (guild == null) {
+      return {'error': 'Guild not found', 'userId': ''};
+    }
+
+    final member = guild.members[userId];
+    if (member == null) {
+      return {'error': 'Member not found in guild', 'userId': ''};
+    }
+
+    await member.kick(
       auditLogReason:
           (reason != null && reason.isNotEmpty)
               ? reason
