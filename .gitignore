@@ -1,0 +1,14 @@
+# https://dart.dev/guides/libraries/private-files
+# Created by https://www.toptal.com/developers/gitignore/api/dart
+# Edit at https://www.toptal.com/developers/gitignore?templates=dart
+
+### Dart ###
+# .packages
+.dart_tool/
+# build/
+# .pub-cache/
+# .pub/
+
+# Custom for Bot Creator
+*.log
+.DS_Store

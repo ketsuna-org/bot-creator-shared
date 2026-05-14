@@ -1,0 +1,642 @@
+Resolving dependencies in `/home/jeremy/Code/bc/bot-creator`...
+Downloading packages...
+  _fe_analyzer_shared 91.0.0 (100.0.0 available)
+  _flutterfire_internals 1.3.69 (1.3.71 available)
+  analyzer 8.4.1 (13.0.0 available)
+  async 2.13.0 (2.13.1 available)
+  cli_util 0.4.2 (0.5.1 available)
+  dart_eval 0.8.4 (0.8.5 available)
+  dart_style 3.1.3 (3.1.9 available)
+  directed_graph 0.4.5 (0.5.5 available)
+  firebase_analytics 12.3.0 (12.4.1 available)
+  firebase_analytics_platform_interface 5.1.1 (6.0.1 available)
+  firebase_analytics_web 0.6.1+5 (0.6.1+7 available)
+  firebase_core 4.7.0 (4.9.0 available)
+  firebase_core_platform_interface 6.0.3 (7.0.1 available)
+  firebase_core_web 3.6.0 (3.7.0 available)
+  firebase_crashlytics 5.2.0 (5.2.2 available)
+  firebase_crashlytics_platform_interface 3.8.20 (3.8.22 available)
+  firebase_performance 0.11.3 (0.11.4+1 available)
+  firebase_performance_platform_interface 0.1.6+7 (0.2.0+1 available)
+  firebase_performance_web 0.1.8+5 (0.1.8+7 available)
+  flutter_plugin_android_lifecycle 2.0.33 (2.0.34 available)
+  google_cloud 0.4.1 (0.5.0 available)
+  google_sign_in_android 7.2.9 (7.2.10 available)
+  googleapis_auth 2.3.0 (2.3.1 available)
+  gtk 2.1.0 (2.2.0 available)
+  hooks 1.0.2 (1.0.3 available)
+  matcher 0.12.19 (0.12.20 available)
+  meta 1.17.0 (1.18.2 available)
+  mime 1.0.6 (2.0.0 available)
+  native_toolchain_c 0.17.6 (0.18.0 available)
+  package_info_plus 9.0.1 (10.1.0 available)
+  package_info_plus_platform_interface 3.2.1 (4.1.0 available)
+  path_provider_android 2.2.22 (2.3.1 available)
+  shared_preferences_android 2.4.21 (2.4.23 available)
+  shared_preferences_platform_interface 2.4.1 (2.4.2 available)
+  sqflite 2.4.2 (2.4.2+1 available)
+  sqflite_common 2.5.6 (2.5.7 available)
+  sqflite_common_ffi 2.4.0+2 (2.4.0+3 available)
+  synchronized 3.4.0 (3.4.0+1 available)
+  test 1.30.0 (1.31.1 available)
+  test_api 0.7.10 (0.7.12 available)
+  test_core 0.6.16 (0.6.18 available)
+  url_launcher_android 6.3.28 (6.3.29 available)
+  url_launcher_web 2.4.2 (2.4.3 available)
+  vector_math 2.2.0 (2.3.0 available)
+  vm_service 15.0.2 (15.2.0 available)
+  webview_flutter_android 4.10.13 (4.12.0 available)
+  webview_flutter_platform_interface 2.14.0 (2.15.1 available)
+  webview_flutter_wkwebview 3.24.1 (3.25.1 available)
+  win32 5.15.0 (6.2.0 available)
+  xml 6.6.1 (7.0.1 available)
+Got dependencies in `/home/jeremy/Code/bc/bot-creator`!
+50 packages have newer versions incompatible with dependency constraints.
+Try `flutter pub outdated` for more information.
+00:00 +0: loading /home/jeremy/Code/bc/bot-creator/packages/shared/test/interaction_listener_registry_test.dart
+00:00 +0: /home/jeremy/Code/bc/bot-creator/packages/shared/test/interaction_listener_registry_test.dart: InteractionListenerRegistry matches listeners by bot, type, and optional scope
+00:00 +1: /home/jeremy/Code/bc/bot-creator/packages/shared/test/interaction_listener_registry_test.dart: InteractionListenerRegistry removeEntry only removes the matched listener instance
+00:00 +2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/interaction_listener_registry_test.dart: InteractionListenerRegistry does not match listeners when interaction type differs
+00:00 +3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/interaction_listener_registry_test.dart: InteractionListenerRegistry matches listeners by messageId to avoid same-channel collisions
+00:00 +4: /home/jeremy/Code/bc/bot-creator/packages/shared/test/command_autocomplete_test.dart: normalizeSerializedAutocompleteConfig normalizes entry point and trims argument keys
+00:00 +5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/command_autocomplete_test.dart: resolveAutocompleteConfigForInteraction finds focused option config through subcommand nesting
+00:00 +6: /home/jeremy/Code/bc/bot-creator/packages/shared/test/interaction_event_context_test.dart: buildInteractionRuntimeVariables extracts button/select routing fields
+00:00 +7: /home/jeremy/Code/bc/bot-creator/packages/shared/test/interaction_event_context_test.dart: buildInteractionRuntimeVariables extracts string select aliases with BDFD-compatible access
+DEBUG: Variable lookup failed for key: "interaction.stringSelect.values[/]"
+DEBUG: First 5 keys in updates: [interaction.kind, interaction.customId, interaction.values, interaction.values.count, interaction.guildId]
+DEBUG: Variable lookup failed for key: "interaction.stringSelect.values[/;2]"
+DEBUG: First 5 keys in updates: [interaction.kind, interaction.customId, interaction.values, interaction.values.count, interaction.guildId]
+00:00 +8: /home/jeremy/Code/bc/bot-creator/packages/shared/test/interaction_event_context_test.dart: buildInteractionRuntimeVariables extracts channel select aliases and count
+00:00 +9: /home/jeremy/Code/bc/bot-creator/packages/shared/test/interaction_event_context_test.dart: buildInteractionRuntimeVariables extracts modal fields values
+00:00 +10: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_lexer_test.dart: BdfdLexer tokenizes plain text as a single text token
+00:00 +11: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_lexer_test.dart: BdfdLexer tokenizes standalone BDFD commands without arguments
+00:00 +12: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_lexer_test.dart: BdfdLexer tokenizes bracketed commands and separators
+00:00 +13: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_lexer_test.dart: BdfdLexer tokenizes nested functions inside arguments
+00:00 +14: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_lexer_test.dart: BdfdLexer tokenizes standalone closing brackets outside functions as text
+00:00 +15: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_lexer_test.dart: BdfdLexer reports unclosed bracket diagnostics at the opening location
+00:00 +16: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_lexer_test.dart: BdfdLexer tracks token line and column across multiline scripts
+00:00 +17: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_lexer_test.dart: BdfdLexer preserves Markdown link brackets inside function arguments
+00:00 +18: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_lexer_test.dart: BdfdLexer preserves JSON array brackets inside function arguments
+00:00 +19: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_lexer_test.dart: BdfdLexer handles nested function inside literal brackets
+00:00 +20: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_lexer_test.dart: BdfdLexer handles nested function with brackets inside literal brackets
+00:00 +21: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_lexer_test.dart: BdfdLexer tokenizes lone brackets as text outside function brackets
+00:00 +22: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_lexer_test.dart: BdfdLexer supports bracketed context IDs in variable names
+00:00 +23: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_lexer_test.dart: BdfdLexer escaped bracket \[\] inside function argument produces text
+00:00 +24: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_lexer_test.dart: BdfdLexer escaped \$ prevents function scanning
+00:00 +25: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_lexer_test.dart: BdfdLexer escaped \; inside function argument produces literal semicolon
+00:00 +26: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_lexer_test.dart: BdfdLexer escaped \] inside function argument produces literal bracket
+00:00 +27: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_lexer_test.dart: BdfdLexer lone backslash without special char is kept as text
+00:00 +28: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_lexer_test.dart: BdfdLexer greedy prefix-matching for functions concatenated with text
+00:00 +29: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_lexer_test.dart: BdfdLexer greedy matching prefers longest valid function name
+00:00 +30: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_lexer_test.dart: BdfdLexer treats unknown identifiers as functions (for loop variables etc)
+00:00 +31: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_signature_hints_test.dart: bdfdSignatureContextAt returns null when caret is outside brackets
+00:00 +32: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_signature_hints_test.dart: bdfdSignatureContextAt returns context for first argument
+00:00 +33: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_signature_hints_test.dart: bdfdSignatureContextAt tracks argument index by semicolons
+00:00 +34: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_signature_hints_test.dart: bdfdSignatureContextAt returns null for functions not in hints map
+00:00 +35: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_signature_hints_test.dart: bdfdSignatureContextAt handles nested functions — innermost wins
+00:00 +36: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_signature_hints_test.dart: bdfdSignatureContextAt returns outer context after inner bracket closes
+00:00 +37: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_signature_hints_test.dart: bdfdSignatureContextAt clamps activeIndex to last parameter
+00:00 +38: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_signature_hints_test.dart: bdfdSignatureContextAt handles zero-parameter functions without clamp errors
+00:00 +39: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_signature_hints_test.dart: bdfdSignatureContextAt returns null for bare functions without brackets
+00:00 +40: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_signature_hints_test.dart: bdfdSignatureContextAt handles cursor right after open bracket
+00:00 +41: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_signature_hints_test.dart: bdfdSignatureContextAt handles empty source
+00:00 +42: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_signature_hints_test.dart: bdfdSignatureContextAt caret at 0 returns null
+00:00 +43: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_signature_hints_test.dart: bdfdSignatureContextAt for/loop signature is available
+00:00 +44: /home/jeremy/Code/bc/bot-creator/packages/shared/test/command_workflow_routing_test.dart: resolveSubcommandRoute returns null when options are null
+00:00 +45: /home/jeremy/Code/bc/bot-creator/packages/shared/test/command_workflow_routing_test.dart: resolveSubcommandRoute returns null when options list is empty
+00:00 +46: /home/jeremy/Code/bc/bot-creator/packages/shared/test/command_workflow_routing_test.dart: resolveSubcommandRoute returns subcommand name for top-level subcommand
+00:00 +47: /home/jeremy/Code/bc/bot-creator/packages/shared/test/command_workflow_routing_test.dart: resolveSubcommandRoute returns grouped route for subcommand group
+00:00 +48: /home/jeremy/Code/bc/bot-creator/packages/shared/test/command_workflow_routing_test.dart: resolveSubcommandRoute supports numeric type 1 for subcommand
+00:00 +49: /home/jeremy/Code/bc/bot-creator/packages/shared/test/command_workflow_routing_test.dart: resolveSubcommandRoute supports numeric type 2 for subcommand group
+00:00 +50: /home/jeremy/Code/bc/bot-creator/packages/shared/test/command_workflow_routing_test.dart: resolveSubcommandRoute supports enum-prefixed type strings
+00:00 +51: /home/jeremy/Code/bc/bot-creator/packages/shared/test/command_workflow_routing_test.dart: resolveSubcommandRoute ignores non-subcommand option trees
+00:00 +52: /home/jeremy/Code/bc/bot-creator/packages/shared/test/command_workflow_routing_test.dart: resolveSubcommandRoute ignores subcommand group without nested subcommands
+00:00 +53: /home/jeremy/Code/bc/bot-creator/packages/shared/test/command_workflow_routing_test.dart: resolveSubcommandRoute ignores subcommand group with missing options
+00:00 +54: /home/jeremy/Code/bc/bot-creator/packages/shared/test/command_workflow_routing_test.dart: resolveSubcommandRoute skips non-subcommand options to find actual subcommand
+00:00 +55: /home/jeremy/Code/bc/bot-creator/packages/shared/test/command_workflow_routing_test.dart: resolveSubcommandRoute handles whitespace in names
+00:00 +56: /home/jeremy/Code/bc/bot-creator/packages/shared/test/command_workflow_routing_test.dart: resolveSubcommandRoute returns null when subcommand has empty name
+00:00 +57: /home/jeremy/Code/bc/bot-creator/packages/shared/test/command_workflow_routing_test.dart: resolveSubcommandWorkflowPayload returns payload for matching route
+00:00 +58: /home/jeremy/Code/bc/bot-creator/packages/shared/test/command_workflow_routing_test.dart: resolveSubcommandWorkflowPayload returns null when route is empty
+00:00 +59: /home/jeremy/Code/bc/bot-creator/packages/shared/test/command_workflow_routing_test.dart: resolveSubcommandWorkflowPayload returns null when route is blank
+00:00 +60: /home/jeremy/Code/bc/bot-creator/packages/shared/test/command_workflow_routing_test.dart: resolveSubcommandWorkflowPayload returns null when route not found
+00:00 +61: /home/jeremy/Code/bc/bot-creator/packages/shared/test/command_workflow_routing_test.dart: resolveSubcommandWorkflowPayload returns null when subcommandWorkflows is absent
+00:00 +62: /home/jeremy/Code/bc/bot-creator/packages/shared/test/command_workflow_routing_test.dart: resolveSubcommandWorkflowPayload returns null when subcommandWorkflows is not a Map
+00:00 +63: /home/jeremy/Code/bc/bot-creator/packages/shared/test/command_workflow_routing_test.dart: resolveSubcommandWorkflowPayload returns null when payload value is not a Map
+00:00 +64: /home/jeremy/Code/bc/bot-creator/packages/shared/test/command_workflow_routing_test.dart: resolveSubcommandWorkflowPayload each route returns its own independent payload
+00:00 +65: /home/jeremy/Code/bc/bot-creator/packages/shared/test/command_workflow_routing_test.dart: normalizeOptionType normalizes string subCommand
+00:00 +66: /home/jeremy/Code/bc/bot-creator/packages/shared/test/command_workflow_routing_test.dart: normalizeOptionType normalizes string subCommandGroup
+00:00 +67: /home/jeremy/Code/bc/bot-creator/packages/shared/test/command_workflow_routing_test.dart: normalizeOptionType normalizes numeric 1 to subcommand
+00:00 +68: /home/jeremy/Code/bc/bot-creator/packages/shared/test/command_workflow_routing_test.dart: normalizeOptionType normalizes numeric 2 to subcommandgroup
+00:00 +69: /home/jeremy/Code/bc/bot-creator/packages/shared/test/command_workflow_routing_test.dart: normalizeOptionType normalizes double 1.0 to subcommand
+00:00 +70: /home/jeremy/Code/bc/bot-creator/packages/shared/test/command_workflow_routing_test.dart: normalizeOptionType normalizes prefixed type string
+00:00 +71: /home/jeremy/Code/bc/bot-creator/packages/shared/test/command_workflow_routing_test.dart: normalizeOptionType normalizes other numeric types to their string
+00:00 +72: /home/jeremy/Code/bc/bot-creator/packages/shared/test/command_workflow_routing_test.dart: normalizeOptionType normalizes plain string types
+00:00 +73: /home/jeremy/Code/bc/bot-creator/packages/shared/test/command_workflow_routing_test.dart: readOptionField reads from Map
+00:00 +74: /home/jeremy/Code/bc/bot-creator/packages/shared/test/command_workflow_routing_test.dart: readOptionField returns null for missing key in Map
+00:00 +75: /home/jeremy/Code/bc/bot-creator/packages/shared/test/command_workflow_routing_test.dart: readOptionField returns null for non-Map non-object
+00:00 +76: /home/jeremy/Code/bc/bot-creator/packages/shared/test/command_workflow_routing_test.dart: normalizeOptionName trims whitespace
+00:00 +77: /home/jeremy/Code/bc/bot-creator/packages/shared/test/command_workflow_routing_test.dart: normalizeOptionName handles null
+00:00 +78: /home/jeremy/Code/bc/bot-creator/packages/shared/test/command_workflow_routing_test.dart: normalizeOptionName converts non-string to string
+00:00 +79: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bot_config_test.dart: BotConfig.fromJson preserves typed global and scoped variables
+00:00 +80: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bot_config_test.dart: BotConfig.fromJson defaults built-in legacy help to enabled
+00:00 +81: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bot_config_test.dart: BotConfig.fromJson preserves disabled built-in legacy help
+00:00 +82: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bot_config_test.dart: BotConfig.fromJson upgrades legacy event workflows
+00:00 +83: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_parser_test.dart: BdfdParser parses plain text into text nodes
+00:00 +84: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_parser_test.dart: BdfdParser parses nested functions with arguments
+00:00 +85: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_parser_test.dart: BdfdParser keeps trailing empty arguments
+00:00 +86: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_parser_test.dart: BdfdParser reports missing closing brackets as parser diagnostics
+00:00 +87: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_parser_test.dart: BdfdParser component/interaction functions parses $addButton with arguments
+00:00 +88: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_parser_test.dart: BdfdParser component/interaction functions parses $addSelectMenuOption with arguments
+00:00 +89: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_parser_test.dart: BdfdParser component/interaction functions parses $addSeparator without arguments
+00:00 +90: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_parser_test.dart: BdfdParser component/interaction functions parses $addTextDisplay with arguments
+00:00 +91: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_parser_test.dart: BdfdParser component/interaction functions parses $addTextInput with arguments
+00:00 +92: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_parser_test.dart: BdfdParser component/interaction functions parses $editButton with arguments
+00:00 +93: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_parser_test.dart: BdfdParser component/interaction functions parses $editSelectMenu with arguments
+00:00 +94: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_parser_test.dart: BdfdParser component/interaction functions parses $editSelectMenuOption with arguments
+00:00 +95: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_parser_test.dart: BdfdParser component/interaction functions parses $newModal with arguments
+00:00 +96: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_parser_test.dart: BdfdParser component/interaction functions parses $newSelectMenu with arguments
+00:00 +97: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_parser_test.dart: BdfdParser component/interaction functions parses $removeAllComponents and $removeAllComponents[]
+00:00 +98: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_parser_test.dart: BdfdParser component/interaction functions parses $removeButtons and $removeButtons[]
+00:00 +99: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_parser_test.dart: BdfdParser component/interaction functions parses $removeComponent with arguments
+00:00 +100: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_parser_test.dart: BdfdParser component/interaction functions parses $defer with arguments
+00:00 +101: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_parser_test.dart: BdfdParser component/interaction functions parses $input with arguments
+00:00 +102: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_parser_test.dart: BdfdParser embed functions parses $title with arguments
+00:00 +103: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_parser_test.dart: BdfdParser embed functions parses $description with arguments
+00:00 +104: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_parser_test.dart: BdfdParser embed functions parses $color with arguments
+00:00 +105: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_parser_test.dart: BdfdParser embed functions parses $footer with text and icon
+00:00 +106: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_parser_test.dart: BdfdParser embed functions parses $footerIcon with arguments
+00:00 +107: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_parser_test.dart: BdfdParser embed functions parses $image with arguments
+00:00 +108: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_parser_test.dart: BdfdParser embed functions parses $thumbnail with arguments
+00:00 +109: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_parser_test.dart: BdfdParser embed functions parses $author with name, icon, and url
+00:00 +110: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_parser_test.dart: BdfdParser embed functions parses $authorIcon with arguments
+00:00 +111: /home/jeremy/Code/bc/bot-creator/packages/shared/test/awaited_registration_test.dart: awaitedRegistrationSnapshot normalizes equivalent map and json string payloads
+00:00 +112: /home/jeremy/Code/bc/bot-creator/packages/shared/test/awaited_registration_test.dart: awaitedRegistrationSnapshot normalizes equivalent map and json string payloads
+00:00 +113: /home/jeremy/Code/bc/bot-creator/packages/shared/test/awaited_registration_test.dart: awaitedRegistrationSnapshot normalizes equivalent map and json string payloads
+00:01 +114: /home/jeremy/Code/bc/bot-creator/packages/shared/test/awaited_registration_test.dart: awaitedRegistrationSnapshot normalizes equivalent map and json string payloads
+00:01 +115: /home/jeremy/Code/bc/bot-creator/packages/shared/test/awaited_registration_test.dart: awaitedRegistrationSnapshot normalizes equivalent map and json string payloads
+00:01 +116: /home/jeremy/Code/bc/bot-creator/packages/shared/test/awaited_registration_test.dart: awaitedRegistrationSnapshot normalizes equivalent map and json string payloads
+00:01 +117: /home/jeremy/Code/bc/bot-creator/packages/shared/test/awaited_registration_test.dart: awaitedRegistrationSnapshot normalizes equivalent map and json string payloads
+00:01 +118: /home/jeremy/Code/bc/bot-creator/packages/shared/test/awaited_registration_test.dart: awaitedRegistrationSnapshot normalizes equivalent map and json string payloads
+00:01 +119: /home/jeremy/Code/bc/bot-creator/packages/shared/test/awaited_registration_test.dart: awaitedRegistrationSnapshot normalizes equivalent map and json string payloads
+00:01 +120: /home/jeremy/Code/bc/bot-creator/packages/shared/test/awaited_registration_test.dart: awaitedRegistrationSnapshot normalizes equivalent map and json string payloads
+00:01 +121: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_parser_test.dart: BdfdParser user/profile functions parses $authorOfMessage without arguments
+00:01 +122: /home/jeremy/Code/bc/bot-creator/packages/shared/test/awaited_registration_test.dart: awaitedRegistrationSnapshot changes when awaited callback is re-armed
+00:01 +123: /home/jeremy/Code/bc/bot-creator/packages/shared/test/awaited_registration_test.dart: awaitedRegistrationSnapshot changes when awaited callback is re-armed
+00:01 +124: /home/jeremy/Code/bc/bot-creator/packages/shared/test/awaited_registration_test.dart: awaitedRegistrationSnapshot changes when awaited callback is re-armed
+00:01 +125: /home/jeremy/Code/bc/bot-creator/packages/shared/test/awaited_registration_test.dart: awaitedRegistrationSnapshot changes when awaited callback is re-armed
+00:01 +126: /home/jeremy/Code/bc/bot-creator/packages/shared/test/awaited_registration_test.dart: awaitedRegistrationSnapshot changes when awaited callback is re-armed
+00:01 +127: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_parser_test.dart: BdfdParser user/profile functions parses $isAdmin without arguments
+00:01 +128: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_parser_test.dart: BdfdParser user/profile functions parses $isBooster without arguments
+00:01 +129: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_parser_test.dart: BdfdParser user/profile functions parses $isBot without arguments
+00:01 +130: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_parser_test.dart: BdfdParser user/profile functions parses $isUserDMEnabled without arguments
+00:01 +131: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_parser_test.dart: BdfdParser user/profile functions parses $userAvatar without arguments
+00:01 +132: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_parser_test.dart: BdfdParser user/profile functions parses $userBadges without arguments
+00:01 +133: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_parser_test.dart: BdfdParser user/profile functions parses $userBanner without arguments
+00:01 +134: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_parser_test.dart: BdfdParser user/profile functions parses $userBannerColor without arguments
+00:01 +135: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_parser_test.dart: BdfdParser user/profile functions parses $userExists without arguments
+00:01 +136: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_parser_test.dart: BdfdParser user/profile functions parses $userID without arguments
+00:01 +137: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_parser_test.dart: BdfdParser user/profile functions parses $userInfo without arguments
+00:01 +138: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_parser_test.dart: BdfdParser user/profile functions parses $userJoined without arguments
+00:01 +139: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_parser_test.dart: BdfdParser user/profile functions parses $userJoinedDiscord without arguments
+00:01 +140: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_parser_test.dart: BdfdParser user/profile functions parses $userPerms without arguments
+00:01 +141: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_parser_test.dart: BdfdParser user/profile functions parses $userServerAvatar without arguments
+00:01 +142: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_parser_test.dart: BdfdParser user/profile functions parses $findUser without arguments
+00:01 +143: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_parser_test.dart: BdfdParser user/profile functions parses $displayName without arguments
+00:01 +144: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_parser_test.dart: BdfdParser user/profile functions parses $displayName[] with user ID
+00:01 +145: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_parser_test.dart: BdfdParser user/profile functions parses $nickname without arguments
+00:01 +146: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_parser_test.dart: BdfdParser user/profile functions parses $nickname[] with user ID
+00:01 +147: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_parser_test.dart: BdfdParser user/profile functions parses $username without arguments
+00:01 +148: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_parser_test.dart: BdfdParser user/profile functions parses $username[] with user ID
+00:01 +149: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_parser_test.dart: BdfdParser user/profile functions parses $changeUsername with arguments
+00:01 +150: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_parser_test.dart: BdfdParser user/profile functions parses $changeUsernameWithID with arguments
+00:01 +151: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bot_template_test.dart: BotTemplate builtInTemplates is not empty
+00:01 +152: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bot_template_test.dart: BotTemplate all templates have unique ids
+00:01 +153: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bot_template_test.dart: BotTemplate all templates have non-empty metadata
+00:01 +154: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bot_template_test.dart: BotTemplate all templates have at least one command
+00:01 +155: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bot_template_test.dart: BotTemplate all command names are valid Discord slash command names
+00:01 +156: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bot_template_test.dart: BotTemplate all commands have the required data fields
+00:01 +157: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bot_template_test.dart: BotTemplate command names are unique within each template
+00:01 +158: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bot_template_test.dart: BotTemplate workflow names are unique within each template
+00:01 +159: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bot_template_test.dart: BotTemplate welcome template has a guildMemberAdd workflow
+00:01 +160: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bot_template_test.dart: BotTemplate moderation template requires ban permissions
+00:01 +161: /home/jeremy/Code/bc/bot-creator/packages/shared/test/invite_management_test.dart: invite management helpers resolveInviteChannelId prefers explicit channelId when valid
+00:01 +162: /home/jeremy/Code/bc/bot-creator/packages/shared/test/invite_management_test.dart: invite management helpers resolveInviteChannelId falls back when payload channelId is empty
+00:01 +163: /home/jeremy/Code/bc/bot-creator/packages/shared/test/invite_management_test.dart: invite management helpers buildInviteUrl returns canonical discord invite URL
+00:01 +164: /home/jeremy/Code/bc/bot-creator/packages/shared/test/runtime_variables_test.dart: hydrateRuntimeVariables injects typed global and scoped variables with compatibility aliases
+00:01 +165: /home/jeremy/Code/bc/bot-creator/packages/shared/test/runtime_variables_test.dart: hydrateRuntimeVariables loads legacy user scoped context and copies it to canonical user context
+00:01 +166: /home/jeremy/Code/bc/bot-creator/packages/shared/test/runtime_variables_test.dart: hydrateRuntimeVariables applies scoped definition default when scoped value is empty
+00:01 +167: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: BdfdAstTranspiler transpiles plain text into respondWithMessage
+00:01 +168: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: BdfdAstTranspiler transpiles embed-style functions into one respondWithMessage action
+00:01 +169: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: BdfdAstTranspiler preserves icon_urls when footericon and authoricon precede footer and author
+00:01 +170: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: BdfdAstTranspiler transpiles if blocks to ifBlock actions with nested branches
+00:01 +171: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: BdfdAstTranspiler transpiles for loop blocks by repeating body actions
+00:01 +172: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: BdfdAstTranspiler supports nested loop blocks
+00:01 +173: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: BdfdAstTranspiler reports stray endfor delimiters
+00:01 +174: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: BdfdAstTranspiler flushes pending response before standalone action functions
+00:01 +175: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: BdfdAstTranspiler reports unsupported functions as diagnostics
+00:01 +176: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: BdfdAstTranspiler renders supported nested variable functions inline without diagnostic
+00:01 +177: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: BdfdAstTranspiler transpiles http requests and result placeholders
+00:01 +178: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: BdfdAstTranspiler reports httpResult without preceding request as error
+00:01 +179: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: BdfdAstTranspiler transpiles block if with elseif/else delimiters
+00:01 +180: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: BdfdAstTranspiler transpiles logical and-conditions and stop action
+00:01 +180 -1: /home/jeremy/Code/bc/bot-creator/packages/shared/test/workflow_call_test.dart: normalizeStoredWorkflowDefinition promotes legacy event field into event workflow
+00:01 +181 -1: /home/jeremy/Code/bc/bot-creator/packages/shared/test/workflow_call_test.dart: normalizeStoredWorkflowDefinition promotes legacy listenFor field into event workflow
+00:01 +182 -1: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: BdfdAstTranspiler transpiles logical and-conditions and stop action [E]
+  Expected: 'stopUnless'
+    Actual: 'stop'
+     Which: is different. Both strings start the same, but the actual value is missing the following trailing characters: Unless
+  
+  package:matcher                           expect
+  test/bdfd_ast_transpiler_test.dart 464:7  main.<fn>.<fn>
+  
+00:01 +182 -1: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: BdfdAstTranspiler supports json parse/get/set/unset/stringify helpers
+00:01 +183 -1: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: BdfdAstTranspiler supports json array helpers
+00:01 +184 -1: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: BdfdAstTranspiler keeps invalid jsonParse non-blocking and returns empty JSON lookups
+00:01 +185 -1: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: BdfdAstTranspiler transpiles startThread inline with returned ID placeholder
+00:01 +186 -1: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: BdfdAstTranspiler transpiles editThread and thread member functions
+00:01 +187 -1: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: BdfdAstTranspiler transpiles guard helpers to ifBlock and stopUnless actions
+00:01 +187 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: BdfdAstTranspiler transpiles guard helpers to ifBlock and stopUnless actions [E]
+  Expected: 'stopUnless'
+    Actual: 'stop'
+     Which: is different. Both strings start the same, but the actual value is missing the following trailing characters: Unless
+  
+  package:matcher                           expect
+  test/bdfd_ast_transpiler_test.dart 750:7  main.<fn>.<fn>
+  
+00:01 +187 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: BdfdAstTranspiler transpiles permission and role guard helpers
+00:01 +188 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: BdfdAstTranspiler transpiles wave 3 guard helpers
+00:01 +189 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: BdfdAstTranspiler normalizes BDFD wiki permission aliases
+00:01 +190 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: BdfdAstTranspiler supports inline checkUserPerms boolean output
+00:01 +191 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: BdfdAstTranspiler supports inline message[] argument lookups
+00:01 +192 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: BdfdAstTranspiler supports inline message without brackets
+00:01 +193 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: BdfdAstTranspiler transpiles channelSendMessage to sendMessage action
+00:01 +194 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: BdfdAstTranspiler resolves user identity helper functions inline
+00:01 +195 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: BdfdAstTranspiler transpiles changeUsername helpers to actions
+00:01 +196 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: BdfdAstTranspiler supports inline mentionedChannels lookup
+00:01 +197 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: embed helper functions transpiles $addTimestamp without argument to "now"
+00:01 +198 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: embed helper functions transpiles $addTimestamp with explicit value
+00:01 +199 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: embed helper functions transpiles $authorIcon standalone into author.icon_url
+00:01 +200 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/global_runtime_details_test.dart: extractChannelRuntimeDetails extracts advanced channel fields
+00:01 +201 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/global_runtime_details_test.dart: extractChannelRuntimeDetails extracts advanced channel fields
+00:01 +202 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/global_runtime_details_test.dart: extractChannelRuntimeDetails extracts advanced channel fields
+00:01 +203 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/global_runtime_details_test.dart: extractChannelRuntimeDetails extracts advanced channel fields
+00:01 +204 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/global_runtime_details_test.dart: extractChannelRuntimeDetails extracts advanced channel fields
+00:01 +205 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/global_runtime_details_test.dart: extractChannelRuntimeDetails extracts advanced channel fields
+00:01 +206 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/global_runtime_details_test.dart: extractChannelRuntimeDetails extracts advanced channel fields
+00:01 +207 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/global_runtime_details_test.dart: extractChannelRuntimeDetails extracts advanced channel fields
+00:01 +208 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/global_runtime_details_test.dart: extractChannelRuntimeDetails extracts advanced channel fields
+00:01 +209 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/global_runtime_details_test.dart: extractChannelRuntimeDetails extracts advanced channel fields
+00:01 +210 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: ComponentV2 builder functions rich V2 components produce respondWithComponentV2 action type
+00:01 +211 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/global_runtime_details_test.dart: extractGuildRuntimeDetails extracts advanced guild fields
+00:01 +212 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/global_runtime_details_test.dart: extractGuildRuntimeDetails extracts advanced guild fields
+00:01 +213 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/global_runtime_details_test.dart: extractGuildRuntimeDetails extracts advanced guild fields
+00:01 +214 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: ComponentV2 editing functions $editButton on a link-style button sets url not customId
+00:01 +215 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/global_runtime_details_test.dart: extractMemberRuntimeDetails extracts admin flag and permission tokens from role bitmask
+00:01 +216 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/global_runtime_details_test.dart: extractMemberRuntimeDetails extracts admin flag and permission tokens from role bitmask
+00:01 +217 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/global_runtime_details_test.dart: extractMemberRuntimeDetails extracts admin flag and permission tokens from role bitmask
+00:01 +218 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: ComponentV2 editing functions $editSelectMenuOption with empty description clears the field
+00:01 +219 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/global_runtime_details_test.dart: extractMemberRuntimeDetails grants all permissions when member is the guild owner
+00:01 +220 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: user/profile inline functions $username without args resolves to ((user.username))
+00:01 +221 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/global_runtime_details_test.dart: extractMemberRuntimeDetails computes permissions correctly with Snowflake-typed role IDs
+00:01 +222 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: user/profile inline functions $username[userID] resolves to ((user[id].username))
+00:01 +223 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/global_runtime_details_test.dart: extractMemberRuntimeDetails computes permissions with Permissions-typed role permissions
+00:01 +224 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/global_runtime_details_test.dart: extractMemberRuntimeDetails computes permissions with Permissions-typed role permissions
+00:01 +225 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: user/profile inline functions $nickname[userID] resolves to ((member[id].nick))
+00:01 +226 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: user/profile inline functions $nickname[userID] resolves to ((member[id].nick))
+00:01 +227 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/global_runtime_details_test.dart: extractMemberRuntimeDetails member.permissions supplements role-based computation
+00:01 +228 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/global_runtime_details_test.dart: extractMemberRuntimeDetails member.permissions supplements role-based computation
+00:01 +229 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: user/profile inline functions $displayName[userID] resolves to targeted fallback
+00:01 +230 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/global_runtime_details_test.dart: extractMemberRuntimeDetails maps member details to by-id permission keys
+00:01 +231 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: user/profile inline functions $authorAvatar resolves to ((author.avatar))
+00:01 +232 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: user/profile inline functions $authorID resolves to ((author.id))
+00:01 +233 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: user/profile inline functions $findUser resolves to ((user.id))
+00:01 +234 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: user/profile inline functions $mentions transpiles to ((message.mentions)) placeholder
+00:01 +235 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: user/profile inline functions $jsonParse with runtime placeholder emits runtimeJsonBlock
+00:01 +236 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: user/profile inline functions $jsonArrayAppend supports complex JSON objects at compile time
+00:01 +237 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: user/profile inline functions literal $jsonParse still works at compile-time (regression)
+00:01 +238 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: user/profile inline functions $jsonPretty does not corrupt double-spaces inside strings
+00:01 +239 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: user/profile inline functions $jsonExists returns false when no JSON context
+00:01 +240 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: user/profile inline functions $jsonSet supports complex JSON objects
+00:01 +241 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: user/profile inline functions $argsCheck emits diagnostic for unknown operator
+00:01 +242 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: user/profile inline functions two consecutive deferred jsonParse blocks get unique prefixes
+00:01 +243 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: user/profile inline functions deferred json is flushed before setServerVar action using $jsonStringify
+00:01 +244 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: user/profile inline functions full additem script keeps runtimeJsonBlock before setServerVar
+00:01 +245 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: user/profile inline functions deferred json reads continue after setServerVar using $jsonPretty
+00:01 +246 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: user/profile inline functions finditem flow emits runtime json before if block
+00:01 +247 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: user/profile inline functions try block flushes runtime json before temp var actions
+00:01 +248 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: user/profile inline functions runtime temp var is emitted before a runtime for loop
+00:01 +249 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: user/profile inline functions runtime loop body keeps temp setter actions in bodyActions
+00:01 +250 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: user/profile inline functions weighted roll style runtime loop keeps nested json if flow dynamic
+00:01 +251 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: user/profile inline functions aggressive nested ifs in a runtime loop keep json reads executable
+00:01 +252 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart: user/profile inline functions standalone if hoists runtime json condition before if action
+00:01 +253 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: BdfdCompiler compiles runtime variable placeholders and scoped vars
+00:01 +254 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: BdfdCompiler compiles message[] helper for normal/slash fallback
+00:01 +255 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: BdfdCompiler compiles message helper without brackets
+00:01 +256 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: BdfdCompiler compiles args helper with runtime args fallback
+00:01 +257 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: BdfdCompiler compiles getTimestampMs as runtime placeholder
+DEBUG: Variable lookup failed for key: "getTimestampMs"
+DEBUG: First 5 keys in updates: []
+00:01 +258 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: BdfdCompiler resolves sub with getTimestampMs and messageTimestamp at runtime
+DEBUG: Variable lookup failed for key: "getTimestampMs"
+DEBUG: First 5 keys in updates: [message.timestamp]
+00:01 +259 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: BdfdCompiler resolves ping compiled to bot.ping at runtime
+00:01 +260 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: BdfdCompiler compiles channelSendMessage helper
+00:01 +261 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: BdfdCompiler compiles mentionedChannels helper
+00:01 +262 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: BdfdCompiler compiles user identity helper functions without diagnostics
+00:01 +263 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: BdfdCompiler compiles changeUsername and changeUsernameWithID helpers
+00:01 +264 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: BdfdCompiler surfaces unsupported functions as compile errors
+00:01 +265 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: BdfdCompiler treats unresolved no-arg dollar token as literal text
+00:01 +266 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: BdfdCompiler preserves nested unsupported text functions as warnings only
+00:01 +267 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: BdfdCompiler compiles BDFD http helpers to httpRequest and placeholders
+00:01 +268 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: BdfdCompiler surfaces httpStatus before request as compile error
+00:01 +269 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: BdfdCompiler compiles awaitFunc to scoped awaited registration action
+00:01 +270 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: BdfdCompiler compiles block if/elseif/else/endif and logical conditions
+00:01 +271 -2: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: BdfdCompiler compiles stop to stopUnless action
+00:01 +271 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/variables_executor_test.dart: executeVariablesAction appendArrayElement appends to a global root array
+00:01 +272 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/variables_executor_test.dart: executeVariablesAction appendArrayElement and removeArrayElement support scoped JSON paths
+00:01 +272 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: BdfdCompiler compiles stop to stopUnless action [E]
+  Expected: BotCreatorActionType:<BotCreatorActionType.stopUnless>
+    Actual: BotCreatorActionType:<BotCreatorActionType.stop>
+  
+  package:matcher                     expect
+  test/bdfd_compiler_test.dart 298:7  main.<fn>.<fn>
+  
+00:02 +273 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/variables_executor_test.dart: executeVariablesAction appendArrayElement and removeArrayElement support scoped JSON paths
+00:02 +274 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: BdfdCompiler compiles jsonKeys to list all keys of root object
+00:02 +275 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/variables_executor_test.dart: executeVariablesAction queryArray filters, sorts, paginates and stores runtime aliases
+00:02 +276 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/variables_executor_test.dart: executeVariablesAction queryArray filters, sorts, paginates and stores runtime aliases
+00:02 +277 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/variables_executor_test.dart: executeVariablesAction queryArray filters, sorts, paginates and stores runtime aliases
+00:02 +278 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: BdfdCompiler compiles jsonForEach to jsonForEachLoop action
+00:02 +279 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: BdfdCompiler compiles jsonForEach to jsonForEachLoop action
+00:02 +280 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: BdfdCompiler compiles jsonForEach to jsonForEachLoop action
+00:02 +281 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/variables_executor_test.dart: executeVariablesAction runtimeJsonBlock bootstraps empty source and supports append/index
+00:02 +282 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/variables_executor_test.dart: executeVariablesAction runtimeJsonBlock bootstraps empty source and supports append/index
+00:02 +283 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/variables_executor_test.dart: executeVariablesAction runtimeJsonBlock bootstraps empty source and supports append/index
+DEBUG: Variable lookup failed for key: "guild.bc_items_db"
+DEBUG: First 5 keys in updates: []
+00:02 +284 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: BdfdCompiler emits diagnostic for unclosed jsonForEach
+00:02 +284 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/variables_executor_test.dart: executeVariablesAction runtimeJsonBlock reuses same-block json reads inside later path segments
+DEBUG: Variable lookup failed for key: "guild.bc_items_db"
+DEBUG: First 5 keys in updates: []
+00:02 +285 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/variables_executor_test.dart: executeVariablesAction runtimeJsonBlock reuses same-block json reads inside later path segments
+00:02 +286 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: BdfdCompiler emits diagnostic for standalone endJsonForEach
+00:02 +287 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/variables_executor_test.dart: executeVariablesAction runtimeJsonBlock stores root json in variables for nested branch reuse
+00:02 +288 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: BdfdCompiler compiles invalid jsonParse without blocking diagnostics
+00:02 +289 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/variables_executor_test.dart: executeVariablesAction runtimeJsonBlock resolves temp scope and loop index inside weighted item paths
+00:02 +290 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: BdfdCompiler compiles thread helpers without diagnostics
+00:02 +291 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: BdfdCompiler compiles thread helpers without diagnostics
+00:02 +292 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/variables_executor_test.dart: executeVariablesAction runtimeJsonBlock recovers from scalar source by promoting to object
+00:02 +293 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: BdfdCompiler compiles additem flow with deferred json stringify into setServerVar payload
+00:02 +294 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: BdfdCompiler compiles additem flow with deferred json stringify into setServerVar payload
+00:02 +295 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/variables_executor_test.dart: executeVariablesAction setTemporaryVariable can resolve a runtime random threshold template
+00:02 +296 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: BdfdCompiler compiles finditem flow with runtime json before if block
+00:02 +297 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/variables_executor_test.dart: executeVariablesAction setScopedVariable falls back to merged variables/results for placeholders
+00:02 +298 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: BdfdCompiler compiles try block after runtime json with temp runtime var body
+00:02 +299 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: BdfdCompiler compiles try block after runtime json with temp runtime var body
+00:02 +300 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/variables_executor_test.dart: executeVariablesAction setScopedVariable falls back to rtJson root when json index key is missing
+DEBUG: Variable lookup failed for key: "rtJson_0.json_9"
+DEBUG: First 5 keys in updates: [guildId, rtJson_0]
+00:02 +301 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/variables_executor_test.dart: executeVariablesAction setScopedVariable falls back to rtJson root when json index key is missing
+00:02 +302 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: BdfdCompiler compiles guard helpers without diagnostics
+00:02 +302 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/variables_executor_test.dart: executeVariablesAction setScopedVariable resolves rtJson placeholder from action alias keys
+DEBUG: Variable lookup failed for key: "rtJson_0.json_0"
+DEBUG: First 5 keys in updates: [guildId, action_1.json_0, action_1]
+00:02 +303 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: BdfdCompiler compiles guard helpers without diagnostics
+00:02 +304 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/variables_executor_test.dart: executeVariablesAction setScopedVariable rtJson alias prefers JSON action value over status strings
+DEBUG: Variable lookup failed for key: "rtJson_0"
+DEBUG: First 5 keys in updates: [guildId, action_0, action_1, action_2]
+00:02 +305 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: BdfdCompiler compiles for loop blocks into repeated actions
+00:02 +306 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/variables_executor_test.dart: executeVariablesAction setScopedVariable resolves literal $jsonStringify from runtime json results
+00:02 +307 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: BdfdCompiler compiles permission and role guards without diagnostics
+00:02 +308 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/variables_executor_test.dart: executeVariablesAction compiled BDFD script resolves dynamic getServerVar keys with bc_ prefix args
+00:02 +309 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/variables_executor_test.dart: executeVariablesAction compiled BDFD script resolves dynamic getServerVar keys with bc_ prefix args
+00:02 +310 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/variables_executor_test.dart: executeVariablesAction compiled BDFD script resolves dynamic getServerVar keys with bc_ prefix args
+00:02 +311 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/variables_executor_test.dart: executeVariablesAction compiled BDFD script resolves dynamic getServerVar keys with bc_ prefix args
+00:02 +311 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/embed_fields_test.dart: buildResolvedEmbedFields merges static and dynamic fields while ignoring invalid entries
+DEBUG: Variable lookup failed for key: "scores.$"
+00:02 +312 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/variables_executor_test.dart: executeVariablesAction compiled BDFD script resolves dynamic getServerVar keys with bc_ prefix args
+00:02 +312 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/embed_fields_test.dart: buildResolvedEmbedFields merges static and dynamic fields while ignoring invalid entries
+DEBUG: First 5 keys in updates: [scores]
+00:02 +313 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/variables_executor_test.dart: executeVariablesAction compiled BDFD script resolves dynamic getServerVar keys with bc_ prefix args
+00:02 +314 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/variables_executor_test.dart: executeVariablesAction compiled BDFD script resolves dynamic getServerVar keys with bc_ prefix args
+00:02 +315 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/variables_executor_test.dart: executeVariablesAction compiled BDFD script resolves dynamic getServerVar keys with bc_ prefix args
+00:02 +316 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/variables_executor_test.dart: executeVariablesAction compiled BDFD script resolves dynamic getServerVar keys with bc_ prefix args
+00:02 +317 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/variables_executor_test.dart: executeVariablesAction compiled BDFD script resolves dynamic getServerVar keys with bc_ prefix args
+00:02 +318 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/variables_executor_test.dart: executeVariablesAction compiled BDFD script resolves dynamic getServerVar keys with bc_ prefix args
+00:02 +319 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/variables_executor_test.dart: executeVariablesAction compiled BDFD script resolves dynamic getServerVar keys with bc_ prefix args
+00:02 +319 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/embed_fields_test.dart: buildResolvedEmbedFields keeps static fields when fieldsTemplate is malformed
+DEBUG: Variable lookup failed for key: "badJson.$"
+DEBUG: First 5 keys in updates: [badJson]
+00:02 +319 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/variables_executor_test.dart: executeVariablesAction compiled BDFD script resolves dynamic getServerVar keys with bc_ prefix args
+DEBUG: Variable lookup failed for key: "message.content[2]"
+DEBUG: First 5 keys in updates: [guildId, args.2, args.3, args.4, bot.id]
+DEBUG: Variable lookup failed for key: "__collection.message.content"
+DEBUG: First 5 keys in updates: [guildId, args.2, args.3, args.4, bot.id]
+DEBUG: Variable lookup failed for key: "message.content[3]"
+DEBUG: First 5 keys in updates: [guildId, args.2, args.3, args.4, bot.id]
+DEBUG: Variable lookup failed for key: "__collection.message.content"
+DEBUG: First 5 keys in updates: [guildId, args.2, args.3, args.4, bot.id]
+00:02 +320 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/variables_executor_test.dart: executeVariablesAction compiled BDFD script resolves dynamic getServerVar keys with bc_ prefix args
+00:02 +321 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/variables_executor_test.dart: executeVariablesAction compiled BDFD script resolves dynamic getServerVar keys with bc_ prefix args
+DEBUG: Variable lookup failed for key: "message.content[1]"
+DEBUG: First 5 keys in updates: [guildId, args.2, args.3, args.4, bot.id]
+DEBUG: Variable lookup failed for key: "__collection.message.content"
+DEBUG: First 5 keys in updates: [guildId, args.2, args.3, args.4, bot.id]
+DEBUG: Variable lookup failed for key: "guild.bc_bc_wallet_db"
+DEBUG: First 5 keys in updates: [guildId, args.2, args.3, args.4, bot.id]
+DEBUG: Variable lookup failed for key: "message.content[1]"
+DEBUG: First 5 keys in updates: [guildId, args.2, args.3, args.4, bot.id]
+DEBUG: Variable lookup failed for key: "__collection.message.content"
+DEBUG: First 5 keys in updates: [guildId, args.2, args.3, args.4, bot.id]
+00:02 +322 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/variables_executor_test.dart: executeVariablesAction compiled BDFD script resolves dynamic getServerVar keys with bc_ prefix args
+00:02 +323 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/variables_executor_test.dart: executeVariablesAction compiled BDFD script resolves dynamic getServerVar keys with bc_ prefix args
+00:02 +324 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: BdfdCompiler C-style for loop with += and -= updates
+00:02 +325 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/variables_executor_test.dart: executeVariablesAction runtime $jsonSet array support creates array element from empty object
+DEBUG: Variable lookup failed for key: "guild.bc_db"
+DEBUG: First 5 keys in updates: [guild.id, bot.id]
+DEBUG: Variable lookup failed for key: "guild.bc_db"
+DEBUG: First 5 keys in updates: [guild.id, bot.id]
+00:02 +326 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: BdfdCompiler C-style for loop with decrement
+00:02 +327 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/variables_executor_test.dart: executeVariablesAction runtime $jsonSet array support mutates existing array element
+00:02 +328 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/variables_executor_test.dart: executeVariablesAction runtime $jsonSet array support mutates existing array element
+00:02 +329 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: BdfdCompiler C-style for loop inlines into embed response
+00:02 +330 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: BdfdCompiler C-style for loop inlines into embed response
+00:02 +331 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: BdfdCompiler C-style for loop with condition comparing two variables
+00:02 +332 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/variables_executor_test.dart: executeVariablesAction runtime $jsonSet array support nested $jsonParse inside $if does not leak prefix to outer scope
+00:02 +333 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/variables_executor_test.dart: executeVariablesAction runtime $jsonSet array support nested $jsonParse inside $if does not leak prefix to outer scope
+00:02 +334 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: BdfdCompiler nested C-style loop restores variables
+00:02 +335 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: BdfdCompiler simple runtime loop emits forLoop action for dynamic iterations
+00:02 +336 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: BdfdCompiler runtime loop can consume a temporary runtime variable
+00:02 +337 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: BdfdCompiler simple runtime loop with $loop alias
+00:02 +338 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: BdfdCompiler C-style runtime loop emits forLoop action when condition has placeholder
+00:02 +339 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: BdfdCompiler C-style runtime loop with runtime init value
+00:02 +340 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: BdfdCompiler static loops still unrolled at compile-time (backward compat)
+00:02 +341 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: BdfdCompiler runtime loop body uses ((_loop.index)) and ((_loop.count)) placeholders
+00:02 +342 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: BdfdCompiler runtime loop body preserves temp variable actions
+00:02 +343 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: BdfdCompiler weighted roll style loop keeps nested json and if blocks runtime
+00:02 +344 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: BdfdCompiler full weighted roll compiles accumulation, random threshold, and winner selection
+00:02 +345 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: BdfdCompiler standalone if hoists runtime json condition before if action
+00:02 +346 -3: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: BdfdCompiler loot flow compiles tiers, enabled gate, fallback, and first-win stop
+00:02 +346 -4: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: BdfdCompiler loot flow compiles tiers, enabled gate, fallback, and first-win stop [E]
+  Expected: true
+    Actual: <false>
+  
+  package:matcher                      expect
+  test/bdfd_compiler_test.dart 1598:9  main.<fn>.<fn>
+  
+00:02 +346 -4: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: temporary variables via $var set and retrieve a temporary variable
+00:02 +347 -4: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: temporary variables via $var overwrite a temporary variable
+00:02 +348 -4: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: temporary variables via $var multiple independent temporary variables
+00:02 +349 -4: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: temporary variables via $var unknown temp var falls back to runtime placeholder
+00:02 +350 -4: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: temporary variables via $var temp var set produces no visible output
+00:02 +351 -4: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: temporary variables via $var temp var with computed value from inline function
+00:02 +352 -4: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: temporary variables via $var runtime inline math stays dynamic and temp vars persist through branches
+DEBUG: Variable lookup failed for key: "user.bc_xp"
+DEBUG: First 5 keys in updates: [message.content, author.isBot, temp.toadd]
+DEBUG: Variable lookup failed for key: "user.bc_xp"
+DEBUG: First 5 keys in updates: [message.content, author.isBot, temp.toadd]
+00:02 +353 -4: /home/jeremy/Code/bc/bot-creator/packages/shared/test/control_flow_executor_test.dart: executeControlFlowAction ifBlock keeps legacy IF/ELSE behavior when no else-if branches exist
+00:02 +354 -4: /home/jeremy/Code/bc/bot-creator/packages/shared/test/control_flow_executor_test.dart: executeControlFlowAction ifBlock keeps legacy IF/ELSE behavior when no else-if branches exist
+00:02 +355 -4: /home/jeremy/Code/bc/bot-creator/packages/shared/test/control_flow_executor_test.dart: executeControlFlowAction ifBlock keeps legacy IF/ELSE behavior when no else-if branches exist
+00:02 +356 -4: /home/jeremy/Code/bc/bot-creator/packages/shared/test/control_flow_executor_test.dart: executeControlFlowAction ifBlock keeps legacy IF/ELSE behavior when no else-if branches exist
+00:02 +357 -4: /home/jeremy/Code/bc/bot-creator/packages/shared/test/control_flow_executor_test.dart: executeControlFlowAction ifBlock keeps legacy IF/ELSE behavior when no else-if branches exist
+00:02 +358 -4: /home/jeremy/Code/bc/bot-creator/packages/shared/test/control_flow_executor_test.dart: executeControlFlowAction ifBlock keeps legacy IF/ELSE behavior when no else-if branches exist
+00:02 +359 -4: /home/jeremy/Code/bc/bot-creator/packages/shared/test/control_flow_executor_test.dart: executeControlFlowAction ifBlock keeps legacy IF/ELSE behavior when no else-if branches exist
+00:02 +360 -4: /home/jeremy/Code/bc/bot-creator/packages/shared/test/control_flow_executor_test.dart: executeControlFlowAction ifBlock keeps legacy IF/ELSE behavior when no else-if branches exist
+00:02 +361 -4: /home/jeremy/Code/bc/bot-creator/packages/shared/test/control_flow_executor_test.dart: executeControlFlowAction ifBlock keeps legacy IF/ELSE behavior when no else-if branches exist
+00:02 +362 -4: /home/jeremy/Code/bc/bot-creator/packages/shared/test/control_flow_executor_test.dart: executeControlFlowAction ifBlock keeps legacy IF/ELSE behavior when no else-if branches exist
+00:02 +363 -4: /home/jeremy/Code/bc/bot-creator/packages/shared/test/control_flow_executor_test.dart: executeControlFlowAction ifBlock keeps legacy IF/ELSE behavior when no else-if branches exist
+00:02 +364 -4: /home/jeremy/Code/bc/bot-creator/packages/shared/test/control_flow_executor_test.dart: executeControlFlowAction ifBlock keeps legacy IF/ELSE behavior when no else-if branches exist
+00:02 +365 -4: /home/jeremy/Code/bc/bot-creator/packages/shared/test/control_flow_executor_test.dart: executeControlFlowAction ifBlock keeps legacy IF/ELSE behavior when no else-if branches exist
+00:02 +366 -4: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: $eval emits runBdfdScript action with script content
+00:02 +367 -4: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: $eval passes through runtime placeholders in script content
+00:02 +368 -4: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: $eval passes through runtime placeholders in script content
+00:02 +369 -4: /home/jeremy/Code/bc/bot-creator/packages/shared/test/control_flow_executor_test.dart: executeControlFlowAction ifBlock falls back to ELSE when no ELSE IF branch matches
+00:02 +370 -4: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: $eval flushes pending response before eval
+00:02 +371 -4: /home/jeremy/Code/bc/bot-creator/packages/shared/test/control_flow_executor_test.dart: executeControlFlowAction runBdfdScript compiles and executes a simple BDFD script
+00:02 +372 -4: /home/jeremy/Code/bc/bot-creator/packages/shared/test/control_flow_executor_test.dart: executeControlFlowAction runBdfdScript compiles and executes a simple BDFD script
+00:02 +373 -4: /home/jeremy/Code/bc/bot-creator/packages/shared/test/control_flow_executor_test.dart: executeControlFlowAction runBdfdScript compiles and executes a simple BDFD script
+00:02 +374 -4: /home/jeremy/Code/bc/bot-creator/packages/shared/test/control_flow_executor_test.dart: executeControlFlowAction runBdfdScript compiles and executes a simple BDFD script
+00:02 +375 -4: /home/jeremy/Code/bc/bot-creator/packages/shared/test/control_flow_executor_test.dart: executeControlFlowAction runBdfdScript compiles and executes a simple BDFD script
+00:02 +376 -4: /home/jeremy/Code/bc/bot-creator/packages/shared/test/control_flow_executor_test.dart: executeControlFlowAction runBdfdScript compiles and executes a simple BDFD script
+00:02 +377 -4: /home/jeremy/Code/bc/bot-creator/packages/shared/test/control_flow_executor_test.dart: executeControlFlowAction runBdfdScript compiles and executes a simple BDFD script
+00:02 +378 -4: /home/jeremy/Code/bc/bot-creator/packages/shared/test/control_flow_executor_test.dart: executeControlFlowAction runBdfdScript compiles and executes a simple BDFD script
+00:02 +379 -4: /home/jeremy/Code/bc/bot-creator/packages/shared/test/control_flow_executor_test.dart: executeControlFlowAction runBdfdScript compiles and executes a simple BDFD script
+00:02 +380 -4: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_compiler_test.dart: $debug pre-compiled awaitFunc actions produce identical snapshots (no re-arm)
+00:02 +381 -4: /home/jeremy/Code/bc/bot-creator/packages/shared/test/control_flow_executor_test.dart: executeControlFlowAction runBdfdScript runBdfdScript supports loot flow with enabled gate fallback and first-win stop
+00:02 +381 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/control_flow_executor_test.dart: executeControlFlowAction runBdfdScript runBdfdScript supports loot flow with enabled gate fallback and first-win stop [E]
+  Expected: true
+    Actual: <false>
+  
+  package:matcher                             expect
+  test/control_flow_executor_test.dart 320:9  main.<fn>.<fn>
+  
+00:02 +381 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/control_flow_executor_test.dart: executeControlFlowAction runBdfdScript returns BDFD_EMPTY for blank script
+00:02 +382 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/control_flow_executor_test.dart: executeControlFlowAction runBdfdScript returns BDFD_EMPTY when scriptContent is missing
+00:02 +383 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/control_flow_executor_test.dart: executeControlFlowAction runBdfdScript throws on compile error
+00:02 +384 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/control_flow_executor_test.dart: executeControlFlowAction runBdfdScript propagates nested results
+00:02 +385 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/control_flow_executor_test.dart: executeControlFlowAction runBdfdScript forwards compiled runtime loop temp var actions to executeActions
+00:02 +386 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/control_flow_executor_test.dart: executeControlFlowAction runBdfdScript forwards weighted roll style runtime loop with nested if blocks
+00:02 +387 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/components_interactions_executor_test.dart: executeComponentsInteractionsAction listen guard listenForButtonClick in event workflow without messageId registers with null messageId
+00:02 +388 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/components_interactions_executor_test.dart: executeComponentsInteractionsAction listen guard listenForButtonClick in event workflow without messageId registers with null messageId
+00:02 +389 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/components_interactions_executor_test.dart: executeComponentsInteractionsAction listen guard listenForButtonClick in event workflow without messageId registers with null messageId
+00:02 +390 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/components_interactions_executor_test.dart: executeComponentsInteractionsAction listen guard listenForButtonClick in event workflow without messageId registers with null messageId
+00:02 +391 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/components_interactions_executor_test.dart: executeComponentsInteractionsAction listen guard listenForButtonClick in event workflow without messageId registers with null messageId
+00:02 +392 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/components_interactions_executor_test.dart: executeComponentsInteractionsAction listen guard listenForButtonClick in event workflow without messageId registers with null messageId
+00:02 +393 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/components_interactions_executor_test.dart: executeComponentsInteractionsAction listen guard listenForButtonClick in event workflow without messageId registers with null messageId
+00:02 +394 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/control_flow_executor_test.dart: executeControlFlowAction forLoop simple runtime loop with 0 iterations produces LOOP_0
+00:02 +395 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/components_interactions_executor_test.dart: executeComponentsInteractionsAction listen guard listenForSelectMenu in event workflow without messageId registers with null messageId
+00:02 +396 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/control_flow_executor_test.dart: executeControlFlowAction forLoop C-style runtime loop executes correctly
+00:02 +397 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/control_flow_executor_test.dart: executeControlFlowAction forLoop C-style runtime loop executes correctly
+00:02 +398 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/control_flow_executor_test.dart: executeControlFlowAction forLoop C-style runtime loop executes correctly
+00:02 +399 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/control_flow_executor_test.dart: executeControlFlowAction forLoop C-style runtime loop resolves runtime bound
+00:02 +400 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/control_flow_executor_test.dart: executeControlFlowAction forLoop forLoop propagates __stopped__
+00:02 +401 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/control_flow_executor_test.dart: executeControlFlowAction runBdfdScript nestedActionsPreprocessor preprocessor is applied to compiled sub-actions before executeActions
+00:02 +402 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/control_flow_executor_test.dart: executeControlFlowAction jsonForEachLoop iterates over compile-time JSON source embedded in payload
+00:02 +403 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/control_flow_executor_test.dart: executeControlFlowAction jsonForEachLoop uses runtime context when no compile-time source
+00:02 +404 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/intent_resolver_test.dart: resolveRequiredIntentKeys returns empty set when no workflows and no legacy commands
+00:02 +405 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/intent_resolver_test.dart: resolveRequiredIntentKeys adds Guild Messages and Message Content for legacy commands
+00:02 +406 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/intent_resolver_test.dart: resolveRequiredIntentKeys excludes Message Content for legacy commands when not approved
+00:02 +407 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/intent_resolver_test.dart: resolveRequiredIntentKeys resolves intents from event workflows
+00:02 +408 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/intent_resolver_test.dart: resolveRequiredIntentKeys gates privileged intent behind approval
+00:02 +409 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/intent_resolver_test.dart: resolveRequiredIntentKeys allows approved privileged intents
+00:02 +410 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/intent_resolver_test.dart: resolveRequiredIntentKeys ignores events with no intent mapping (e.g. ready)
+00:02 +411 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/intent_resolver_test.dart: resolveRequiredIntentKeys resolves auto-moderation intents
+00:02 +412 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/intent_resolver_test.dart: resolveRequiredIntentKeys resolves guild scheduled events intent
+00:02 +413 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/intent_resolver_test.dart: resolveRequiredIntentKeys resolves poll intents
+00:02 +414 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/intent_resolver_test.dart: resolveRequiredIntentKeys resolves invite intents
+00:02 +415 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/intent_resolver_test.dart: resolveRequiredIntentKeys resolves voice state intents
+00:02 +416 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/intent_resolver_test.dart: resolveRequiredIntentKeys resolves webhook intents
+00:02 +417 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/intent_resolver_test.dart: resolveRequiredIntentKeys resolves moderation intents
+00:02 +418 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/intent_resolver_test.dart: resolveRequiredIntentKeys resolves expression intents from soundboard events
+00:02 +419 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/intent_resolver_test.dart: resolveRequiredIntentKeys deduplicates intents from multiple events
+00:02 +420 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/intent_resolver_test.dart: resolveRequiredIntentKeys handles workflows with missing eventTrigger
+00:02 +421 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/intent_resolver_test.dart: eventToIntentKeys all mapped events map to valid intent keys
+00:02 +422 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/intent_resolver_test.dart: privilegedIntentKeys are a subset of allIntentKeys
+00:02 +423 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/template_resolver_test.dart: resolveTemplatePlaceholders resolves bot.ping placeholder
+00:02 +424 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/template_resolver_test.dart: resolveTemplatePlaceholders resolves direct keys case-insensitively with exact-match priority
+00:02 +425 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/template_resolver_test.dart: resolveTemplatePlaceholders resolves JSON-path placeholders with case-insensitive source lookup
+DEBUG: Variable lookup failed for key: "MyHttp.Body.$.items[0].count"
+DEBUG: First 5 keys in updates: [myHttp.body]
+DEBUG: Variable lookup failed for key: "MyHttp.Body"
+DEBUG: First 5 keys in updates: [myHttp.body]
+00:02 +426 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/template_resolver_test.dart: resolveTemplatePlaceholders keeps fallback at top level without splitting function arguments
+DEBUG: Variable lookup failed for key: "scores.$"
+DEBUG: First 5 keys in updates: [scores, fallback]
+00:02 +427 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/template_resolver_test.dart: resolveTemplatePlaceholders falls back when the first resolved value is an empty string
+00:02 +428 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/template_resolver_test.dart: resolveTemplatePlaceholders supports bare punctuation literal fallback values
+DEBUG: Variable lookup failed for key: "!"
+DEBUG: First 5 keys in updates: [user.bc_prefix, guild.bc_prefix]
+00:02 +429 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/template_resolver_test.dart: resolveTemplatePlaceholders resolves nested placeholders inside variable keys
+00:02 +430 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/template_resolver_test.dart: resolveTemplatePlaceholders falls back after nested key resolution when dynamic key is missing
+DEBUG: Variable lookup failed for key: "permissions.byId.243117191774470146"
+DEBUG: First 5 keys in updates: [author.id, member.permissions]
+00:02 +431 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/template_resolver_test.dart: resolveTemplatePlaceholders serializes slice results back to JSON text
+DEBUG: Variable lookup failed for key: "scores.$"
+DEBUG: First 5 keys in updates: [scores]
+00:02 +432 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/template_resolver_test.dart: resolveTemplatePlaceholders formats array items with nested object placeholders
+DEBUG: Variable lookup failed for key: "scores.$"
+DEBUG: First 5 keys in updates: [scores]
+00:02 +433 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/template_resolver_test.dart: resolveTemplatePlaceholders returns empty string for invalid JSON paths or missing values
+DEBUG: Variable lookup failed for key: "payload.$.items[99].name"
+DEBUG: First 5 keys in updates: [payload]
+00:02 +434 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/template_resolver_test.dart: resolveTemplatePlaceholders resolves BDFD select collection suffixes
+DEBUG: Variable lookup failed for key: "interaction.stringSelect.value[2]"
+DEBUG: First 5 keys in updates: [interaction.stringSelect.value, interaction.stringSelect.values, __collection.interaction.stringSelect.value, __collection.interaction.stringSelect.values]
+DEBUG: Variable lookup failed for key: "interaction.stringSelect.values[, ]"
+DEBUG: First 5 keys in updates: [interaction.stringSelect.value, interaction.stringSelect.values, __collection.interaction.stringSelect.value, __collection.interaction.stringSelect.values]
+DEBUG: Variable lookup failed for key: "interaction.stringSelect.values[/;2]"
+DEBUG: First 5 keys in updates: [interaction.stringSelect.value, interaction.stringSelect.values, __collection.interaction.stringSelect.value, __collection.interaction.stringSelect.values]
+00:02 +435 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/template_resolver_test.dart: resolveTemplateExpressionValue normalizes string casing and whitespace
+00:02 +436 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/template_resolver_test.dart: resolveTemplateExpressionValue supports replace and contains helpers
+00:02 +437 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/template_resolver_test.dart: resolveTemplateExpressionValue supports BDScript-like casing aliases and title case
+00:02 +438 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/template_resolver_test.dart: resolveTemplateExpressionValue supports charCount and linesCount helpers
+00:02 +439 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/template_resolver_test.dart: resolveTemplateExpressionValue supports numberSeparator helper
+00:02 +440 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/template_resolver_test.dart: resolveTemplateExpressionValue supports split helper with and without index
+00:02 +441 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/template_resolver_test.dart: resolveTemplateExpressionValue supports cropText helper
+00:02 +442 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/template_resolver_test.dart: resolveTemplateExpressionValue supports first, last and sum for arrays
+DEBUG: Variable lookup failed for key: "scores.$"
+DEBUG: First 5 keys in updates: [scores]
+DEBUG: Variable lookup failed for key: "scores.$"
+DEBUG: First 5 keys in updates: [scores]
+DEBUG: Variable lookup failed for key: "scores.$"
+DEBUG: First 5 keys in updates: [scores]
+00:02 +443 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/template_resolver_test.dart: resolveTemplateExpressionValue supports length and at helpers for arrays
+DEBUG: Variable lookup failed for key: "scores.$"
+DEBUG: First 5 keys in updates: [scores]
+DEBUG: Variable lookup failed for key: "scores.$"
+DEBUG: First 5 keys in updates: [scores]
+00:02 +444 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/template_resolver_test.dart: resolveTemplateExpressionValue builds embed field payloads from object arrays
+DEBUG: Variable lookup failed for key: "scores.$"
+DEBUG: First 5 keys in updates: [scores]
+00:02 +445 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/template_resolver_test.dart: resolveTemplateExpressionValue rewrites avatar URL format and size
+00:02 +446 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/template_resolver_test.dart: resolveTemplateExpressionValue rewrites banner URL with default values when args are missing
+00:02 +447 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/template_resolver_test.dart: random template functions coin() returns "true" or empty string
+00:02 +448 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/template_resolver_test.dart: random template functions random() returns "true" or empty string (legacy alias)
+00:02 +449 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/template_resolver_test.dart: random template functions randomchoice picks from provided arguments
+00:02 +450 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/template_resolver_test.dart: random template functions randomint returns integer in range
+00:02 +451 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/template_resolver_test.dart: random template functions randomchoice with no args returns empty
+00:02 +452 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/template_resolver_test.dart: random template functions randomint with invalid range returns empty
+00:02 +453 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_autocomplete_test.dart: bdfdAutocompleteTemplates contains supported inline placeholders and functions
+00:02 +454 -5: /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_autocomplete_test.dart: bdfdAutocompleteTemplates contains control flow block helpers
+00:02 +455 -5: Some tests failed.

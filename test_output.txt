@@ -1,0 +1,150 @@
+Resolving dependencies in `/home/jeremy/Code/bc/bot-creator`...
+Downloading packages...
+  _fe_analyzer_shared 91.0.0 (100.0.0 available)
+  _flutterfire_internals 1.3.69 (1.3.71 available)
+  analyzer 8.4.1 (13.0.0 available)
+  async 2.13.0 (2.13.1 available)
+  cli_util 0.4.2 (0.5.1 available)
+  dart_eval 0.8.4 (0.8.5 available)
+  dart_style 3.1.3 (3.1.9 available)
+  directed_graph 0.4.5 (0.5.5 available)
+  firebase_analytics 12.3.0 (12.4.1 available)
+  firebase_analytics_platform_interface 5.1.1 (6.0.1 available)
+  firebase_analytics_web 0.6.1+5 (0.6.1+7 available)
+  firebase_core 4.7.0 (4.9.0 available)
+  firebase_core_platform_interface 6.0.3 (7.0.1 available)
+  firebase_core_web 3.6.0 (3.7.0 available)
+  firebase_crashlytics 5.2.0 (5.2.2 available)
+  firebase_crashlytics_platform_interface 3.8.20 (3.8.22 available)
+  firebase_performance 0.11.3 (0.11.4+1 available)
+  firebase_performance_platform_interface 0.1.6+7 (0.2.0+1 available)
+  firebase_performance_web 0.1.8+5 (0.1.8+7 available)
+  flutter_plugin_android_lifecycle 2.0.33 (2.0.34 available)
+  google_cloud 0.4.1 (0.5.0 available)
+  google_sign_in_android 7.2.9 (7.2.10 available)
+  googleapis_auth 2.3.0 (2.3.1 available)
+  gtk 2.1.0 (2.2.0 available)
+  hooks 1.0.2 (1.0.3 available)
+  matcher 0.12.19 (0.12.20 available)
+  meta 1.17.0 (1.18.2 available)
+  mime 1.0.6 (2.0.0 available)
+  native_toolchain_c 0.17.6 (0.18.0 available)
+  package_info_plus 9.0.1 (10.1.0 available)
+  package_info_plus_platform_interface 3.2.1 (4.1.0 available)
+  path_provider_android 2.2.22 (2.3.1 available)
+  shared_preferences_android 2.4.21 (2.4.23 available)
+  shared_preferences_platform_interface 2.4.1 (2.4.2 available)
+  sqflite 2.4.2 (2.4.2+1 available)
+  sqflite_common 2.5.6 (2.5.7 available)
+  sqflite_common_ffi 2.4.0+2 (2.4.0+3 available)
+  synchronized 3.4.0 (3.4.0+1 available)
+  test 1.30.0 (1.31.1 available)
+  test_api 0.7.10 (0.7.12 available)
+  test_core 0.6.16 (0.6.18 available)
+  url_launcher_android 6.3.28 (6.3.29 available)
+  url_launcher_web 2.4.2 (2.4.3 available)
+  vector_math 2.2.0 (2.3.0 available)
+  vm_service 15.0.2 (15.2.0 available)
+  webview_flutter_android 4.10.13 (4.12.0 available)
+  webview_flutter_platform_interface 2.14.0 (2.15.1 available)
+  webview_flutter_wkwebview 3.24.1 (3.25.1 available)
+  win32 5.15.0 (6.2.0 available)
+  xml 6.6.1 (7.0.1 available)
+Got dependencies in `/home/jeremy/Code/bc/bot-creator`!
+50 packages have newer versions incompatible with dependency constraints.
+Try `flutter pub outdated` for more information.
+00:00 +0: loading /home/jeremy/Code/bc/bot-creator/packages/shared/test/bdfd_ast_transpiler_test.dart
+00:00 +0: BdfdAstTranspiler transpiles plain text into respondWithMessage
+00:00 +1: BdfdAstTranspiler transpiles embed-style functions into one respondWithMessage action
+00:00 +2: BdfdAstTranspiler preserves icon_urls when footericon and authoricon precede footer and author
+00:00 +3: BdfdAstTranspiler transpiles if blocks to ifBlock actions with nested branches
+00:00 +4: BdfdAstTranspiler transpiles for loop blocks by repeating body actions
+00:00 +5: BdfdAstTranspiler supports nested loop blocks
+00:00 +6: BdfdAstTranspiler reports stray endfor delimiters
+00:00 +7: BdfdAstTranspiler flushes pending response before standalone action functions
+00:00 +8: BdfdAstTranspiler reports unsupported functions as diagnostics
+00:00 +9: BdfdAstTranspiler renders supported nested variable functions inline without diagnostic
+00:00 +10: BdfdAstTranspiler transpiles http requests and result placeholders
+00:00 +11: BdfdAstTranspiler reports httpResult without preceding request as error
+00:00 +12: BdfdAstTranspiler transpiles block if with elseif/else delimiters
+00:00 +13: BdfdAstTranspiler transpiles logical and-conditions and stop action
+00:00 +13 -1: BdfdAstTranspiler transpiles logical and-conditions and stop action [E]
+  Expected: 'stopUnless'
+    Actual: 'stop'
+     Which: is different. Both strings start the same, but the actual value is missing the following trailing characters: Unless
+  
+  package:matcher                           expect
+  test/bdfd_ast_transpiler_test.dart 464:7  main.<fn>.<fn>
+  
+00:00 +13 -1: BdfdAstTranspiler supports json parse/get/set/unset/stringify helpers
+00:00 +14 -1: BdfdAstTranspiler supports json array helpers
+00:00 +15 -1: BdfdAstTranspiler keeps invalid jsonParse non-blocking and returns empty JSON lookups
+00:00 +16 -1: BdfdAstTranspiler transpiles startThread inline with returned ID placeholder
+00:00 +17 -1: BdfdAstTranspiler transpiles editThread and thread member functions
+00:00 +18 -1: BdfdAstTranspiler transpiles guard helpers to ifBlock and stopUnless actions
+00:00 +18 -2: BdfdAstTranspiler transpiles guard helpers to ifBlock and stopUnless actions [E]
+  Expected: 'stopUnless'
+    Actual: 'stop'
+     Which: is different. Both strings start the same, but the actual value is missing the following trailing characters: Unless
+  
+  package:matcher                           expect
+  test/bdfd_ast_transpiler_test.dart 750:7  main.<fn>.<fn>
+  
+00:00 +18 -2: BdfdAstTranspiler transpiles permission and role guard helpers
+00:00 +19 -2: BdfdAstTranspiler transpiles wave 3 guard helpers
+00:00 +20 -2: BdfdAstTranspiler normalizes BDFD wiki permission aliases
+00:00 +21 -2: BdfdAstTranspiler supports inline checkUserPerms boolean output
+00:00 +22 -2: BdfdAstTranspiler supports inline message[] argument lookups
+00:00 +23 -2: BdfdAstTranspiler supports inline message without brackets
+00:00 +24 -2: BdfdAstTranspiler transpiles channelSendMessage to sendMessage action
+00:00 +25 -2: BdfdAstTranspiler resolves user identity helper functions inline
+00:00 +26 -2: BdfdAstTranspiler transpiles changeUsername helpers to actions
+00:00 +27 -2: BdfdAstTranspiler supports inline mentionedChannels lookup
+00:00 +28 -2: embed helper functions transpiles $addTimestamp without argument to "now"
+00:00 +29 -2: embed helper functions transpiles $addTimestamp with explicit value
+00:00 +30 -2: embed helper functions transpiles $authorIcon standalone into author.icon_url
+00:00 +31 -2: embed helper functions transpiles $authorURL standalone into author.url
+00:00 +32 -2: embed helper functions transpiles $embeddedURL into embed url
+00:00 +33 -2: embed helper functions transpiles $footerIcon standalone into footer.icon_url
+00:00 +34 -2: embed helper functions transpiles $thumbnail into an embed thumbnail
+00:00 +35 -2: ComponentV2 builder functions transpiles $addContainer into a ComponentV2 container component
+00:00 +36 -2: ComponentV2 builder functions transpiles $addSection into a ComponentV2 section component
+00:00 +37 -2: ComponentV2 builder functions transpiles $addThumbnail into a ComponentV2 thumbnail component
+00:00 +38 -2: ComponentV2 builder functions $addMediaGallery creates an empty media gallery with an ID
+00:00 +39 -2: ComponentV2 builder functions $addMediaGallery starts a new gallery after a non-gallery component
+00:00 +40 -2: ComponentV2 builder functions rich V2 components produce respondWithComponentV2 action type
+00:00 +41 -2: ComponentV2 builder functions pure buttons without rich V2 keep respondWithMessage action type
+00:00 +42 -2: ComponentV2 editing functions $editButton modifies the button identified by custom ID
+00:00 +43 -2: ComponentV2 editing functions $editButton on a link-style button sets url not customId
+00:00 +44 -2: ComponentV2 editing functions $editSelectMenu updates min, max, and placeholder
+00:00 +45 -2: ComponentV2 editing functions $editSelectMenuOption updates the first option of the given menu
+00:00 +46 -2: ComponentV2 editing functions $editSelectMenuOption with empty description clears the field
+00:00 +47 -2: user/profile inline functions $username without args resolves to ((user.username))
+00:00 +48 -2: user/profile inline functions $username[userID] resolves to ((user[id].username))
+00:00 +49 -2: user/profile inline functions $nickname without args resolves to ((member.nick))
+00:00 +50 -2: user/profile inline functions $nickname[userID] resolves to ((member[id].nick))
+00:00 +51 -2: user/profile inline functions $displayName without args resolves to fallback
+00:00 +52 -2: user/profile inline functions $displayName[userID] resolves to targeted fallback
+00:00 +53 -2: user/profile inline functions $authorAvatar resolves to ((author.avatar))
+00:00 +54 -2: user/profile inline functions $authorID resolves to ((author.id))
+00:00 +55 -2: user/profile inline functions $findUser resolves to ((user.id))
+00:00 +56 -2: user/profile inline functions $mentions transpiles to ((message.mentions)) placeholder
+00:00 +57 -2: user/profile inline functions $jsonParse with runtime placeholder emits runtimeJsonBlock
+00:00 +58 -2: user/profile inline functions $jsonArrayAppend supports complex JSON objects at compile time
+00:00 +59 -2: user/profile inline functions literal $jsonParse still works at compile-time (regression)
+00:00 +60 -2: user/profile inline functions $jsonPretty does not corrupt double-spaces inside strings
+00:00 +61 -2: user/profile inline functions $jsonExists returns false when no JSON context
+00:00 +62 -2: user/profile inline functions $jsonSet supports complex JSON objects
+00:00 +63 -2: user/profile inline functions $argsCheck emits diagnostic for unknown operator
+00:00 +64 -2: user/profile inline functions two consecutive deferred jsonParse blocks get unique prefixes
+00:00 +65 -2: user/profile inline functions deferred json is flushed before setServerVar action using $jsonStringify
+00:00 +66 -2: user/profile inline functions full additem script keeps runtimeJsonBlock before setServerVar
+00:00 +67 -2: user/profile inline functions deferred json reads continue after setServerVar using $jsonPretty
+00:00 +68 -2: user/profile inline functions finditem flow emits runtime json before if block
+00:00 +69 -2: user/profile inline functions try block flushes runtime json before temp var actions
+00:00 +70 -2: user/profile inline functions runtime temp var is emitted before a runtime for loop
+00:00 +71 -2: user/profile inline functions runtime loop body keeps temp setter actions in bodyActions
+00:00 +72 -2: user/profile inline functions weighted roll style runtime loop keeps nested json if flow dynamic
+00:00 +73 -2: user/profile inline functions aggressive nested ifs in a runtime loop keep json reads executable
+00:00 +74 -2: user/profile inline functions standalone if hoists runtime json condition before if action
+00:00 +75 -2: Some tests failed.
