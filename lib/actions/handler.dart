@@ -258,6 +258,7 @@ Future<Map<String, String>> handleActions(
       guildId: guildId,
       fallbackChannelId: fallbackChannelId,
       interaction: interaction,
+      onLog: onLog,
     );
     if (handledByVariablesExecutor) {
       recordTrace();

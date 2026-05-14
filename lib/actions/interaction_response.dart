@@ -66,7 +66,9 @@ bool requiresV2Flag(Map<String, dynamic> response) {
 }
 
 Future<void> sendWorkflowResponse({
-  required Interaction interaction,
+  Interaction? interaction,
+  NyxxGateway? gateway,
+  Snowflake? fallbackChannelId,
   required Map<String, dynamic> response,
   required Map<String, String> runtimeVariables,
   required String botId,
@@ -194,6 +196,13 @@ Future<void> sendWorkflowResponse({
 
   if (isModal) {
     if (activeModalJson.isNotEmpty) {
+      if (interaction == null) {
+        onLog?.call(
+          'Error: Modal response is not supported in this context (no interaction)',
+          botId: botId,
+        );
+        return;
+      }
       try {
         final definition = ModalDefinition.fromJson(activeModalJson);
         final modalBuilder = ModalBuilder(
@@ -476,7 +485,7 @@ Future<void> sendWorkflowResponse({
       }
     }
 
-    final isResponded = isInteractionAcknowledged(interaction);
+    final isResponded = interaction != null && isInteractionAcknowledged(interaction);
 
     final hasCustomResponse =
         responseText.isNotEmpty ||
@@ -501,7 +510,44 @@ Future<void> sendWorkflowResponse({
             ? 'No response outputted.'
             : responseText;
 
-    if (didDefer) {
+    if (interaction == null) {
+      if (gateway == null || fallbackChannelId == null) {
+        onLog?.call(
+          'Error: Cannot send response without interaction, gateway and fallbackChannelId',
+          botId: botId,
+        );
+        return;
+      }
+      try {
+        final channel = await gateway.channels.get(fallbackChannelId).catchError((e) => gateway.channels.fetch(fallbackChannelId));
+        if (channel is! TextChannel) {
+          onLog?.call('Error: Fallback channel is not a text channel', botId: botId);
+          return;
+        }
+
+        if (useV2Flag) {
+          if (activeComponentDefinition != null) {
+             final builder = buildComponentMessage(
+               definition: activeComponentDefinition,
+               resolve: (s) => resolveTemplatePlaceholders(s, runtimeVariables),
+             );
+             final message = await channel.sendMessage(builder);
+             responseMessageId = message.id.toString();
+          }
+        } else {
+          final builder = MessageBuilder(
+            content: finalText.isEmpty ? null : finalText,
+            embeds: embeds.isEmpty ? null : embeds,
+            components: componentNodes,
+          );
+          final message = await channel.sendMessage(builder);
+          responseMessageId = message.id.toString();
+        }
+        onLog?.call('Response sent to fallback channel', botId: botId);
+      } catch (e) {
+        onLog?.call('Error sending response to fallback channel: $e', botId: botId);
+      }
+    } else if (didDefer) {
       final updateBuilder = MessageUpdateBuilder(
         content: useV2Flag ? null : (finalText.isEmpty ? null : finalText),
         components: componentNodes,
@@ -590,8 +636,8 @@ Future<void> sendWorkflowResponse({
         definition: activeComponentDefinition,
         resolve: (s) => resolveTemplatePlaceholders(s, runtimeVariables),
         botId: botId,
-        guildId: interaction.guildId?.toString(),
-        channelId: interaction.channelId?.toString(),
+        guildId: (interaction?.guildId ?? fallbackChannelId)?.toString(),
+        channelId: (interaction?.channelId ?? fallbackChannelId)?.toString(),
         messageId: responseMessageId,
       );
     }

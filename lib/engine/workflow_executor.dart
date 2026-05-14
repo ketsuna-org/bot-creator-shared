@@ -26,8 +26,21 @@ class WorkflowExecutor {
     required NyxxGateway gateway,
     required String botId,
     required Map<String, String> runtimeVariables,
+    Snowflake? fallbackChannelId,
+    Snowflake? fallbackGuildId,
   }) async {
-    if (actions.isEmpty) return const {};
+    callbacks.onLog?.call(
+      'DEBUG: executeActions started with ${actions.length} actions',
+      botId: botId,
+    );
+    
+    if (actions.isEmpty) {
+      callbacks.onLog?.call(
+        'DEBUG: No actions to execute, returning empty results',
+        botId: botId,
+      );
+      return const {};
+    }
 
     await hydrateActionPlaceholders(
       store: store,
@@ -41,7 +54,7 @@ class WorkflowExecutor {
     try {
       final results = await handleActions(
         gateway,
-        context,
+        context is Interaction ? context : null,
         actions: actions,
         store: store,
         botId: botId,
@@ -49,10 +62,22 @@ class WorkflowExecutor {
         resolveTemplate: (input) =>
             resolveTemplatePlaceholders(input, runtimeVariables),
         onLog: (msg) => callbacks.onLog?.call(msg, botId: botId),
+        fallbackChannelId: fallbackChannelId,
+        fallbackGuildId: fallbackGuildId,
       );
+      
+      callbacks.onLog?.call(
+        'DEBUG: handleActions completed with ${results.length} results: $results',
+        botId: botId,
+      );
+      
       return results;
     } catch (e, st) {
       callbacks.onDebugLog?.call('Action execution failed: $e\n$st', botId: botId);
+      callbacks.onLog?.call(
+        'ERROR: Action execution failed: $e',
+        botId: botId,
+      );
       rethrow;
     }
   }
@@ -65,9 +90,19 @@ class WorkflowExecutor {
     required String botId,
     required Map<String, String> runtimeVariables,
   }) async {
+    callbacks.onLog?.call(
+      'DEBUG: executeVisualWorkflow started',
+      botId: botId,
+    );
+    
     final response = Map<String, dynamic>.from(
       (workflowData["response"] as Map?)?.cast<String, dynamic>() ?? const {},
     );
+    callbacks.onLog?.call(
+      'DEBUG: Response data in executeVisualWorkflow: $response',
+      botId: botId,
+    );
+    
     final workflow = Map<String, dynamic>.from(
       (response['workflow'] as Map?)?.cast<String, dynamic>() ?? const {},
     );
@@ -94,6 +129,10 @@ class WorkflowExecutor {
     }
 
     final actions = actionsJson.map(Action.fromJson).toList();
+    callbacks.onLog?.call(
+      'DEBUG: Parsed ${actions.length} actions for visual workflow',
+      botId: botId,
+    );
     
     // Defer if needed
     final isEphemeral = workflow['visibility']?.toString().toLowerCase() == 'ephemeral';
@@ -101,19 +140,40 @@ class WorkflowExecutor {
     var didDefer = false;
 
     if (shouldDefer) {
+      callbacks.onLog?.call(
+        'DEBUG: Attempting to defer interaction',
+        botId: botId,
+      );
       try {
         await (interaction as dynamic).acknowledge(isEphemeral: isEphemeral);
-      } catch (_) {}
+        callbacks.onLog?.call(
+          'DEBUG: Interaction acknowledged successfully',
+          botId: botId,
+        );
+      } catch (e) {
+        callbacks.onLog?.call(
+          'DEBUG: Failed to acknowledge interaction: $e',
+          botId: botId,
+        );
+      }
       didDefer = true;
     }
 
     if (actions.isNotEmpty) {
+      callbacks.onLog?.call(
+        'DEBUG: Executing ${actions.length} actions in visual workflow',
+        botId: botId,
+      );
       final results = await executeActions(
         actions: actions,
         context: interaction,
         gateway: gateway,
         botId: botId,
         runtimeVariables: runtimeVariables,
+      );
+      callbacks.onLog?.call(
+        'DEBUG: Action execution results: $results',
+        botId: botId,
       );
       for (final entry in results.entries) {
         runtimeVariables['action.${entry.key}'] = entry.value;
@@ -122,6 +182,7 @@ class WorkflowExecutor {
 
     await sendWorkflowResponse(
       interaction: interaction,
+      gateway: gateway,
       response: response,
       runtimeVariables: runtimeVariables,
       botId: botId,
@@ -129,6 +190,11 @@ class WorkflowExecutor {
       isEphemeral: isEphemeral,
       onLog: (msg, {required botId}) async => callbacks.onLog?.call(msg, botId: botId),
       onDebugLog: (msg, {required botId}) async => callbacks.onDebugLog?.call(msg, botId: botId),
+    );
+    
+    callbacks.onLog?.call(
+      'DEBUG: executeVisualWorkflow completed',
+      botId: botId,
     );
   }
 
@@ -139,6 +205,11 @@ class WorkflowExecutor {
     required Map<String, String> runtimeVariables,
     String? replayLabel,
   }) async {
+    callbacks.onLog?.call(
+      'DEBUG: executeGeneralWorkflow started',
+      botId: botId,
+    );
+    
     final actionsJson = List<Map<String, dynamic>>.from(
       (workflowData["actions"] as List?)?.whereType<Map>().map(
             (e) => Map<String, dynamic>.from(e),
@@ -146,9 +217,19 @@ class WorkflowExecutor {
           const [],
     );
 
-    if (actionsJson.isEmpty) return;
+    if (actionsJson.isEmpty) {
+      callbacks.onLog?.call(
+        'DEBUG: No actions in general workflow, returning early',
+        botId: botId,
+      );
+      return;
+    }
 
     final actions = actionsJson.map(Action.fromJson).toList();
+    callbacks.onLog?.call(
+      'DEBUG: Executing ${actions.length} actions in general workflow',
+      botId: botId,
+    );
 
     await executeActions(
       actions: actions,
@@ -156,6 +237,11 @@ class WorkflowExecutor {
       gateway: gateway,
       botId: botId,
       runtimeVariables: runtimeVariables,
+    );
+    
+    callbacks.onLog?.call(
+      'DEBUG: executeGeneralWorkflow completed',
+      botId: botId,
     );
   }
 }

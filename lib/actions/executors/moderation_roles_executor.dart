@@ -27,6 +27,7 @@ Future<bool> executeModerationRolesAction({
     case BotCreatorActionType.unmuteUser:
     case BotCreatorActionType.addRole:
     case BotCreatorActionType.removeRole:
+    case BotCreatorActionType.setNickname:
       if (guildId == null) {
         throw Exception('User action requires a guild context');
       }

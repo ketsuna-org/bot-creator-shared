@@ -37,6 +37,7 @@ class CommandExecutor {
     final interaction = event.interaction;
 
     if (interaction is ApplicationCommandAutocompleteInteraction) {
+      callbacks.onLog?.call('DEBUG: Autocomplete interaction for ${interaction.data.name}', botId: botId);
       await _handleAutocomplete(
         interaction,
         botId: botId,
@@ -51,6 +52,7 @@ class CommandExecutor {
         startedAt: startedAt,
       );
     } else if (interaction is MessageComponentInteraction) {
+      callbacks.onLog?.call('DEBUG: Component interaction: ${interaction.data.customId}', botId: botId);
       await handleComponentInteraction(
         event.gateway as dynamic,
         interaction,
@@ -58,6 +60,7 @@ class CommandExecutor {
         botId,
       );
     } else if (interaction is ModalSubmitInteraction) {
+      callbacks.onLog?.call('DEBUG: Modal submit: ${interaction.data.customId}', botId: botId);
       await handleModalSubmitInteraction(
         event.gateway as dynamic,
         interaction,
