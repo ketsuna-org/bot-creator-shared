@@ -108,14 +108,18 @@ Future<Map<String, String>> createAutoModRuleAction(
     switch (triggerTypeRaw) {
       case 'spam':
         triggerType = TriggerType.spam;
+        break;
       case 'keywordpreset':
       case 'keyword_preset':
         triggerType = TriggerType.keywordPreset;
+        break;
       case 'mentionspam':
       case 'mention_spam':
         triggerType = TriggerType.mentionSpam;
+        break;
       default:
         triggerType = TriggerType.keyword;
+        break;
     }
 
     final keywords = _toStringList(payload['keywords']);
@@ -156,6 +160,7 @@ Future<Map<String, String>> createAutoModRuleAction(
             ),
           );
         }
+        break;
       case 'timeout':
         final timeoutDuration =
             int.tryParse(
@@ -167,8 +172,10 @@ Future<Map<String, String>> createAutoModRuleAction(
             duration: Duration(seconds: timeoutDuration),
           ),
         );
+        break;
       default:
         actions.add(AutoModerationActionBuilder.blockMessage());
+        break;
     }
 
     // Build trigger metadata
@@ -186,11 +193,16 @@ Future<Map<String, String>> createAutoModRuleAction(
         switch (p.toLowerCase()) {
           case 'profanity':
             presets.add(KeywordPresetType.profanity);
+            break;
           case 'sexualcontent':
           case 'sexual_content':
             presets.add(KeywordPresetType.sexualContent);
+            break;
           case 'slurs':
             presets.add(KeywordPresetType.slurs);
+            break;
+          default:
+            break;
         }
       }
       triggerMetadata = TriggerMetadataBuilder(
