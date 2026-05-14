@@ -78,18 +78,21 @@ class EventDispatcher {
     );
 
     // Helper to register simple events
-    void reg(
-      String eventName,
-      Stream<dynamic> stream,
-      Function buildContext,
-    ) {
+    void reg(String eventName, Stream<dynamic> stream, Function buildContext) {
       subscriptions.add(
         stream.listen((event) {
           callbacks.onDebugLog?.call(
             'Event received: $eventName',
             botId: botId,
           );
-          _dispatchEvent(eventName, event, buildContext, botId, gateway, startedAt);
+          _dispatchEvent(
+            eventName,
+            event,
+            buildContext,
+            botId,
+            gateway,
+            startedAt,
+          );
         }),
       );
     }
@@ -98,58 +101,158 @@ class EventDispatcher {
     reg('guildCreate', gateway.onGuildCreate, buildGuildCreateEventContext);
     reg('guildUpdate', gateway.onGuildUpdate, buildGuildUpdateEventContext);
     reg('guildDelete', gateway.onGuildDelete, buildGuildDeleteEventContext);
-    reg('guildAuditLogCreate', gateway.onGuildAuditLogCreate, buildGuildAuditLogCreateEventContext);
+    reg(
+      'guildAuditLogCreate',
+      gateway.onGuildAuditLogCreate,
+      buildGuildAuditLogCreateEventContext,
+    );
 
     // Channels
-    reg('channelCreate', gateway.onChannelCreate, buildChannelCreateEventContext);
-    reg('channelUpdate', gateway.onChannelUpdate, buildChannelUpdateEventContext);
-    reg('channelDelete', gateway.onChannelDelete, buildChannelDeleteEventContext);
-    reg('channelPinsUpdate', gateway.onChannelPinsUpdate, buildChannelPinsUpdateEventContext);
+    reg(
+      'channelCreate',
+      gateway.onChannelCreate,
+      buildChannelCreateEventContext,
+    );
+    reg(
+      'channelUpdate',
+      gateway.onChannelUpdate,
+      buildChannelUpdateEventContext,
+    );
+    reg(
+      'channelDelete',
+      gateway.onChannelDelete,
+      buildChannelDeleteEventContext,
+    );
+    reg(
+      'channelPinsUpdate',
+      gateway.onChannelPinsUpdate,
+      buildChannelPinsUpdateEventContext,
+    );
 
     // Threads
     reg('threadCreate', gateway.onThreadCreate, buildThreadCreateEventContext);
     reg('threadUpdate', gateway.onThreadUpdate, buildThreadUpdateEventContext);
     reg('threadDelete', gateway.onThreadDelete, buildThreadDeleteEventContext);
-    reg('threadMemberUpdate', gateway.onThreadMemberUpdate, buildThreadMemberUpdateEventContext);
-    reg('threadMembersUpdate', gateway.onThreadMembersUpdate, buildThreadMembersUpdateEventContext);
+    reg(
+      'threadMemberUpdate',
+      gateway.onThreadMemberUpdate,
+      buildThreadMemberUpdateEventContext,
+    );
+    reg(
+      'threadMembersUpdate',
+      gateway.onThreadMembersUpdate,
+      buildThreadMembersUpdateEventContext,
+    );
 
     // Members
-    reg('guildMemberAdd', gateway.onGuildMemberAdd, buildGuildMemberAddEventContext);
-    reg('guildMemberUpdate', gateway.onGuildMemberUpdate, buildGuildMemberUpdateEventContext);
-    reg('guildMemberRemove', gateway.onGuildMemberRemove, buildGuildMemberRemoveEventContext);
+    reg(
+      'guildMemberAdd',
+      gateway.onGuildMemberAdd,
+      buildGuildMemberAddEventContext,
+    );
+    reg(
+      'guildMemberUpdate',
+      gateway.onGuildMemberUpdate,
+      buildGuildMemberUpdateEventContext,
+    );
+    reg(
+      'guildMemberRemove',
+      gateway.onGuildMemberRemove,
+      buildGuildMemberRemoveEventContext,
+    );
 
     // Roles
-    reg('guildRoleCreate', gateway.onGuildRoleCreate, buildGuildRoleCreateEventContext);
-    reg('guildRoleUpdate', gateway.onGuildRoleUpdate, buildGuildRoleUpdateEventContext);
-    reg('guildRoleDelete', gateway.onGuildRoleDelete, buildGuildRoleDeleteEventContext);
+    reg(
+      'guildRoleCreate',
+      gateway.onGuildRoleCreate,
+      buildGuildRoleCreateEventContext,
+    );
+    reg(
+      'guildRoleUpdate',
+      gateway.onGuildRoleUpdate,
+      buildGuildRoleUpdateEventContext,
+    );
+    reg(
+      'guildRoleDelete',
+      gateway.onGuildRoleDelete,
+      buildGuildRoleDeleteEventContext,
+    );
 
     // Messages (Update and Delete, Create is special)
-    reg('messageUpdate', gateway.onMessageUpdate, buildMessageUpdateEventContext);
-    reg('messageDelete', gateway.onMessageDelete, buildMessageDeleteEventContext);
+    reg(
+      'messageUpdate',
+      gateway.onMessageUpdate,
+      buildMessageUpdateEventContext,
+    );
+    reg(
+      'messageDelete',
+      gateway.onMessageDelete,
+      buildMessageDeleteEventContext,
+    );
     // reg('messageBulkDelete', gateway.onMessageBulkDelete, buildMessageBulkDeleteEventContext); // If needed
 
     // Reactions
-    reg('messageReactionAdd', gateway.onMessageReactionAdd, buildMessageReactionAddEventContext);
-    reg('messageReactionRemove', gateway.onMessageReactionRemove, buildMessageReactionRemoveEventContext);
-    reg('messageReactionRemoveAll', gateway.onMessageReactionRemoveAll, buildMessageReactionRemoveAllEventContext);
-    reg('messageReactionRemoveEmoji', gateway.onMessageReactionRemoveEmoji, buildMessageReactionRemoveEmojiEventContext);
+    reg(
+      'messageReactionAdd',
+      gateway.onMessageReactionAdd,
+      buildMessageReactionAddEventContext,
+    );
+    reg(
+      'messageReactionRemove',
+      gateway.onMessageReactionRemove,
+      buildMessageReactionRemoveEventContext,
+    );
+    reg(
+      'messageReactionRemoveAll',
+      gateway.onMessageReactionRemoveAll,
+      buildMessageReactionRemoveAllEventContext,
+    );
+    reg(
+      'messageReactionRemoveEmoji',
+      gateway.onMessageReactionRemoveEmoji,
+      buildMessageReactionRemoveEmojiEventContext,
+    );
 
     // Polls
-    reg('messagePollVoteAdd', gateway.onMessagePollVoteAdd, buildMessagePollVoteAddEventContext);
-    reg('messagePollVoteRemove', gateway.onMessagePollVoteRemove, buildMessagePollVoteRemoveEventContext);
+    reg(
+      'messagePollVoteAdd',
+      gateway.onMessagePollVoteAdd,
+      buildMessagePollVoteAddEventContext,
+    );
+    reg(
+      'messagePollVoteRemove',
+      gateway.onMessagePollVoteRemove,
+      buildMessagePollVoteRemoveEventContext,
+    );
 
     // Invites
     reg('inviteCreate', gateway.onInviteCreate, buildInviteCreateEventContext);
     reg('inviteDelete', gateway.onInviteDelete, buildInviteDeleteEventContext);
 
     // Presence & User
-    reg('presenceUpdate', gateway.onPresenceUpdate, buildPresenceUpdateEventContext);
+    reg(
+      'presenceUpdate',
+      gateway.onPresenceUpdate,
+      buildPresenceUpdateEventContext,
+    );
     reg('userUpdate', gateway.onUserUpdate, buildUserUpdateEventContext);
 
     // Voice
-    reg('voiceStateUpdate', gateway.onVoiceStateUpdate, buildVoiceStateUpdateEventContext);
-    reg('voiceServerUpdate', gateway.onVoiceServerUpdate, buildVoiceServerUpdateEventContext);
-    reg('voiceChannelEffectSend', gateway.onVoiceChannelEffectSend, buildVoiceChannelEffectSendEventContext);
+    reg(
+      'voiceStateUpdate',
+      gateway.onVoiceStateUpdate,
+      buildVoiceStateUpdateEventContext,
+    );
+    reg(
+      'voiceServerUpdate',
+      gateway.onVoiceServerUpdate,
+      buildVoiceServerUpdateEventContext,
+    );
+    reg(
+      'voiceChannelEffectSend',
+      gateway.onVoiceChannelEffectSend,
+      buildVoiceChannelEffectSendEventContext,
+    );
 
     // Typing
     reg('typingStart', gateway.onTypingStart, buildTypingStartEventContext);
@@ -193,7 +296,14 @@ class EventDispatcher {
     // Prevent bots from triggering event workflows for message events to avoid infinite loops.
     if (event is MessageCreateEvent) {
       final author = event.message.author;
-      final isBot = author is User ? author.isBot : false;
+      final isBot =
+          author is User
+              ? (author.isBot
+                  ? true
+                  : author is WebhookAuthor
+                  ? true
+                  : false)
+              : true;
       if (isBot || event.message.application != null) {
         return;
       }
@@ -201,7 +311,14 @@ class EventDispatcher {
     if (event is MessageUpdateEvent) {
       final msg = event.message;
       final author = msg.author;
-      final isBot = author is User ? author.isBot : false;
+      final isBot =
+          author is User
+              ? (author.isBot
+                  ? true
+                  : author is WebhookAuthor
+                  ? true
+                  : false)
+              : true;
       if (isBot || msg.application != null) {
         return;
       }
