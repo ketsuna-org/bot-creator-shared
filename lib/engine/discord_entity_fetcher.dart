@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:nyxx/nyxx.dart';
+import '../utils/global.dart';
 
 /// Logic to hydrate Discord entities (user, member, channel, guild) into runtime variables.
 class DiscordEntityFetcher {
@@ -20,7 +21,13 @@ class DiscordEntityFetcher {
           final user = await gateway.users.fetch(id);
           variables['user[$contextId].username'] = user.username;
           variables['user[$contextId].tag'] = user.discriminator;
-          variables['user[$contextId].avatar'] = user.avatar.url.toString();
+          variables['user[$contextId].avatar'] = makeAvatarUrl(
+            user.id.toString(),
+            avatarId: user.avatar.hash,
+            isAnimated: user.avatar.isAnimated,
+            legacyFormat: 'webp',
+            discriminator: user.discriminator,
+          );
           variables['user[$contextId].globalName'] =
               user.globalName ?? user.username;
           variables['user[$contextId].displayName'] =
@@ -39,8 +46,13 @@ class DiscordEntityFetcher {
           if (guildId != null) {
             final member = await gateway.guilds[guildId].members.fetch(id);
             variables['member[$contextId].nick'] = member.nick ?? '';
-            variables['member[$contextId].avatar'] =
-                member.avatar?.url.toString() ?? '';
+            variables['member[$contextId].avatar'] = makeAvatarUrl(
+              member.id.toString(),
+              avatarId: member.avatar?.hash,
+              isAnimated: member.avatar?.isAnimated ?? false,
+              legacyFormat: 'webp',
+              discriminator: member.user?.discriminator,
+            );
             variables['member[$contextId].displayName'] =
                 member.nick ?? member.user?.globalName ?? member.user?.username ?? '';
             variables['member[$contextId].joinedAt'] =
@@ -53,7 +65,13 @@ class DiscordEntityFetcher {
             if (user != null) {
               variables['user[$contextId].username'] = user.username;
               variables['user[$contextId].tag'] = user.discriminator;
-              variables['user[$contextId].avatar'] = user.avatar.url.toString();
+              variables['user[$contextId].avatar'] = makeAvatarUrl(
+                user.id.toString(),
+                avatarId: user.avatar.hash,
+                isAnimated: user.avatar.isAnimated,
+                legacyFormat: 'webp',
+                discriminator: user.discriminator,
+              );
               variables['user[$contextId].globalName'] =
                   user.globalName ?? user.username;
             }

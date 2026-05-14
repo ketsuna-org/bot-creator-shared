@@ -251,7 +251,13 @@ EventExecutionContext buildInteractionCreateEventContext(
   if (member is Member) {
     extra['member.id'] = member.id.toString();
     extra['member.nick'] = member.nick ?? '';
-    extra['member.avatar'] = member.avatar?.url.toString() ?? '';
+    extra['member.avatar'] = makeAvatarUrl(
+      member.id.toString(),
+      avatarId: member.avatar?.hash,
+      isAnimated: member.avatar?.isAnimated ?? false,
+      legacyFormat: 'webp',
+      discriminator: member.user?.discriminator,
+    );
     extra['member.joinedAt'] = member.joinedAt.toIso8601String();
     extra['member.roles'] = member.roleIds.map((id) => id.toString()).join(',');
     extra['member.isBooster'] = (member.premiumSince != null).toString();
@@ -268,14 +274,21 @@ EventExecutionContext buildInteractionCreateEventContext(
     extra['user.username'] = user.username;
     extra['user.globalName'] = user.globalName ?? user.username;
     extra['user.tag'] = user.discriminator;
-    extra['user.avatar'] = user.avatar.url.toString();
+    final userAvatarUrl = makeAvatarUrl(
+      user.id.toString(),
+      avatarId: user.avatar.hash,
+      isAnimated: user.avatar.isAnimated,
+      legacyFormat: 'webp',
+      discriminator: user.discriminator,
+    );
+    extra['user.avatar'] = userAvatarUrl;
     extra['user.banner'] = user.banner?.url.toString() ?? '';
     extra['user.createdAt'] = user.id.timestamp.toIso8601String();
     extra['author.id'] = user.id.toString();
     extra['author.username'] = user.username;
     extra['author.globalName'] = user.globalName ?? user.username;
     extra['author.tag'] = user.discriminator;
-    extra['author.avatar'] = user.avatar.url.toString();
+    extra['author.avatar'] = userAvatarUrl;
     extra['author.banner'] = user.banner?.url.toString() ?? '';
     final accentColor = user.accentColor;
     if (accentColor != null) {

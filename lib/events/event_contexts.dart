@@ -188,7 +188,15 @@ Map<String, String> _messageContentExtra(Message message, {PartialMember? member
   final authorId = author.id.toString();
   final authorName = author.username;
   final authorTag = author is User ? author.discriminator : '';
-  final authorAvatar = author is User ? (author.avatar.url.toString()) : '';
+  final authorAvatar = author is User
+      ? makeAvatarUrl(
+        author.id.toString(),
+        avatarId: author.avatar.hash,
+        isAnimated: author.avatar.isAnimated,
+        legacyFormat: 'webp',
+        discriminator: author.discriminator,
+      )
+      : '';
 
   String authorBanner = '';
   String userCreatedAt = '';
@@ -252,7 +260,13 @@ Map<String, String> _messageContentExtra(Message message, {PartialMember? member
     if (member is Member) ...{
       'member.id': member.id.toString(),
       'member.nick': member.nick ?? '',
-      'member.avatar': member.avatar?.url.toString() ?? '',
+      'member.avatar': makeAvatarUrl(
+        member.id.toString(),
+        avatarId: member.avatar?.hash,
+        isAnimated: member.avatar?.isAnimated ?? false,
+        legacyFormat: 'webp',
+        discriminator: member.user?.discriminator,
+      ),
       'member.joinedAt': member.joinedAt.toIso8601String(),
       'member.roles': member.roleIds.map((id) => id.toString()).join(','),
       'member.isBooster': (member.premiumSince != null).toString(),

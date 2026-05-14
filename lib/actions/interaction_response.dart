@@ -406,7 +406,7 @@ Future<void> sendWorkflowResponse({
       final footerIconUri = resolveEmbedUri(footerJson['icon_url']);
       if (footerText.isNotEmpty || footerIconUri != null) {
         embed.footer = EmbedFooterBuilder(
-          text: footerText,
+          text: footerText.isEmpty ? '\u200B' : footerText,
           iconUrl: footerIconUri,
         );
       }
@@ -422,9 +422,11 @@ Future<void> sendWorkflowResponse({
       final authorIconUri = resolveEmbedUri(
         authorJson['author_icon_url'] ?? authorJson['icon_url'],
       );
-      if (authorName.isNotEmpty) {
+      if (authorName.isNotEmpty ||
+          authorUrlUri != null ||
+          authorIconUri != null) {
         embed.author = EmbedAuthorBuilder(
-          name: authorName,
+          name: authorName.isEmpty ? '\u200B' : authorName,
           url: authorUrlUri,
           iconUrl: authorIconUri,
         );

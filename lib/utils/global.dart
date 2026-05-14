@@ -73,7 +73,7 @@ Future<Guild?> fetchGuildCached(dynamic client, Snowflake guildId) async {
   try {
     // Try cache first
     final cached = await client.guilds.get(guildId);
-    
+
     // Only return cached if it's a full Guild object
     if (cached is Guild) {
       return cached;
@@ -533,9 +533,14 @@ Future<Map<String, String>> generateKeyValues(
   Interaction<ApplicationCommandInteractionData> interaction,
 ) async {
   final client = interaction.manager.client;
-  final guildId = _asSnowflake((interaction as dynamic).guildId) ?? interaction.guild?.id;
-  final channelId = _asSnowflake((interaction as dynamic).channelId) ?? interaction.channel?.id;
-  final invokingUserId = _asSnowflake(interaction.user?.id) ?? _asSnowflake(interaction.member?.id);
+  final guildId =
+      _asSnowflake((interaction as dynamic).guildId) ?? interaction.guild?.id;
+  final channelId =
+      _asSnowflake((interaction as dynamic).channelId) ??
+      interaction.channel?.id;
+  final invokingUserId =
+      _asSnowflake(interaction.user?.id) ??
+      _asSnowflake(interaction.member?.id);
 
   // Parallelize data fetching
   final results = await Future.wait([
@@ -566,7 +571,8 @@ Future<Map<String, String>> generateKeyValues(
   final guildIdText = guildId?.toString() ?? '';
   final channelIdText = channelId?.toString() ?? '';
   final guildName = guild?.name ?? (guildId != null ? "Unknown Guild" : "DM");
-  final userName = user?.user?.username ?? interaction.user?.username ?? "Unknown User";
+  final userName =
+      user?.user?.username ?? interaction.user?.username ?? "Unknown User";
 
   final count = await getGuildMemberCount(
     guild ?? interaction.guild,
@@ -583,7 +589,10 @@ Future<Map<String, String>> generateKeyValues(
       channelType = (interaction.channel as dynamic).type.value.toString();
     }
   } catch (_) {}
-  String channelMention = (channel ?? interaction.channel) != null ? "<#${(channel ?? interaction.channel)!.id}>" : "";
+  String channelMention =
+      (channel ?? interaction.channel) != null
+          ? "<#${(channel ?? interaction.channel)!.id}>"
+          : "";
 
   String userAvatarUrl = "https://cdn.discordapp.com/embed/avatars/0.png";
   String userBannerUrl = '';
@@ -644,24 +653,29 @@ Future<Map<String, String>> generateKeyValues(
     "member.id": invokingUserIdText,
     "member.nick": user?.nick ?? '',
     "member.avatar": memberAvatarUrl,
-    "member.displayName": user?.nick ?? user?.user?.globalName ?? user?.user?.username ?? '',
-    "displayName": user?.nick ?? user?.user?.globalName ?? user?.user?.username ?? '',
+    "member.displayName":
+        user?.nick ?? user?.user?.globalName ?? user?.user?.username ?? '',
+    "displayName":
+        user?.nick ?? user?.user?.globalName ?? user?.user?.username ?? '',
     "interaction.member.id": invokingUserIdText,
     "interaction.member.nick": user?.nick ?? '',
     "interaction.member.avatar": memberAvatarUrl,
-    "interaction.member.displayName": user?.nick ?? user?.user?.globalName ?? user?.user?.username ?? '',
+    "interaction.member.displayName":
+        user?.nick ?? user?.user?.globalName ?? user?.user?.username ?? '',
     "author.id": invokingUserIdText,
     "author.username": user?.user?.username ?? "Unknown User",
     "author.tag": user?.user?.discriminator ?? "Unknown User",
     "author.avatar": userAvatarUrl,
     "author.banner": userBannerUrl,
-    "author.displayName": user?.nick ?? user?.user?.globalName ?? user?.user?.username ?? '',
+    "author.displayName":
+        user?.nick ?? user?.user?.globalName ?? user?.user?.username ?? '',
     "interaction.user.id": invokingUserIdText,
     "interaction.user.username": user?.user?.username ?? "Unknown User",
     "interaction.user.tag": user?.user?.discriminator ?? "Unknown User",
     "interaction.user.avatar": userAvatarUrl,
     "interaction.user.banner": userBannerUrl,
-    "interaction.user.displayName": user?.user?.globalName ?? user?.user?.username ?? '',
+    "interaction.user.displayName":
+        user?.user?.globalName ?? user?.user?.username ?? '',
     "guildName": guildName,
     "guild.name": guildName,
     "channelName": channelName,

@@ -118,7 +118,7 @@ Future<Map<String, String>> editMessageAction(
             (footerJson['icon_url'] ?? '').toString();
         if (footerText.isNotEmpty || footerIcon.isNotEmpty) {
           embed.footer = EmbedFooterBuilder(
-            text: footerText,
+            text: footerText.isEmpty ? '\u200B' : footerText,
             iconUrl: footerIcon.isNotEmpty ? Uri.tryParse(footerIcon) : null,
           );
         }
@@ -139,9 +139,9 @@ Future<Map<String, String>> editMessageAction(
             ) ??
             (authorJson['author_icon_url'] ?? authorJson['icon_url'] ?? '')
                 .toString();
-        if (authorName.isNotEmpty) {
+        if (authorName.isNotEmpty || authorUrl.isNotEmpty || authorIcon.isNotEmpty) {
           embed.author = EmbedAuthorBuilder(
-            name: authorName,
+            name: authorName.isEmpty ? '\u200B' : authorName,
             url: authorUrl.isNotEmpty ? Uri.tryParse(authorUrl) : null,
             iconUrl: authorIcon.isNotEmpty ? Uri.tryParse(authorIcon) : null,
           );

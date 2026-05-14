@@ -11,7 +11,15 @@ EventExecutionContext buildUserUpdateEventContext(UserUpdateEvent event) {
     extra: <String, String>{
       'user.id': _idString(user?.id),
       'user.username': (user?.username ?? '').toString(),
-      'user.avatar': (user?.avatar?.url?.toString() ?? '').toString(),
+      'user.avatar': user != null
+          ? makeAvatarUrl(
+            user.id.toString(),
+            avatarId: (user as dynamic).avatar?.hash,
+            isAnimated: (user as dynamic).avatar?.isAnimated ?? false,
+            legacyFormat: 'webp',
+            discriminator: (user as dynamic).discriminator,
+          )
+          : '',
       'user.banner': (user?.banner?.url?.toString() ?? '').toString(),
       'user.accentColor': (user?.accentColor?.toString() ?? '').toString(),
     },

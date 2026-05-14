@@ -11,7 +11,15 @@ EventExecutionContext buildPresenceUpdateEventContext(
     'user.name': fullUser?.username ?? '',
     'user.username': fullUser?.username ?? '',
     'user.tag': fullUser?.discriminator ?? '',
-    'user.avatar': fullUser?.avatar.url.toString() ?? '',
+    'user.avatar': fullUser != null
+        ? makeAvatarUrl(
+          fullUser.id.toString(),
+          avatarId: fullUser.avatar.hash,
+          isAnimated: fullUser.avatar.isAnimated,
+          legacyFormat: 'webp',
+          discriminator: fullUser.discriminator,
+        )
+        : '',
     'presence.status': event.status?.value.toString() ?? '',
     'presence.activity.count': activities.length.toString(),
     'presence.client.desktop':
