@@ -81,7 +81,7 @@ Future<Map<String, String>> _guildExtra(
   required Nyxx? client,
 }) async {
   if (guild == null) return <String, String>{};
-  
+
   final count = await getGuildMemberCount(
     guild,
     client: client,
@@ -118,27 +118,37 @@ String _roleColorString(dynamic role) {
 
   try {
     final dynamic color = role?.color;
+
     if (color == null) {
       return '';
     }
+
     if (color is num || color is String) {
       return color.toString();
     }
+
     final dynamic value = color.value;
+
     if (value != null) {
       return value.toString();
     }
+
     return color.toString();
   } catch (_) {
     return '';
   }
 }
 
-Map<String, String> _reactionEmojiExtra(dynamic raw, dynamic emoji) {
+Map<String, String> _reactionEmojiExtra(
+  dynamic raw,
+  dynamic emoji,
+) {
   bool animated = false;
+
   try {
     animated = (emoji?.isAnimated ?? false) == true;
   } catch (_) {}
+
   return <String, String>{
     'message.id': _idString(raw.messageId),
     'reaction.emoji.name': (emoji?.name ?? '').toString(),
@@ -151,131 +161,269 @@ Map<String, String> _memberBasicExtra(
   String memberId,
   String? username,
   String? discriminator,
-) => <String, String>{
-  'member.id': memberId,
-  'member.name': username ?? '',
-  'member.username': username ?? '',
-  'member.tag': discriminator ?? '',
-};
+) =>
+    <String, String>{
+      'member.id': memberId,
+      'member.name': username ?? '',
+      'member.username': username ?? '',
+      'member.tag': discriminator ?? '',
+    };
 
 Map<String, String> _inviteExtra({
   required String code,
   required String channelId,
   required String inviterId,
-}) => <String, String>{
-  'invite.code': code,
-  'invite.channelId': channelId,
-  'invite.inviterId': inviterId,
-};
+}) =>
+    <String, String>{
+      'invite.code': code,
+      'invite.channelId': channelId,
+      'invite.inviterId': inviterId,
+    };
 
 Map<String, String> _pollVoteExtra({
   required Snowflake messageId,
   required int answerId,
-}) => <String, String>{
-  'message.id': messageId.toString(),
-  'poll.answer.id': answerId.toString(),
-};
+}) =>
+    <String, String>{
+      'message.id': messageId.toString(),
+      'poll.answer.id': answerId.toString(),
+    };
 
-Map<String, String> _messageContentExtra(Message message, {PartialMember? member}) {
+Map<String, String> _messageContentExtra(
+  Message message, {
+  PartialMember? member,
+}) {
   final author = message.author;
   final content = message.content;
-  final words = content.trim().split(RegExp(r'\s+'));
-  final mentionIds = message.mentions.map((u) => u.id.toString()).toList();
-  final roleMentionIds =
-      message.roleMentionIds.map((id) => id.toString()).toList();
+
+  final words = content
+      .trim()
+      .split(RegExp(r'\s+'))
+      .where((word) => word.isNotEmpty)
+      .toList();
+
+  final mentionIds = message.mentions
+      .map((u) => u.id.toString())
+      .take(10)
+      .toList();
+
+  final roleMentionIds = message.roleMentionIds
+      .map((id) => id.toString())
+      .take(10)
+      .toList();
+
   final isBot = author is User ? author.isBot : false;
+
   final authorId = author.id.toString();
   final authorName = author.username;
-  final authorTag = author is User ? author.discriminator : '';
-  final authorAvatar = author is User ? (author.avatar.url.toString()) : '';
+
+  final authorTag =
+      author is User ? author.discriminator : '';
+
+  final authorAvatar = author is User
+      ? author.avatar.url.toString()
+      : '';
 
   String authorBanner = '';
   String userCreatedAt = '';
   String userBannerColor = '';
+
   if (author is User) {
-    authorBanner = author.banner?.url.toString() ?? '';
-    userCreatedAt = author.id.timestamp.toIso8601String();
+    authorBanner =
+        author.banner?.url.toString() ?? '';
+
+    userCreatedAt =
+        author.id.timestamp.toIso8601String();
+
     final accentColor = author.accentColor;
+
     if (accentColor != null) {
       userBannerColor =
           '#${accentColor.value.toRadixString(16).padLeft(6, '0')}';
     }
   }
 
+  final safeContent = content.length > 4000
+      ? content.substring(0, 4000)
+      : content;
+
+  final attachmentUrls = message.attachments
+      .map((a) => a.url.toString())
+      .take(10)
+      .join(',');
+
   final extra = <String, String>{
     'message.id': message.id.toString(),
-    'message.content': content,
-    'message.word.count': words.length.toString(),
+
+    'message.content': safeContent,
+
+    'message.word.count':
+        words.length.toString(),
+
     'message.isBot': isBot.toString(),
-    'message.channelId': message.channelId.toString(),
-    'message.isDM': (message.channel is DmChannel).toString(),
-    'message.isSystem': (message.type != MessageType.normal).toString(),
-    'message.type': message.type.value.toString(),
-    'message.mentions': mentionIds.join(','),
-    'message.mention.count': mentionIds.length.toString(),
-    'message.timestamp': message.timestamp.millisecondsSinceEpoch.toString(),
-    'message.isEdited': (message.editedTimestamp != null).toString(),
-    'message.isPinned': message.isPinned.toString(),
-    'message.attachments': message.attachments
-        .map((a) => a.url.toString())
-        .join(','),
-    'message.attachments.count': message.attachments.length.toString(),
-    'message.embeds.count': message.embeds.length.toString(),
-    'message.roleMentions': roleMentionIds.join(','),
-    'message.roleMentions.count': roleMentionIds.length.toString(),
-    'message.mentionsEveryone': message.mentionsEveryone.toString(),
+
+    'message.channelId':
+        message.channelId.toString(),
+
+    'message.isDM':
+        (message.channel is DmChannel)
+            .toString(),
+
+    'message.isSystem':
+        (message.type != MessageType.normal)
+            .toString(),
+
+    'message.type':
+        message.type.value.toString(),
+
+    'message.mentions':
+        mentionIds.join(','),
+
+    'message.mention.count':
+        mentionIds.length.toString(),
+
+    'message.timestamp':
+        message.timestamp
+            .millisecondsSinceEpoch
+            .toString(),
+
+    'message.isEdited':
+        (message.editedTimestamp != null)
+            .toString(),
+
+    'message.isPinned':
+        message.isPinned.toString(),
+
+    'message.attachments':
+        attachmentUrls,
+
+    'message.attachments.count':
+        message.attachments.length.toString(),
+
+    'message.embeds.count':
+        message.embeds.length.toString(),
+
+    'message.roleMentions':
+        roleMentionIds.join(','),
+
+    'message.roleMentions.count':
+        roleMentionIds.length.toString(),
+
+    'message.mentionsEveryone':
+        message.mentionsEveryone.toString(),
+
     'author.id': authorId,
     'author.name': authorName,
     'author.username': authorName,
-    'author.globalName': author is User ? (author.globalName ?? authorName) : authorName,
+
+    'author.globalName': author is User
+        ? (author.globalName ?? authorName)
+        : authorName,
+
     'author.tag': authorTag,
+
     'author.isBot': isBot.toString(),
+
     'author.avatar': authorAvatar,
+
     'author.banner': authorBanner,
+
     'userId': authorId,
     'userName': authorName,
     'userAvatar': authorAvatar,
+
     'user.id': authorId,
     'user.name': authorName,
     'user.username': authorName,
-    'user.globalName': author is User ? (author.globalName ?? authorName) : authorName,
+
+    'user.globalName': author is User
+        ? (author.globalName ?? authorName)
+        : authorName,
+
     'user.tag': authorTag,
+
     'user.avatar': authorAvatar,
+
     'user.banner': authorBanner,
+
     'user.createdAt': userCreatedAt,
+
     'user.bannerColor': userBannerColor,
+
     'interaction.user.id': authorId,
-    'interaction.user.username': authorName,
-    'interaction.user.tag': authorTag,
-    'interaction.user.avatar': authorAvatar,
+
+    'interaction.user.username':
+        authorName,
+
+    'interaction.user.tag':
+        authorTag,
+
+    'interaction.user.avatar':
+        authorAvatar,
+
     if (member is Member) ...{
       'member.id': member.id.toString(),
+
       'member.nick': member.nick ?? '',
-      'member.avatar': member.avatar?.url.toString() ?? '',
-      'member.joinedAt': member.joinedAt.toIso8601String(),
-      'member.roles': member.roleIds.map((id) => id.toString()).join(','),
-      'member.isBooster': (member.premiumSince != null).toString(),
-      'member.isAdmin': member.permissions?.has(Permissions.administrator) == true
-          ? 'true'
-          : 'false',
+
+      'member.avatar':
+          member.avatar?.url.toString() ?? '',
+
+      'member.joinedAt':
+          member.joinedAt.toIso8601String(),
+
+      'member.roles': member.roleIds
+          .map((id) => id.toString())
+          .take(50)
+          .join(','),
+
+      'member.isBooster':
+          (member.premiumSince != null)
+              .toString(),
+
+      'member.isAdmin':
+          member.permissions?.has(
+                    Permissions.administrator,
+                  ) ==
+                  true
+              ? 'true'
+              : 'false',
     },
   };
 
   if (message.editedTimestamp != null) {
     extra['message.editedTimestamp'] =
-        message.editedTimestamp!.millisecondsSinceEpoch.toString();
-  }
-  final referencedMessage = message.referencedMessage;
-  if (referencedMessage != null) {
-    extra['message.referencedMessage.id'] = referencedMessage.id.toString();
+        message.editedTimestamp!
+            .millisecondsSinceEpoch
+            .toString();
   }
 
-  for (var idx = 0; idx < words.length && idx < 10; idx++) {
-    extra['message.content[$idx]'] = words[idx];
+  final referencedMessage =
+      message.referencedMessage;
+
+  if (referencedMessage != null) {
+    extra['message.referencedMessage.id'] =
+        referencedMessage.id.toString();
   }
-  for (var idx = 0; idx < mentionIds.length && idx < 10; idx++) {
-    extra['message.mentions[$idx]'] = mentionIds[idx];
+
+  for (
+    var idx = 0;
+    idx < words.length && idx < 10;
+    idx++
+  ) {
+    extra['message.content[$idx]'] =
+        words[idx];
   }
+
+  for (
+    var idx = 0;
+    idx < mentionIds.length && idx < 10;
+    idx++
+  ) {
+    extra['message.mentions[$idx]'] =
+        mentionIds[idx];
+  }
+
   return extra;
 }
 
@@ -283,21 +431,27 @@ Snowflake? _asSnowflake(dynamic value) {
   if (value == null) {
     return null;
   }
+
   if (value is Snowflake) {
     return value;
   }
+
   if (value is int) {
     return Snowflake(value);
   }
+
   final parsed = int.tryParse(value.toString());
+
   if (parsed == null) {
     return null;
   }
+
   return Snowflake(parsed);
 }
 
 String _idString(dynamic value) {
-  return _asSnowflake(value)?.toString() ?? (value?.toString() ?? '');
+  return _asSnowflake(value)?.toString() ??
+      (value?.toString() ?? '');
 }
 
 EventExecutionContext _baseEventContext({
@@ -308,9 +462,11 @@ EventExecutionContext _baseEventContext({
   Snowflake? messageId,
   Interaction? interaction,
   PartialMember? member,
-  Map<String, String> extra = const <String, String>{},
+  Map<String, String> extra =
+      const <String, String>{},
 }) {
   final now = DateTime.now();
+
   return EventExecutionContext(
     eventName: eventName,
     guildId: guildId,
@@ -321,7 +477,8 @@ EventExecutionContext _baseEventContext({
     member: member,
     variables: <String, String>{
       'event.name': eventName,
-      'timestamp': now.millisecondsSinceEpoch.toString(),
+      'timestamp':
+          now.millisecondsSinceEpoch.toString(),
       'actualTime': now.toIso8601String(),
       'guildId': guildId?.toString() ?? '',
       'channelId': channelId?.toString() ?? '',
@@ -335,17 +492,22 @@ String _getChannelName(Channel channel) {
   if (channel is GuildTextChannel) {
     return channel.name;
   }
+
   if (channel is GuildVoiceChannel) {
     return channel.name;
   }
+
   if (channel is ThreadsOnlyChannel) {
     return channel.name;
   }
+
   if (channel is GuildStageChannel) {
     return channel.name;
   }
+
   if (channel is DmChannel) {
     return 'DM';
   }
+
   return 'Unknown Channel';
 }
