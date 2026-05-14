@@ -77,111 +77,90 @@ class EventDispatcher {
       }),
     );
 
-    // Common event listeners
-    subscriptions.add(
-      gateway.onGuildMemberAdd.listen((event) {
-        callbacks.onDebugLog?.call(
-          'Event received: guildMemberAdd',
-          botId: botId,
-        );
-        _dispatchEvent(
-          'guildMemberAdd',
-          event,
-          buildGuildMemberAddEventContext,
-          botId,
-          gateway,
-          startedAt,
-        );
-      }),
-    );
-    subscriptions.add(
-      gateway.onGuildMemberRemove.listen((event) {
-        callbacks.onDebugLog?.call(
-          'Event received: guildMemberRemove',
-          botId: botId,
-        );
-        _dispatchEvent(
-          'guildMemberRemove',
-          event,
-          buildGuildMemberRemoveEventContext,
-          botId,
-          gateway,
-          startedAt,
-        );
-      }),
-    );
-    subscriptions.add(
-      gateway.onMessageUpdate.listen((event) {
-        callbacks.onDebugLog?.call(
-          'Event received: messageUpdate',
-          botId: botId,
-        );
-        _dispatchEvent(
-          'messageUpdate',
-          event,
-          buildMessageUpdateEventContext,
-          botId,
-          gateway,
-          startedAt,
-        );
-      }),
-    );
-    subscriptions.add(
-      gateway.onMessageDelete.listen((event) {
-        callbacks.onDebugLog?.call(
-          'Event received: messageDelete',
-          botId: botId,
-        );
-        _dispatchEvent(
-          'messageDelete',
-          event,
-          buildMessageDeleteEventContext,
-          botId,
-          gateway,
-          startedAt,
-        );
-      }),
-    );
-    subscriptions.add(
-      gateway.onChannelUpdate.listen((event) {
-        callbacks.onDebugLog?.call(
-          'Event received: channelUpdate',
-          botId: botId,
-        );
-        _dispatchEvent(
-          'channelUpdate',
-          event,
-          buildChannelUpdateEventContext,
-          botId,
-          gateway,
-          startedAt,
-        );
-      }),
-    );
-    subscriptions.add(
-      gateway.onInviteCreate.listen((event) {
-        callbacks.onDebugLog?.call(
-          'Event received: inviteCreate',
-          botId: botId,
-        );
-        _dispatchEvent(
-          'inviteCreate',
-          event,
-          buildInviteCreateEventContext,
-          botId,
-          gateway,
-          startedAt,
-        );
-      }),
-    );
+    // Helper to register simple events
+    void reg(
+      String eventName,
+      Stream<dynamic> stream,
+      Function buildContext,
+    ) {
+      subscriptions.add(
+        stream.listen((event) {
+          callbacks.onDebugLog?.call(
+            'Event received: $eventName',
+            botId: botId,
+          );
+          _dispatchEvent(eventName, event, buildContext, botId, gateway, startedAt);
+        }),
+      );
+    }
+
+    // Guilds
+    reg('guildCreate', gateway.onGuildCreate, buildGuildCreateEventContext);
+    reg('guildUpdate', gateway.onGuildUpdate, buildGuildUpdateEventContext);
+    reg('guildDelete', gateway.onGuildDelete, buildGuildDeleteEventContext);
+    reg('guildAuditLogCreate', gateway.onGuildAuditLogCreate, buildGuildAuditLogCreateEventContext);
+
+    // Channels
+    reg('channelCreate', gateway.onChannelCreate, buildChannelCreateEventContext);
+    reg('channelUpdate', gateway.onChannelUpdate, buildChannelUpdateEventContext);
+    reg('channelDelete', gateway.onChannelDelete, buildChannelDeleteEventContext);
+    reg('channelPinsUpdate', gateway.onChannelPinsUpdate, buildChannelPinsUpdateEventContext);
+
+    // Threads
+    reg('threadCreate', gateway.onThreadCreate, buildThreadCreateEventContext);
+    reg('threadUpdate', gateway.onThreadUpdate, buildThreadUpdateEventContext);
+    reg('threadDelete', gateway.onThreadDelete, buildThreadDeleteEventContext);
+    reg('threadMemberUpdate', gateway.onThreadMemberUpdate, buildThreadMemberUpdateEventContext);
+    reg('threadMembersUpdate', gateway.onThreadMembersUpdate, buildThreadMembersUpdateEventContext);
+
+    // Members
+    reg('guildMemberAdd', gateway.onGuildMemberAdd, buildGuildMemberAddEventContext);
+    reg('guildMemberUpdate', gateway.onGuildMemberUpdate, buildGuildMemberUpdateEventContext);
+    reg('guildMemberRemove', gateway.onGuildMemberRemove, buildGuildMemberRemoveEventContext);
+
+    // Roles
+    reg('guildRoleCreate', gateway.onGuildRoleCreate, buildGuildRoleCreateEventContext);
+    reg('guildRoleUpdate', gateway.onGuildRoleUpdate, buildGuildRoleUpdateEventContext);
+    reg('guildRoleDelete', gateway.onGuildRoleDelete, buildGuildRoleDeleteEventContext);
+
+    // Messages (Update and Delete, Create is special)
+    reg('messageUpdate', gateway.onMessageUpdate, buildMessageUpdateEventContext);
+    reg('messageDelete', gateway.onMessageDelete, buildMessageDeleteEventContext);
+    // reg('messageBulkDelete', gateway.onMessageBulkDelete, buildMessageBulkDeleteEventContext); // If needed
+
+    // Reactions
+    reg('messageReactionAdd', gateway.onMessageReactionAdd, buildMessageReactionAddEventContext);
+    reg('messageReactionRemove', gateway.onMessageReactionRemove, buildMessageReactionRemoveEventContext);
+    reg('messageReactionRemoveAll', gateway.onMessageReactionRemoveAll, buildMessageReactionRemoveAllEventContext);
+    reg('messageReactionRemoveEmoji', gateway.onMessageReactionRemoveEmoji, buildMessageReactionRemoveEmojiEventContext);
+
+    // Polls
+    reg('messagePollVoteAdd', gateway.onMessagePollVoteAdd, buildMessagePollVoteAddEventContext);
+    reg('messagePollVoteRemove', gateway.onMessagePollVoteRemove, buildMessagePollVoteRemoveEventContext);
+
+    // Invites
+    reg('inviteCreate', gateway.onInviteCreate, buildInviteCreateEventContext);
+    reg('inviteDelete', gateway.onInviteDelete, buildInviteDeleteEventContext);
+
+    // Presence & User
+    reg('presenceUpdate', gateway.onPresenceUpdate, buildPresenceUpdateEventContext);
+    reg('userUpdate', gateway.onUserUpdate, buildUserUpdateEventContext);
+
+    // Voice
+    reg('voiceStateUpdate', gateway.onVoiceStateUpdate, buildVoiceStateUpdateEventContext);
+    reg('voiceServerUpdate', gateway.onVoiceServerUpdate, buildVoiceServerUpdateEventContext);
+    reg('voiceChannelEffectSend', gateway.onVoiceChannelEffectSend, buildVoiceChannelEffectSendEventContext);
+
+    // Typing
+    reg('typingStart', gateway.onTypingStart, buildTypingStartEventContext);
 
     return subscriptions;
   }
 
-  void _dispatchEvent<T>(
+  void _dispatchEvent(
     String eventName,
-    T event,
-    EventExecutionContext Function(T) buildContext,
+    dynamic event,
+    Function buildContext,
     String botId,
     NyxxGateway gateway,
     DateTime? startedAt,
@@ -198,10 +177,10 @@ class EventDispatcher {
     );
   }
 
-  Future<void> _handleEvent<T>(
+  Future<void> _handleEvent(
     String eventName,
-    T event,
-    EventExecutionContext Function(T) buildContext, {
+    dynamic event,
+    Function buildContext, {
     required String botId,
     required NyxxGateway gateway,
     required DateTime? startedAt,
@@ -254,7 +233,12 @@ class EventDispatcher {
       return;
     }
 
-    final context = buildContext(event);
+    final dynamic contextResult = (buildContext as dynamic)(event);
+    final EventExecutionContext context =
+        contextResult is Future<EventExecutionContext>
+            ? await contextResult
+            : contextResult;
+
     callbacks.onDebugLog?.call(
       'Built context for event: $eventName',
       botId: botId,

@@ -12,6 +12,7 @@ part 'events/guild_create_event.dart';
 part 'events/guild_delete_event.dart';
 part 'events/guild_member_add_event.dart';
 part 'events/guild_member_remove_event.dart';
+part 'events/guild_member_update_event.dart';
 part 'events/guild_role_create_event.dart';
 part 'events/guild_role_delete_event.dart';
 part 'events/guild_role_update_event.dart';
