@@ -3,32 +3,27 @@ name: CI Tests
 on:
   pull_request:
     branches: ["master", "main"]
-
-env:
-  FLUTTER_VERSION: "3.41.2"
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  push:
+    branches: ["master", "main"]
 
 jobs:
   analyze_and_test:
-    runs-on: vps01
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
-      - name: Install Flutter
-        uses: subosito/flutter-action@v2
+      - name: Setup Dart
+        uses: dart-lang/setup-dart@v1
         with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-          channel: "stable"
-          cache: true
-          pub-cache: false
+          sdk: stable
 
-      - name: Install workspace dependencies
-        run: flutter pub get
+      - name: Install dependencies
+        run: dart pub get
 
-      - name: Analyze shared package
-        run: dart analyze
+      - name: Analyze project
+        run: dart analyze --fatal-infos
 
-      - name: Run shared tests
+      - name: Run tests
         run: dart test
