@@ -1,4 +1,4 @@
-﻿import 'package:nyxx/nyxx.dart';
+import 'package:nyxx/nyxx.dart';
 import 'package:bot_creator_shared/utils/global.dart';
 import 'permission_checks.dart';
 
@@ -80,7 +80,7 @@ Future<Map<String, String>> updateAutoModAction(
     final maxMentionsRaw = int.tryParse(
       (payload['maxMentions'] ?? '').toString(),
     );
-    final maxMentions = (maxMentionsRaw ?? 5).clamp(1, 50);
+    final maxMentions = ((maxMentionsRaw ?? 5).clamp(1, 50)).toInt();
     final reason = payload['reason']?.toString().trim();
 
     final guild = await fetchGuildCached(client, guildId);
