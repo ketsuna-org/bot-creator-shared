@@ -1,4 +1,4 @@
-﻿// We will create a "new list" based on the current list provided. A special function will be used inside to format the current list
+// We will create a "new list" based on the current list provided. A special function will be used inside to format the current list
 
 Map<String, dynamic> formatList(
   List<dynamic> list,
@@ -6,25 +6,31 @@ Map<String, dynamic> formatList(
   int itemPerPage = 10,
   int page = 1,
 }) {
-  final startIndex = (page - 1) * itemPerPage;
-  final endIndex = startIndex + itemPerPage;
-  final paginatedList = list.sublist(
-    startIndex,
-    endIndex > list.length ? list.length : endIndex,
-  );
+  // Defensive: ensure sensible pagination parameters
+  final safeItemPerPage = itemPerPage <= 0 ? 1 : itemPerPage;
+  final safePage = page < 1 ? 1 : page;
 
-  final computedList =
-      paginatedList.map((item) {
-        if (format.isEmpty) {
-          return item.toString();
-        }
+  final startIndex = (safePage - 1) * safeItemPerPage;
+  final endIndex = startIndex + safeItemPerPage;
 
-        return format.replaceAll('{{item}}', item.toString());
-      }).toList();
+  final paginatedList = (startIndex >= list.length)
+      ? <dynamic>[]
+      : list.sublist(
+          startIndex,
+          endIndex > list.length ? list.length : endIndex,
+        );
+
+  final computedList = paginatedList.map((item) {
+    if (format.isEmpty) {
+      return item.toString();
+    }
+
+    return format.replaceAll('{{item}}', item.toString());
+  }).toList();
 
   return {
-    'page': page.toString(),
-    'totalPages': (list.length / itemPerPage).ceil().toString(),
+    'page': safePage.toString(),
+    'totalPages': (list.length / safeItemPerPage).ceil().toString(),
     'computedList': computedList,
   };
 }
