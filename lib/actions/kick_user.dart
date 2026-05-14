@@ -1,4 +1,4 @@
-﻿import 'package:nyxx/nyxx.dart';
+import 'package:nyxx/nyxx.dart';
 import 'package:bot_creator_shared/actions/permission_checks.dart';
 import 'package:bot_creator_shared/utils/global.dart';
 
@@ -11,7 +11,7 @@ Snowflake? _toSnowflake(dynamic value) {
 }
 
 Future<Map<String, String>> kickUserAction(
-  NyxxGateway client, {
+  Nyxx client, {
   required Snowflake? guildId,
   required Map<String, dynamic> payload,
 }) async {
@@ -32,22 +32,34 @@ Future<Map<String, String>> kickUserAction(
       requiredPermission: Permissions.kickMembers,
       actionLabel: 'kick',
     );
+
     if (permError != null) {
       return {'error': permError, 'userId': ''};
     }
 
-    final reason = payload['reason']?.toString().trim();
+    final reasonRaw = payload['reason'];
+    final reason = reasonRaw?.toString().trim();
+
     final guild = await fetchGuildCached(client, guildId);
-    if (guild == null) return {'error': 'Guild not found', 'userId': ''};
-    await guild.members[userId].delete(
-      auditLogReason:
-          (reason != null && reason.isNotEmpty)
-              ? reason
-              : 'Kick via BotCreator action',
+    if (guild == null) {
+      return {'error': 'Guild not found', 'userId': ''};
+    }
+
+    await client.httpEndpoints.kickMember(
+      guildId,
+      userId,
+      reason: (reason != null && reason.isNotEmpty)
+          ? reason
+          : 'Kick via BotCreator action',
     );
 
-    return {'userId': userId.toString()};
+    return {
+      'userId': userId.toString(),
+    };
   } catch (error) {
-    return {'error': 'Failed to kick user: $error', 'userId': ''};
+    return {
+      'error': 'Failed to kick user: $error',
+      'userId': '',
+    };
   }
 }
