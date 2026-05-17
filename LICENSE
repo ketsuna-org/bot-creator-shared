@@ -1,6 +1,20 @@
 Copyright (c) 2026 Bot-Creator. All rights reserved.
 
-Proprietary and Confidential.
-This code and all its intellectual property remain the exclusive property of Bot-Creator.
+Proprietary and Source-Available License.
 
-Unauthorized copying, distribution, or modification of this code, via any medium, is strictly prohibited.
+1. SOLE COMMERCIAL RIGHTS
+Bot-Creator retains the SOLE and EXCLUSIVE right to commercially exploit, sell, 
+sub-license, host, or monetize this software and its derivatives. Any commercial 
+use, commercial hosting, or monetization of this software by any third party 
+is strictly prohibited.
+
+2. PERMITTED NON-COMMERCIAL USE & MODIFICATIONS
+Third parties are granted the right to view, clone, modify, and use the source 
+code for strictly personal, educational, and non-commercial purposes only.
+
+3. INBOUND CONTRIBUTION LICENSE GRANT
+By submitting any contribution (including but not limited to Pull Requests, bug 
+fixes, or feature implementations) to Bot-Creator, you hereby grant Bot-Creator 
+a perpetual, worldwide, irrevocable, royalty-free, transferable, and 
+sublicensable license to use, modify, distribute, and commercially exploit 
+your contribution in any way, without restriction, compensation, or credit.
