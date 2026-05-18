@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 import 'package:nyxx/nyxx.dart';
 import 'package:bot_creator_shared/bot/bot_config.dart';
+import 'package:pedantic/pedantic.dart';
 
 /// Manages Discord presence and status rotation for a bot session.
 class PresenceManager {
@@ -109,7 +110,9 @@ class PresenceManager {
     BotStatusConfig status,
     String presenceStatus,
   ) async {
-    final text = _sanitizeActivityText(status.name);
+    // Protege contra valores nulos vindos de BotStatusConfig
+    final name = status.name ?? '';
+    final text = _sanitizeActivityText(name);
     if (text.isEmpty) return;
 
     final streamUrl = _parseStreamingUrl(status.url ?? '');
@@ -122,9 +125,9 @@ class PresenceManager {
           activities: <ActivityBuilder>[
             ActivityBuilder(
               name: text,
-              type: _mapActivityType(status.type, streamUrl: streamUrl),
-              url: streamUrl,
-              state: status.state.isNotEmpty ? status.state : null,
+              type: _mapActivityType(status.type ?? 'playing', streamUrl: streamUrl),
+              url: streamUrl?.toString(),
+              state: (status.state ?? '').isNotEmpty ? status.state : null,
             ),
           ],
         ),
