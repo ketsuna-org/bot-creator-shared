@@ -20,45 +20,46 @@ Future<Map<String, String>> registerGuildCommandsAction(
           .toList() ??
       [];
 
-  final matchingCommands =
-      commands.where((cmd) {
-        final type = cmd['type']?.toString();
-        if (type != 'chatInput') return false;
+  final matchingCommands = commands.where((cmd) {
+    final type = cmd['type']?.toString();
+    if (type != 'chatInput') return false;
 
-        final data = Map<String, dynamic>.from(
-          (cmd['data'] as Map?)?.cast<String, dynamic>() ?? const {},
-        );
+    final rawData = cmd['data'];
+    final data = (rawData is Map)
+        ? Map<String, dynamic>.from(rawData.cast<String, dynamic>())
+        : <String, dynamic>{};
 
-        // Only fetch commands marked as localOnly.
-        // Usually standard slash commands are globally pushed via sync anyway.
-        if (data['legacyLocalOnly'] != true) return false;
+    // Only fetch commands marked as localOnly.
+    if (data['legacyLocalOnly'] != true) return false;
 
-        final name = cmd['name']?.toString() ?? '';
-        if (providedCommandNames.isNotEmpty) {
-          if (!providedCommandNames.contains(name)) return false;
-        }
-        return true;
-      }).toList();
+    final name = cmd['name']?.toString() ?? '';
+    if (providedCommandNames.isNotEmpty) {
+      if (!providedCommandNames.contains(name)) return false;
+    }
+    return true;
+  }).toList();
 
   for (final cmd in matchingCommands) {
     final name = cmd['name']?.toString() ?? '';
     final description =
         cmd['description']?.toString() ?? 'No description provided';
-    final data = Map<String, dynamic>.from(
-      (cmd['data'] as Map?)?.cast<String, dynamic>() ?? const {},
-    );
+
+    final rawData = cmd['data'];
+    final data = (rawData is Map)
+        ? Map<String, dynamic>.from(rawData.cast<String, dynamic>())
+        : <String, dynamic>{};
+
     final optionsRaw = data['options'] as List<dynamic>? ?? [];
 
-    final options =
-        optionsRaw.map((opt) {
-          final oMap = opt as Map<String, dynamic>? ?? {};
-          return CommandOptionBuilder(
-            type: CommandOptionType(oMap['type'] as int? ?? 3),
-            name: oMap['name']?.toString() ?? '',
-            description: oMap['description']?.toString() ?? '',
-            isRequired: oMap['required'] == true,
-          );
-        }).toList();
+    final options = optionsRaw.map((opt) {
+      final oMap = (opt is Map<String, dynamic>) ? opt : <String, dynamic>{};
+      return CommandOptionBuilder(
+        type: CommandOptionType(oMap['type'] as int? ?? 3),
+        name: oMap['name']?.toString() ?? '',
+        description: oMap['description']?.toString() ?? '',
+        isRequired: oMap['required'] == true,
+      );
+    }).toList();
 
     try {
       await client.guilds[guildId].commands.create(
