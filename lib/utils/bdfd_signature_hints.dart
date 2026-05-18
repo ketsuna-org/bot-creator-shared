@@ -587,6 +587,8 @@ const Map<String, List<String>> bdfdSignatureHints = <String, List<String>>{
   'istimedout': ['userID (opt)'],
   'memberid': ['index (opt)'],
   'membernick': ['userID (opt)'],
+  'displayname': ['userID (opt)'],
+  'displayName': ['userID (opt)'],
   'stickercount': ['guildID (opt)'],
   'userexists': ['userID'],
   'userinfo': ['userID (opt)', 'field'],

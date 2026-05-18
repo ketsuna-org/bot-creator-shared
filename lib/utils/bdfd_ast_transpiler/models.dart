@@ -570,7 +570,7 @@ const Map<String, String> _inlineRuntimeVariables = <String, String>{
   'authoravatar': '((author.avatar))',
   'authorbanner': '((author.banner))',
   'discriminator': '((author.tag))',
-  'displayname': '((member.nick|author.globalName))',
+  'displayname': '((member.nick|author.displayName|author.username))',
   'isadmin': '((member.isAdmin))',
   'isbot': '((author.isBot))',
   'nickname': '((member.nick))',
