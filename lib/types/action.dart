@@ -153,10 +153,11 @@ class Action {
         ),
         key: json['key'] as String?,
         enabled: json['enabled'] as bool? ?? true,
-        payload: Map<String, dynamic>.from(json['payload'] ?? const {}),
+        payload: (json['payload'] as Map?)?.cast<String, dynamic>() ??
+            <String, dynamic>{},
       )
       ..dependOn.addAll(List<String>.from(json['depend_on'] ?? []))
-      ..error.addAll(Map<String, String>.from(json['error'] ?? {}));
+      ..error.addAll((json['error'] as Map?)?.cast<String, String>() ?? {});
   }
 
   Action copyWith({
