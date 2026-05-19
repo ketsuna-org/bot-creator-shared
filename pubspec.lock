@@ -268,9 +268,10 @@ packages:
   nyxx:
     dependency: "direct main"
     description:
-      path: "../nyxx"
-      relative: true
-    source: path
+      name: nyxx
+      sha256: "8b0dd3a65fb3afad5eb5e85a6d37a3a5c5a1aa2e0d0b52b1474de02fb8bcc3de"
+      url: "https://pub.dev"
+    source: hosted
     version: "6.9.0"
   oauth2:
     dependency: transitive

@@ -1,5 +1,6 @@
 import 'package:bot_creator_shared/events/event_contexts.dart';
 import 'package:bot_creator_shared/utils/template_resolver.dart';
+import 'package:nyxx/src/models/interaction.dart';
 import 'package:test/test.dart';
 
 class _FakeComponentData {
@@ -81,12 +82,16 @@ void main() {
     test('extracts button/select routing fields', () {
       final variables = buildInteractionRuntimeVariables(
         _FakeInteraction(
-          data: _FakeComponentData(customId: 'btn:save', values: ['a', 'b']),
-          user: _FakeUser('42'),
-          channelId: '100',
-          guildId: '200',
-          message: _FakeMessage('300'),
-        ),
+              data: _FakeComponentData(
+                customId: 'btn:save',
+                values: ['a', 'b'],
+              ),
+              user: _FakeUser('42'),
+              channelId: '100',
+              guildId: '200',
+              message: _FakeMessage('300'),
+            )
+            as Interaction<dynamic>,
       );
 
       expect(variables['interaction.customId'], 'btn:save');
@@ -101,12 +106,13 @@ void main() {
     test('extracts string select aliases with BDFD-compatible access', () {
       final variables = buildInteractionRuntimeVariables(
         _FakeInteraction(
-          data: _FakeComponentData(
-            customId: 'select:string',
-            type: 'stringSelect',
-            values: ['alpha', 'beta', 'gamma'],
-          ),
-        ),
+              data: _FakeComponentData(
+                customId: 'select:string',
+                type: 'stringSelect',
+                values: ['alpha', 'beta', 'gamma'],
+              ),
+            )
+            as Interaction<dynamic>,
       );
 
       expect(variables['interaction.stringSelect.value'], 'alpha');
@@ -138,12 +144,13 @@ void main() {
     test('extracts channel select aliases and count', () {
       final variables = buildInteractionRuntimeVariables(
         _FakeInteraction(
-          data: _FakeComponentData(
-            customId: 'select:channel',
-            type: 'channelSelect',
-            values: ['10', '20'],
-          ),
-        ),
+              data: _FakeComponentData(
+                customId: 'select:channel',
+                type: 'channelSelect',
+                values: ['10', '20'],
+              ),
+            )
+            as Interaction<dynamic>,
       );
 
       expect(variables['interaction.channelSelect.channelId'], '10');
@@ -161,17 +168,18 @@ void main() {
     test('extracts modal fields values', () {
       final variables = buildInteractionRuntimeVariables(
         _FakeInteraction(
-          data: _FakeModalData(
-            customId: 'modal:feedback',
-            components: <_FakeModalRow>[
-              _FakeModalRow(<_FakeModalInput>[
-                _FakeModalInput('title', 'Hello'),
-                _FakeModalInput('body', 'World'),
-              ]),
-            ],
-          ),
-          member: _FakeMember(_FakeMemberUser('77')),
-        ),
+              data: _FakeModalData(
+                customId: 'modal:feedback',
+                components: <_FakeModalRow>[
+                  _FakeModalRow(<_FakeModalInput>[
+                    _FakeModalInput('title', 'Hello'),
+                    _FakeModalInput('body', 'World'),
+                  ]),
+                ],
+              ),
+              member: _FakeMember(_FakeMemberUser('77')),
+            )
+            as Interaction<dynamic>,
       );
 
       expect(variables['modal.customId'], 'modal:feedback');

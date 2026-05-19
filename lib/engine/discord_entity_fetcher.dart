@@ -21,7 +21,14 @@ class DiscordEntityFetcher {
 
         case 'member':
           final guildId = _resolveGuildId(variables);
-          if (guildId == null) return;
+          if (guildId == null) {
+            // In DMs or when guild is unknown, fall back to user scope
+            // so that templates like ((member[ID].displayName|user[ID].displayName))
+            // can still resolve the user fallback.
+            final user = await gateway.users.fetch(id);
+            _populateUserVariables(variables, contextId, user);
+            break;
+          }
 
           final member = await gateway.guilds[guildId].members.fetch(id);
           _populateMemberVariables(variables, contextId, member);
@@ -32,7 +39,9 @@ class DiscordEntityFetcher {
 
         case 'channel':
           final channel = await gateway.channels.fetch(id);
-          variables[_key('channel', contextId, 'name')] = _getChannelName(channel);
+          variables[_key('channel', contextId, 'name')] = _getChannelName(
+            channel,
+          );
           variables[_key('channel', contextId, 'id')] = channel.id.toString();
           break;
 
@@ -63,7 +72,9 @@ class DiscordEntityFetcher {
 
   static Snowflake? _resolveGuildId(Map<String, String> variables) {
     final guildIdStr =
-        variables['guild.id'] ?? variables['interaction.guildId'] ?? variables['guildId'];
+        variables['guild.id'] ??
+        variables['interaction.guildId'] ??
+        variables['guildId'];
     final parsed = int.tryParse(guildIdStr ?? '');
     return parsed != null ? Snowflake(parsed) : null;
   }
@@ -83,8 +94,10 @@ class DiscordEntityFetcher {
       avatar: user.avatar,
       discriminator: user.discriminator,
     );
-    variables[_key('user', contextId, 'globalName')] = user.globalName ?? user.username;
-    variables[_key('user', contextId, 'displayName')] = user.globalName ?? user.username;
+    variables[_key('user', contextId, 'globalName')] =
+        user.globalName ?? user.username;
+    variables[_key('user', contextId, 'displayName')] =
+        user.globalName ?? user.username;
     variables[_key('user', contextId, 'createdAt')] =
         user.id.timestamp.toIso8601String();
   }
@@ -105,8 +118,9 @@ class DiscordEntityFetcher {
         member.nick ?? member.user?.globalName ?? member.user?.username ?? '';
     variables[_key('member', contextId, 'joinedAt')] =
         member.joinedAt?.toIso8601String() ?? '';
-    variables[_key('member', contextId, 'roles')] =
-        (member.roleIds ?? []).map((rid) => rid.toString()).join(',');
+    variables[_key('member', contextId, 'roles')] = (member.roleIds ?? [])
+        .map((rid) => rid.toString())
+        .join(',');
   }
 
   // Avatar structure may vary across library versions; using dynamic for safety

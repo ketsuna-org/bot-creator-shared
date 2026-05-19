@@ -5,7 +5,7 @@ EventExecutionContext buildMessageCreateEventContext(MessageCreateEvent event) {
   final guildId = event.guildId;
   final extra = _messageContentExtra(message, member: event.member);
   if (guildId != null) {
-    extra['message.url'] =
+    extra['message.url'] = 
         'https://discord.com/channels/$guildId/${message.channelId}/${message.id}';
   } else {
     extra['message.url'] =

@@ -151,18 +151,18 @@ Map<String, String> _buildSelectInteractionVariables(
   return const <String, String>{};
 }
 
-Map<String, String> buildInteractionRuntimeVariables(dynamic interaction) {
-  final dynamic data = _safeRead(interaction, () => interaction?.data);
-  final dynamic commandType = _safeRead(data, () => data?.type);
-  final dynamic commandId = _safeRead(data, () => data?.id);
-  final commandName = (_safeRead(data, () => data?.name) ?? '').toString();
+Map<String, String> buildInteractionRuntimeVariables(Interaction interaction) {
+  final dynamic data = _safeRead(interaction, () => interaction.data);
+  final dynamic commandType = _safeRead(data, () => data.type);
+  final dynamic commandId = _safeRead(data, () => data.id);
+  final commandName = (_safeRead(data, () => data.name) ?? '').toString();
 
-  final customId = (_safeRead(data, () => data?.customId) ?? '').toString();
+  final customId = (_safeRead(data, () => data.customId) ?? '').toString();
   final values = _stringifyInteractionValues(
-    _safeRead(data, () => data?.values),
+    _safeRead(data, () => data.values),
   );
 
-  final modalComponents = _safeRead(data, () => data?.components);
+  final modalComponents = _safeRead(data, () => data.components);
   final modalInputPairs = <String, String>{};
   if (modalComponents is Iterable) {
     for (final component in modalComponents) {
@@ -183,21 +183,21 @@ Map<String, String> buildInteractionRuntimeVariables(dynamic interaction) {
   }
 
   final userId =
-      _idString(_safeRead(interaction, () => interaction?.user?.id)) != ''
-          ? _idString(_safeRead(interaction, () => interaction?.user?.id))
+      _idString(_safeRead(interaction, () => interaction.user?.id)) != ''
+          ? _idString(_safeRead(interaction, () => interaction.user?.id))
           : _idString(
-            _safeRead(interaction, () => interaction?.member?.user?.id),
+            _safeRead(interaction, () => interaction.member?.user?.id),
           );
   final channelId = _idString(
-    _safeRead(interaction, () => interaction?.channelId) ??
-        _safeRead(interaction, () => interaction?.channel?.id),
+    _safeRead(interaction, () => interaction.channelId) ??
+        _safeRead(interaction, () => interaction.channel?.id),
   );
   final guildId = _idString(
-    _safeRead(interaction, () => interaction?.guildId) ??
-        _safeRead(interaction, () => interaction?.guild?.id),
+    _safeRead(interaction, () => interaction.guildId) ??
+        _safeRead(interaction, () => interaction.guild?.id),
   );
   final messageId = _idString(
-    _safeRead(interaction, () => interaction?.message?.id),
+    _safeRead(interaction, () => interaction.message?.id),
   );
 
   final kind =
@@ -209,7 +209,7 @@ Map<String, String> buildInteractionRuntimeVariables(dynamic interaction) {
           ? 'command'
           : interaction is ApplicationCommandAutocompleteInteraction
           ? 'autocomplete'
-          : interaction.runtimeType.toString();
+          : interaction.type.toString();
 
   return <String, String>{
     'interaction.kind': kind,
@@ -260,6 +260,7 @@ EventExecutionContext buildInteractionCreateEventContext(
     );
     extra['member.joinedAt'] = member.joinedAt.toIso8601String();
     extra['member.roles'] = member.roleIds.map((id) => id.toString()).join(',');
+    extra['member.roles.count'] = member.roleIds.length.toString();
     extra['member.isBooster'] = (member.premiumSince != null).toString();
     if (member.communicationDisabledUntil != null) {
       extra['member.communicationDisabledUntil'] =
