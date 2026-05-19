@@ -4,10 +4,9 @@ import 'package:bot_creator_shared/bot/bot_data_store.dart';
 import 'package:bot_creator_shared/actions/handler.dart';
 import 'package:bot_creator_shared/actions/interaction_response.dart';
 import 'package:bot_creator_shared/types/action.dart';
-import 'package:bot_creator_shared/utils/runtime_variables.dart';
 import 'package:bot_creator_shared/utils/template_resolver.dart';
+import 'package:bot_creator_shared/utils/bdfd_compiler.dart';
 import 'package:bot_creator_shared/engine/bot_engine_callbacks.dart';
-import 'package:bot_creator_shared/engine/discord_entity_fetcher.dart';
 
 /// Helper to execute visual workflows or BDFD actions for both interactions and events.
 class WorkflowExecutor {
@@ -28,12 +27,13 @@ class WorkflowExecutor {
     required Map<String, String> runtimeVariables,
     Snowflake? fallbackChannelId,
     Snowflake? fallbackGuildId,
+    String? replayLabel,
   }) async {
     callbacks.onDebugLog?.call(
       'executeActions started with ${actions.length} actions',
       botId: botId,
     );
-    
+
     if (actions.isEmpty) {
       callbacks.onDebugLog?.call(
         'No actions to execute, returning empty results',
@@ -42,16 +42,9 @@ class WorkflowExecutor {
       return const {};
     }
 
-    await hydrateActionPlaceholders(
-      store: store,
-      botId: botId,
-      actions: actions,
-      variables: runtimeVariables,
-      discordFetcher: (scope, contextId, vars) =>
-          DiscordEntityFetcher.hydrateEntity(gateway, scope, contextId, vars),
-    );
-
     try {
+      final isCapturing = callbacks.isDebugReplayCapturing?.call(botId) ?? false;
+
       final results = await handleActions(
         gateway,
         context is Interaction ? context : null,
@@ -64,7 +57,23 @@ class WorkflowExecutor {
         onLog: (msg) => callbacks.onLog?.call(msg, botId: botId),
         fallbackChannelId: fallbackChannelId,
         fallbackGuildId: fallbackGuildId,
+        onReplayCaptured: isCapturing
+            ? (frames, totalMs) {
+                String label = replayLabel ?? '';
+                if (label.isEmpty) {
+                  if (context is Interaction) {
+                    label = '/${context.data.name}';
+                  } else if (runtimeVariables.containsKey('0')) {
+                    label = '!${runtimeVariables['0']}';
+                  } else {
+                    label = 'Workflow';
+                  }
+                }
+                callbacks.onReplayCaptured?.call(botId, label, frames, totalMs);
+              }
+            : null,
       );
+
       
       callbacks.onDebugLog?.call(
         'handleActions completed with ${results.length} results: $results',
@@ -128,7 +137,8 @@ class WorkflowExecutor {
       }
     }
 
-    final actions = actionsJson.map(Action.fromJson).toList();
+    var actions = actionsJson.map(Action.fromJson).toList();
+    actions = _transpileVisualActions(actions);
     callbacks.onDebugLog?.call(
       'Parsed ${actions.length} actions for visual workflow',
       botId: botId,
@@ -170,6 +180,11 @@ class WorkflowExecutor {
         gateway: gateway,
         botId: botId,
         runtimeVariables: runtimeVariables,
+        replayLabel: workflowName.isNotEmpty
+            ? workflowName
+            : (interaction is ApplicationCommandInteraction
+                ? '/${interaction.data.name}'
+                : 'Slash Command'),
       );
       callbacks.onDebugLog?.call(
         'Action execution results: $results',
@@ -225,7 +240,9 @@ class WorkflowExecutor {
       return;
     }
 
-    final actions = actionsJson.map(Action.fromJson).toList();
+    var actions = actionsJson.map(Action.fromJson).toList();
+    actions = _transpileVisualActions(actions);
+    
     callbacks.onDebugLog?.call(
       'Executing ${actions.length} actions in general workflow',
       botId: botId,
@@ -237,11 +254,47 @@ class WorkflowExecutor {
       gateway: gateway,
       botId: botId,
       runtimeVariables: runtimeVariables,
+      replayLabel: replayLabel ?? (workflowData['name'] ?? '').toString(),
     );
     
     callbacks.onDebugLog?.call(
       'executeGeneralWorkflow completed',
       botId: botId,
     );
+  }
+
+  /// Helper to transpile any inline BDFD syntax found in visual workflow action payloads.
+  List<Action> _transpileVisualActions(List<Action> actions) {
+    dynamic processValue(dynamic value) {
+      if (value is String) {
+        if (value.contains(r'$')) {
+          // It might contain BDFD inline functions
+          final compileResult = BdfdCompiler().compile(value);
+          // If the compilation produced a single action that is just appending text,
+          // we can replace the value with the transpiled text (which now has placeholders).
+          // Action type 'sendMessage' with 'content' is the default for raw text in our compiler.
+          if (!compileResult.hasErrors && compileResult.actions.isNotEmpty) {
+             final firstAction = compileResult.actions.first;
+             if ((firstAction.type == BotCreatorActionType.sendMessage ||
+                  firstAction.type == BotCreatorActionType.respondWithMessage) && 
+                 firstAction.payload.containsKey('content') &&
+                 compileResult.actions.length == 1) {
+                return firstAction.payload['content'];
+             }
+          }
+        }
+        return value;
+      } else if (value is Map) {
+        return value.map((k, v) => MapEntry(k, processValue(v)));
+      } else if (value is List) {
+        return value.map((item) => processValue(item)).toList();
+      }
+      return value;
+    }
+
+    return actions.map((action) {
+      final newPayload = processValue(action.payload);
+      return Action(type: action.type, payload: newPayload as Map<String, dynamic>);
+    }).toList();
   }
 }

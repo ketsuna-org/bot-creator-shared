@@ -35,7 +35,7 @@ Future<Map<String, dynamic>> respondWithMessageAction(
         return {'error': 'No channelId available for respondWithMessage fallback'};
       }
 
-      return sendMessageToChannel(
+      final result = await sendMessageToChannel(
         client,
         channelId,
         content: resolve((payload['content'] ?? '').toString()),
@@ -43,6 +43,17 @@ Future<Map<String, dynamic>> respondWithMessageAction(
         resolve: resolve,
         botId: botId,
       );
+      if (result['error'] != null) {
+        // When content/embeds/components are all empty (e.g. template resolved
+        // to blank inside a loop iteration), skip silently instead of crashing.
+        final content = resolve((payload['content'] ?? '').toString());
+        if (content.trim().isEmpty &&
+            result['error']!.contains('needs at least')) {
+          return {'messageId': '', 'status': 'skipped_empty'};
+        }
+        return result;
+      }
+      return result;
     }
 
     if (interaction is! MessageResponse &&
@@ -204,11 +215,9 @@ Future<Map<String, dynamic>> respondWithMessageAction(
         embeds.isNotEmpty ||
         componentNodes.isNotEmpty;
     if (!hasResponsePayload) {
-      return {
-        'error':
-            'respondWithMessage needs at least content, embeds, or components',
-      };
+      return {'messageId': '', 'status': 'skipped_empty'};
     }
+
 
     final dynInteraction = interaction as dynamic;
 

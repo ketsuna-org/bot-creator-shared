@@ -241,6 +241,7 @@ Map<String, String> _messageContentExtra(Message message, {PartialMember? member
     'author.isBot': isBot.toString(),
     'author.avatar': authorAvatar,
     'author.banner': authorBanner,
+    'author.displayName': author is User ? (author.globalName ?? authorName) : authorName,
     'userId': authorId,
     'userName': authorName,
     'userAvatar': authorAvatar,
@@ -248,6 +249,7 @@ Map<String, String> _messageContentExtra(Message message, {PartialMember? member
     'user.name': authorName,
     'user.username': authorName,
     'user.globalName': author is User ? (author.globalName ?? authorName) : authorName,
+    'user.displayName': author is User ? (author.globalName ?? authorName) : authorName,
     'user.tag': authorTag,
     'user.avatar': authorAvatar,
     'user.banner': authorBanner,
@@ -260,6 +262,7 @@ Map<String, String> _messageContentExtra(Message message, {PartialMember? member
     if (member is Member) ...{
       'member.id': member.id.toString(),
       'member.nick': member.nick ?? '',
+      'member.displayName': member.nick ?? (member.user?.globalName ?? member.user?.username ?? ''),
       'member.avatar': makeAvatarUrl(
         member.id.toString(),
         avatarId: member.avatar?.hash,

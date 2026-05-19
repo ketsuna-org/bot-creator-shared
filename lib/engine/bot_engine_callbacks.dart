@@ -5,6 +5,8 @@ class BotEngineCallbacks {
     this.onDebugLog,
     this.onLifecycleChange,
     this.onMetrics,
+    this.onReplayCaptured,
+    this.isDebugReplayCapturing,
   });
 
   /// Emitted for general bot logs.
@@ -19,6 +21,17 @@ class BotEngineCallbacks {
   /// Emitted when bot runtime metrics are updated.
   final void Function(BotRuntimeMetrics metrics, {required String botId})?
   onMetrics;
+
+  /// Emitted when a debug replay is captured.
+  final void Function(
+    String botId,
+    String commandLabel,
+    List<Map<String, dynamic>> frames,
+    int totalMs,
+  )? onReplayCaptured;
+
+  /// Returns whether debug replay capturing is enabled for a bot.
+  final bool Function(String botId)? isDebugReplayCapturing;
 }
 
 /// Snapshot of bot runtime metrics.

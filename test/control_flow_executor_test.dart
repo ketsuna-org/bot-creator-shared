@@ -1,5 +1,6 @@
 import 'package:bot_creator_shared/actions/executors/control_flow_executor.dart';
 import 'package:bot_creator_shared/types/action.dart';
+import 'package:bot_creator_shared/utils/template_resolver.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -317,10 +318,7 @@ void main() {
         final winnerThen = List<Map<String, dynamic>>.from(
           rollGate['thenActions'] as List? ?? const [],
         );
-        expect(
-          winnerThen.any((action) => action['type'] == 'stop'),
-          isTrue,
-        );
+        expect(winnerThen.any((action) => action['type'] == 'stop'), isTrue);
       },
     );
 
@@ -569,7 +567,7 @@ void main() {
       required Map<String, dynamic> payload,
       required Map<String, String> results,
       required List<List<Action>> executedBatches,
-      Map<String, String> variables = const <String, String>{},
+      required Map<String, String> variables,
       String Function(String input)? resolveValue,
     }) {
       return executeControlFlowAction(
@@ -577,14 +575,32 @@ void main() {
         payload: payload,
         resultKey: 'loop',
         results: results,
-        variables: Map<String, String>.of(variables),
+        variables: variables,
         botId: 'test_bot',
         resolveValue: resolveValue ?? (input) => input,
         onLog: null,
         activeWorkflowStack: <String>{},
         getWorkflowByName: (_) async => null,
         executeActions: (actions) async {
-          executedBatches.add(actions);
+          final resolvedActions =
+              actions.map((a) {
+                final resolvedPayload = a.payload.map((key, value) {
+                  if (value is String) {
+                    return MapEntry(
+                      key,
+                      resolveTemplatePlaceholders(value, variables),
+                    );
+                  }
+                  return MapEntry(key, value);
+                });
+                return Action(
+                  type: a.type,
+                  payload: resolvedPayload,
+                  key: a.key,
+                  enabled: a.enabled,
+                );
+              }).toList();
+          executedBatches.add(resolvedActions);
           return <String, String>{'nested': 'ok'};
         },
       );
@@ -595,6 +611,7 @@ void main() {
       final batches = <List<Action>>[];
 
       await runForLoop(
+        variables: <String, String>{},
         payload: <String, dynamic>{
           'mode': 'simple',
           'iterations': '3',
@@ -624,6 +641,7 @@ void main() {
         final batches = <List<Action>>[];
 
         await runForLoop(
+          variables: <String, String>{},
           payload: <String, dynamic>{
             'mode': 'simple',
             'iterations': '((message[2]))',
@@ -651,6 +669,7 @@ void main() {
         final batches = <List<Action>>[];
 
         await runForLoop(
+          variables: <String, String>{},
           payload: <String, dynamic>{
             'mode': 'simple',
             'iterations': '((temp.looping))',
@@ -663,7 +682,6 @@ void main() {
           },
           results: results,
           executedBatches: batches,
-          variables: <String, String>{'temp.looping': '2'},
           resolveValue: (input) => input.replaceAll('((temp.looping))', '2'),
         );
 
@@ -677,6 +695,7 @@ void main() {
       final batches = <List<Action>>[];
 
       await runForLoop(
+        variables: <String, String>{},
         payload: <String, dynamic>{
           'mode': 'simple',
           'iterations': '500',
@@ -701,6 +720,7 @@ void main() {
       final batches = <List<Action>>[];
 
       await runForLoop(
+        variables: <String, String>{},
         payload: <String, dynamic>{
           'mode': 'simple',
           'iterations': '0',
@@ -724,6 +744,7 @@ void main() {
       final batches = <List<Action>>[];
 
       await runForLoop(
+        variables: <String, String>{},
         payload: <String, dynamic>{
           'mode': 'cstyle',
           'init': 'i=0',
@@ -753,6 +774,7 @@ void main() {
       final batches = <List<Action>>[];
 
       await runForLoop(
+        variables: <String, String>{},
         payload: <String, dynamic>{
           'mode': 'cstyle',
           'init': 'i=0',
@@ -893,7 +915,10 @@ void main() {
             for (final a in actions) {
               if (a.type == BotCreatorActionType.setTemporaryVariable) {
                 final key = a.payload['key'] as String;
-                final value = a.payload['value'] as String;
+                final value = resolveTemplatePlaceholders(
+                  a.payload['value'] as String,
+                  variables,
+                );
                 variables[key] = value;
                 // Collect for assertions
                 final parts = value.split(': ');
@@ -948,7 +973,10 @@ void main() {
         executeActions: (actions) async {
           for (final a in actions) {
             if (a.type == BotCreatorActionType.setTemporaryVariable) {
-              final value = a.payload['value'] as String;
+              final value = resolveTemplatePlaceholders(
+                a.payload['value'] as String,
+                variables,
+              );
               collectedKeys.add(value);
             }
           }

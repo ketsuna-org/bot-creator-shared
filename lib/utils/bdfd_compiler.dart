@@ -56,7 +56,14 @@ class BdfdCompileResult {
 }
 
 class BdfdCompiler {
+  static final Map<String, BdfdCompileResult> _cache = {};
+
+  static void clearCache() => _cache.clear();
+
   BdfdCompileResult compile(String source) {
+    if (_cache.containsKey(source)) {
+      return _cache[source]!;
+    }
     final compileStopwatch = Stopwatch()..start();
     final lexerResult = BdfdLexer().tokenize(source);
     final parserResult = BdfdParser().parseTokens(lexerResult.tokens);
@@ -112,7 +119,7 @@ class BdfdCompiler {
       ),
     ];
 
-    return BdfdCompileResult(
+    final result = BdfdCompileResult(
       source: source,
       lexerResult: lexerResult,
       parserResult: parserResult,
@@ -121,6 +128,12 @@ class BdfdCompiler {
       actions: List<Action>.unmodifiable(transpileResult.actions),
       diagnostics: List<BdfdCompileDiagnostic>.unmodifiable(diagnostics),
     );
+
+    if (_cache.length > 500) {
+      _cache.clear();
+    }
+    _cache[source] = result;
+    return result;
   }
 }
 

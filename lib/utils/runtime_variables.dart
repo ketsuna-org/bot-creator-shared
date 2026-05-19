@@ -292,23 +292,38 @@ Future<void> hydrateActionPlaceholders({
     Map<String, String> variables,
   )?
   discordFetcher,
+  Set<dynamic>? hydratedActions,
 }) async {
-  final placeholderPattern = RegExp(r'\(\(([a-z]+)\[([^\]]+)\]\.([a-zA-Z_]+)');
+  final placeholderPattern = RegExp(r'\b([a-z]+)\[([^\]]+)\]\.([a-zA-Z_]+)');
   final bdfdFunctionPattern = RegExp(
     r'\$(?:get(?:User|Guild|Channel|Message)Var)\[[^;]+;([^\]\s]+)\]',
   );
 
   final scopedContextsToFetch = <(String scope, String contextId)>{};
   final discordContextsToFetch = <(String scope, String contextId)>{};
+  final activeHydratedActions = hydratedActions ?? <dynamic>{};
 
   void scan(dynamic obj) {
+    if (obj == null) return;
+    if (activeHydratedActions.contains(obj)) return;
+    
     if (obj is String) {
+      // String scanning is still needed as its content might contain placeholders
+      // that resolve differently based on current variables.
+      // However, if the string doesn't contain placeholders, we could skip it.
+      if (!obj.contains('((') && !obj.contains(r'$')) {
+         activeHydratedActions.add(obj);
+         return;
+      }
+      
       // 1. Scan for internal placeholders ((user[ID].username)) or ((user[ID].bc_var))
-      for (final match in placeholderPattern.allMatches(obj)) {
+      final matches = placeholderPattern.allMatches(obj).toList();
+      
+      for (final match in matches) {
         final scope = match.group(1)!;
         var contextId = match.group(2)!;
         final property = match.group(3)!;
-
+        
         if (contextId.contains('((')) {
           contextId = resolveTemplatePlaceholders(contextId, variables);
         }
@@ -316,9 +331,15 @@ Future<void> hydrateActionPlaceholders({
             contextId != 'unknown user' &&
             contextId != 'dm') {
           if (property.startsWith('bc_')) {
-            scopedContextsToFetch.add((scope, contextId));
+            final varKey = '$scope[$contextId].$property';
+            if (!variables.containsKey(varKey)) {
+              scopedContextsToFetch.add((scope, contextId));
+            }
           } else {
-            discordContextsToFetch.add((scope, contextId));
+            final varKey = '$scope[$contextId].$property';
+            if (!variables.containsKey(varKey)) {
+              discordContextsToFetch.add((scope, contextId));
+            }
           }
         }
       }
@@ -342,14 +363,23 @@ Future<void> hydrateActionPlaceholders({
           scopedContextsToFetch.add((scope, contextId));
         }
       }
+      
+      // We don't mark strings as hydrated because they are values, 
+      // and the same string literal might appear multiple times.
+      // But we can mark the Action objects.
     } else if (obj is Map) {
+      activeHydratedActions.add(obj);
       for (final value in obj.values) {
         scan(value);
       }
     } else if (obj is List) {
+      activeHydratedActions.add(obj);
       for (final item in obj) {
         scan(item);
       }
+    } else if (obj is Action) {
+      activeHydratedActions.add(obj);
+      scan(obj.payload);
     }
   }
 
@@ -359,11 +389,7 @@ Future<void> hydrateActionPlaceholders({
   }
 
   for (final action in actions) {
-    if (action is Map && action.containsKey('payload')) {
-      scan(action['payload']);
-    } else if (action is Action) {
-      scan(action.payload);
-    }
+     scan(action);
   }
 
   final futures = <Future<void>>[];
@@ -377,7 +403,9 @@ Future<void> hydrateActionPlaceholders({
           scope: m.$1,
           contextId: m.$2,
           runtimeVariables: variables,
-        ),
+        ).catchError((e) {
+          // Ignore individual hydration errors to allow fallbacks
+        }),
       ),
     );
   }
@@ -385,7 +413,9 @@ Future<void> hydrateActionPlaceholders({
   if (discordContextsToFetch.isNotEmpty && discordFetcher != null) {
     futures.addAll(
       discordContextsToFetch.map(
-        (m) => discordFetcher(m.$1, m.$2, variables),
+        (m) => discordFetcher(m.$1, m.$2, variables).catchError((e) {
+          // Ignore individual hydration errors to allow fallbacks
+        }),
       ),
     );
   }

@@ -88,6 +88,26 @@ class BotEngine {
     _debugReplayEnabled[botId] = enabled;
   }
 
+  void saveDebugReplay(
+    String botId,
+    String label,
+    List<Map<String, dynamic>> frames,
+    int totalMs,
+  ) {
+    final list = _debugReplays.putIfAbsent(botId, () => []);
+    list.add({
+      'botId': botId,
+      'commandLabel': label,
+      'triggeredAt': DateTime.now().toUtc().toIso8601String(),
+      'actionCount': frames.length,
+      'totalMs': totalMs,
+      'frames': frames,
+    });
+    if (list.length > 30) {
+      list.removeRange(0, list.length - 30);
+    }
+  }
+
   List<Map<String, dynamic>> listDebugReplays(String botId, {int limit = 30}) {
     final replays = _debugReplays[botId] ?? [];
     if (replays.length > limit) {

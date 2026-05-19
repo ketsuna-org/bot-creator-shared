@@ -1,6 +1,6 @@
 import 'package:bot_creator_shared/events/event_contexts.dart';
 import 'package:bot_creator_shared/utils/template_resolver.dart';
-import 'package:nyxx/src/models/interaction.dart';
+import 'package:nyxx/nyxx.dart';
 import 'package:test/test.dart';
 
 class _FakeComponentData {
@@ -35,46 +35,70 @@ class _FakeModalData {
   final List<_FakeModalRow> components;
 }
 
-class _FakeUser {
-  _FakeUser(this.id);
+class _FakeUser implements User {
+  _FakeUser(this.idString);
 
-  final String id;
+  final String idString;
+
+  @override
+  Snowflake get id => Snowflake(int.parse(idString));
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
-class _FakeMemberUser {
-  _FakeMemberUser(this.id);
-
-  final String id;
-}
-
-class _FakeMember {
+class _FakeMember implements Member {
   _FakeMember(this.user);
 
-  final _FakeMemberUser user;
+  @override
+  final User user;
+
+  @override
+  Snowflake get id => user.id;
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
-class _FakeInteraction {
+class _FakeInteraction implements Interaction<dynamic> {
   _FakeInteraction({
     required this.data,
     this.user,
     this.member,
     this.channelId,
     this.guildId,
-    this.message,
+    this.message, required this.type,
   });
 
+  @override
   final dynamic data;
-  final dynamic user;
-  final dynamic member;
-  final dynamic channelId;
-  final dynamic guildId;
-  final dynamic message;
+  @override
+  final User? user;
+  @override
+  final Member? member;
+  @override
+  final Snowflake? channelId;
+  @override
+  final Snowflake? guildId;
+  @override
+  final Message? message;
+  @override
+  final InteractionType type;
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
-class _FakeMessage {
-  _FakeMessage(this.id);
+class _FakeMessage implements Message {
+  _FakeMessage(this.idString);
 
-  final String id;
+  final String idString;
+
+  @override
+  Snowflake get id => Snowflake(int.parse(idString));
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 void main() {
@@ -87,9 +111,9 @@ void main() {
                 values: ['a', 'b'],
               ),
               user: _FakeUser('42'),
-              channelId: '100',
-              guildId: '200',
-              message: _FakeMessage('300'),
+              channelId: Snowflake(100),
+              guildId: Snowflake(200),
+              message: _FakeMessage('300'), type: InteractionType.messageComponent,
             )
             as Interaction<dynamic>,
       );
@@ -111,6 +135,7 @@ void main() {
                 type: 'stringSelect',
                 values: ['alpha', 'beta', 'gamma'],
               ),
+            type: InteractionType.messageComponent,
             )
             as Interaction<dynamic>,
       );
@@ -149,6 +174,7 @@ void main() {
                 type: 'channelSelect',
                 values: ['10', '20'],
               ),
+            type: InteractionType.messageComponent,
             )
             as Interaction<dynamic>,
       );
@@ -177,7 +203,8 @@ void main() {
                   ]),
                 ],
               ),
-              member: _FakeMember(_FakeMemberUser('77')),
+              type: InteractionType.modalSubmit,
+              member: _FakeMember(_FakeUser('77')),
             )
             as Interaction<dynamic>,
       );

@@ -515,14 +515,7 @@ Future<bool> executeControlFlowAction({
         variables['_loop.index'] = i.toString();
         variables['_loop.count'] = (i + 1).toString();
 
-        final iterActions = _cloneActionsWithLoopVars(
-          templateActions,
-          loopVars: <String, String>{
-            '_loop.index': i.toString(),
-            '_loop.count': (i + 1).toString(),
-          },
-        );
-        final iterResults = await executeActions(iterActions);
+        final iterResults = await executeActions(templateActions);
         for (final entry in iterResults.entries) {
           results['$resultKey.iter$i.${entry.key}'] = entry.value;
         }
@@ -608,17 +601,7 @@ Future<bool> executeControlFlowAction({
         variables['_loop.index'] = i.toString();
         variables['_loop.count'] = (i + 1).toString();
 
-        final iterActions = _cloneActionsWithLoopVars(
-          templateActions,
-          loopVars: <String, String>{
-            '_loop.var.jsonkey': key,
-            '_loop.var.jsonvalue': value,
-            '_loop.var.jsonindex': i.toString(),
-            '_loop.index': i.toString(),
-            '_loop.count': (i + 1).toString(),
-          },
-        );
-        final iterResults = await executeActions(iterActions);
+        final iterResults = await executeActions(templateActions);
         for (final entry in iterResults.entries) {
           results['$resultKey.iter$i.${entry.key}'] = entry.value;
         }
@@ -751,16 +734,7 @@ Future<bool> _executeCStyleForLoop({
     variables['_loop.index'] = iterationCount.toString();
     variables['_loop.count'] = (iterationCount + 1).toString();
 
-    final iterActions = _cloneActionsWithLoopVars(
-      templateActions,
-      loopVars: <String, String>{
-        for (final entry in loopVars.entries)
-          '_loop.var.${entry.key}': entry.value.toString(),
-        '_loop.index': iterationCount.toString(),
-        '_loop.count': (iterationCount + 1).toString(),
-      },
-    );
-    final iterResults = await executeActions(iterActions);
+    final iterResults = await executeActions(templateActions);
     for (final entry in iterResults.entries) {
       results['$resultKey.iter$iterationCount.${entry.key}'] = entry.value;
     }
@@ -780,64 +754,6 @@ Future<bool> _executeCStyleForLoop({
   variables.remove('_loop.count');
   results[resultKey] = 'LOOP_$iterationCount';
   return true;
-}
-
-List<Action> _cloneActionsWithLoopVars(
-  List<Action> templateActions, {
-  required Map<String, String> loopVars,
-}) {
-  return templateActions.map((action) {
-    final resolvedPayload = _resolvePayloadLoopVars(action.payload, loopVars);
-    return Action(
-      type: action.type,
-      key: action.key,
-      payload: resolvedPayload,
-      enabled: action.enabled,
-    );
-  }).toList();
-}
-
-Map<String, dynamic> _resolvePayloadLoopVars(
-  Map<String, dynamic> payload,
-  Map<String, String> loopVars,
-) {
-  return payload.map((key, value) {
-    if (value is String) {
-      return MapEntry(key, _substituteLoopPlaceholders(value, loopVars));
-    }
-    if (value is List) {
-      return MapEntry(
-        key,
-        value.map((item) {
-          if (item is String) {
-            return _substituteLoopPlaceholders(item, loopVars);
-          }
-          if (item is Map) {
-            return _resolvePayloadLoopVars(
-              Map<String, dynamic>.from(item),
-              loopVars,
-            );
-          }
-          return item;
-        }).toList(),
-      );
-    }
-    if (value is Map) {
-      return MapEntry(
-        key,
-        _resolvePayloadLoopVars(Map<String, dynamic>.from(value), loopVars),
-      );
-    }
-    return MapEntry(key, value);
-  });
-}
-
-String _substituteLoopPlaceholders(String input, Map<String, String> loopVars) {
-  var result = input;
-  for (final entry in loopVars.entries) {
-    result = result.replaceAll('((${entry.key}))', entry.value);
-  }
-  return result;
 }
 
 String _resolveLoopExpression(

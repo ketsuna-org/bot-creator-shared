@@ -28,6 +28,8 @@ import 'package:bot_creator_shared/actions/executors/http_executor.dart';
 import 'package:bot_creator_shared/actions/executors/variables_executor.dart';
 import 'package:bot_creator_shared/actions/executors/webhooks_executor.dart';
 import 'package:bot_creator_shared/bot/bot_data_store.dart';
+import 'package:bot_creator_shared/utils/runtime_variables.dart';
+import 'package:bot_creator_shared/engine/discord_entity_fetcher.dart';
 import 'package:nyxx/nyxx.dart';
 import '../types/action.dart';
 
@@ -57,6 +59,14 @@ Future<Map<String, String>> handleActions(
   /// adapt interaction-oriented actions (e.g. respondWithMessage → sendMessage)
   /// for messageCreate context.
   List<Action> Function(List<Action>)? nestedActionsPreprocessor,
+
+  /// When provided, caches Discord entities fetched during hydration to avoid
+  /// redundant network calls across nested executions (loops, scripts, etc).
+  Map<String, dynamic>? entityCache,
+
+  /// When provided, tracks which Action objects have already been scanned for
+  /// placeholders in this session to avoid redundant regex processing.
+  Set<dynamic>? hydratedActions,
 }) async {
   final results = <String, String>{};
   final resolvedFallbackChannelId =
@@ -64,8 +74,29 @@ Future<Map<String, String>> handleActions(
   final guildId =
       fallbackGuildId ?? (interaction as dynamic)?.guildId as Snowflake?;
   final activeWorkflowStack = workflowStack ?? <String>{};
+  final activeEntityCache = entityCache ?? <String, dynamic>{};
+  final activeHydratedActions = hydratedActions ?? <dynamic>{};
+
+  // Ensure all actions (including potential nested ones) have their placeholders hydrated.
+  await hydrateActionPlaceholders(
+    store: store,
+    botId: botId,
+    actions: actions,
+    variables: variables,
+    discordFetcher: (scope, contextId, vars) async {
+      await DiscordEntityFetcher.hydrateEntity(
+        client,
+        scope,
+        contextId,
+        vars,
+        cache: activeEntityCache,
+      );
+    },
+    hydratedActions: activeHydratedActions,
+  );
 
   String resolveValue(String value) => resolveTemplate(value);
+
 
   // Permission cache – shared across all actions in this execution
   final permCache = BotPermissionCache();
@@ -88,12 +119,22 @@ Future<Map<String, String>> handleActions(
   // Execution timer for ((execution.time)) resolution.
   final executionStopwatch = Stopwatch()..start();
 
-  for (var i = 0; i < actions.length; i++) {
-    final action = actions[i];
-    final resultKey = action.key ?? 'action_$i';
-    if (!action.enabled) {
-      continue;
-    }
+  Action? currentAction;
+  String? currentResultKey;
+  int? currentReplayStartMs;
+  Map<String, String>? currentVarSnapshotBefore;
+
+  try {
+    for (var i = 0; i < actions.length; i++) {
+      final action = actions[i];
+      final resultKey = action.key ?? 'action_$i';
+      currentAction = action;
+      currentResultKey = resultKey;
+      currentReplayStartMs = replayStopwatch?.elapsedMilliseconds ?? 0;
+      currentVarSnapshotBefore = replayTrace != null ? _snapshotVariables(variables) : null;
+      if (!action.enabled) {
+        continue;
+      }
 
     // Update execution.time before each action so templates pick up the
     // elapsed time since command execution started.
@@ -309,6 +350,8 @@ Future<Map<String, String>> handleActions(
             workflowStack: activeWorkflowStack,
             onLog: onLog,
             nestedActionsPreprocessor: nestedActionsPreprocessor,
+            entityCache: activeEntityCache,
+            hydratedActions: activeHydratedActions,
           ),
     );
     if (handledByControlFlowExecutor) {
@@ -995,7 +1038,7 @@ Future<Map<String, String>> handleActions(
     }
 
     // Record trace for switch-handled actions (no error)
-    if (debugTrace != null &&
+    if ((debugTrace != null || replayTrace != null) &&
         !(results[resultKey]?.startsWith('Error:') ?? false)) {
       recordTrace();
     }
@@ -1064,30 +1107,49 @@ Future<Map<String, String>> handleActions(
     }
   }
 
-  // Replay capture callback — fires after the embed (if any) is sent.
-  if (onReplayCaptured != null && replayTrace != null) {
-    replayStopwatch?.stop();
-    final totalMs = replayStopwatch?.elapsedMilliseconds ?? 0;
-    onReplayCaptured(
-      replayTrace
-          .map(
-            (entry) => <String, dynamic>{
-              'actionType': entry.actionType,
-              'startMs': entry.startMs,
-              'durationMs': entry.endMs - entry.startMs,
-              if (entry.result != null) 'result': entry.result,
-              if (entry.loopDepth != null) 'loopDepth': entry.loopDepth,
-              if (entry.loopIteration != null)
-                'loopIteration': entry.loopIteration,
-              if (entry.variablesBefore != null)
-                'variablesBefore': entry.variablesBefore,
-              if (entry.variablesAfter != null)
-                'variablesAfter': entry.variablesAfter,
-            },
-          )
-          .toList(growable: false),
-      totalMs,
-    );
+  } catch (e) {
+    if (currentAction != null && currentResultKey != null) {
+      results[currentResultKey] = 'Error: $e';
+      replayTrace?.add(
+        _DebugTraceEntry(
+          actionType: currentAction.type.name,
+          startMs: currentReplayStartMs ?? 0,
+          endMs: replayStopwatch?.elapsedMilliseconds ?? 0,
+          result: 'Error: $e',
+          loopDepth: currentAction.payload['_debugLoopDepth'] as int?,
+          loopIteration: currentAction.payload['_debugLoopIteration'] as int?,
+          variablesBefore: currentVarSnapshotBefore,
+          variablesAfter: _snapshotVariables(variables),
+        ),
+      );
+    }
+    rethrow;
+  } finally {
+    // Replay capture callback — fires after the embed (if any) is sent.
+    if (onReplayCaptured != null && replayTrace != null) {
+      replayStopwatch?.stop();
+      final totalMs = replayStopwatch?.elapsedMilliseconds ?? 0;
+      onReplayCaptured(
+        replayTrace
+            .map(
+              (entry) => <String, dynamic>{
+                'actionType': entry.actionType,
+                'startMs': entry.startMs,
+                'durationMs': entry.endMs - entry.startMs,
+                if (entry.result != null) 'result': entry.result,
+                if (entry.loopDepth != null) 'loopDepth': entry.loopDepth,
+                if (entry.loopIteration != null)
+                  'loopIteration': entry.loopIteration,
+                if (entry.variablesBefore != null)
+                  'variablesBefore': entry.variablesBefore,
+                if (entry.variablesAfter != null)
+                  'variablesAfter': entry.variablesAfter,
+              },
+            )
+            .toList(growable: false),
+        totalMs,
+      );
+    }
   }
 
   return results;

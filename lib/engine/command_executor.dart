@@ -207,6 +207,7 @@ class CommandExecutor {
       gateway: gateway,
       botId: botId,
       runtimeVariables: runtimeVariables,
+      replayLabel: '/${interaction.data.name}',
     );
 
     // BDFD script might have its own response logic but usually it's handled via actions.

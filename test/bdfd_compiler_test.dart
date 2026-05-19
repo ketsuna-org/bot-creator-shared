@@ -2079,6 +2079,7 @@ void main() {
         await Future<void>.delayed(const Duration(milliseconds: 2));
 
         // Second compilation (callback re-arms)
+        BdfdCompiler.clearCache();
         final second = BdfdCompiler().compile(script);
         expect(second.hasErrors, isFalse);
         final secondSet = second.actions.firstWhere(

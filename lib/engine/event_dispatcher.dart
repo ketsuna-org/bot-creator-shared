@@ -701,6 +701,8 @@ class EventDispatcher {
     );
 
     if (actions.isNotEmpty) {
+      final cmdName = runtimeVariables['0'];
+      final label = cmdName != null ? '!$cmdName' : 'BDFD Script';
       await _workflowExecutor.executeActions(
         actions: actions,
         context: null,
@@ -709,6 +711,7 @@ class EventDispatcher {
         runtimeVariables: runtimeVariables,
         fallbackChannelId: context.channelId,
         fallbackGuildId: context.guildId,
+        replayLabel: label,
       );
     }
   }
@@ -755,6 +758,7 @@ class EventDispatcher {
         runtimeVariables: runtimeVariables,
         fallbackChannelId: context.channelId,
         fallbackGuildId: context.guildId,
+        replayLabel: (workflow['name'] ?? '').toString(),
       );
       callbacks.onDebugLog?.call(
         'Executed actions, got ${actionResults.length} results',
