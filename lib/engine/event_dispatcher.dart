@@ -18,12 +18,17 @@ class EventDispatcher {
     required this.callbacks,
     required this.commandExecutor,
     required WorkflowExecutor workflowExecutor,
+    this.sessionVariableInjector,
   }) : _workflowExecutor = workflowExecutor;
 
   final BotDataStore store;
   final BotEngineCallbacks callbacks;
   final CommandExecutor commandExecutor;
   final WorkflowExecutor _workflowExecutor;
+
+  /// Optional callback to inject session-specific bot variables
+  /// (e.g. bot.ownerId, bot.commands, bot.uptime) into runtime variables.
+  final void Function(Map<String, String>)? sessionVariableInjector;
 
   /// Registers all event listeners for a bot session.
   List<StreamSubscription<dynamic>> registerListeners(
@@ -367,6 +372,7 @@ class EventDispatcher {
     };
     _injectBaseVariables(runtimeVariables, botId: botId, startedAt: startedAt);
     runtimeVariables.addAll(shared_global.extractBotRuntimeDetails(gateway));
+    sessionVariableInjector?.call(runtimeVariables);
 
     // Hydrate variables once for all matching workflows
     await _hydrateEventContext(gateway, context, runtimeVariables);
@@ -462,6 +468,7 @@ class EventDispatcher {
     final runtimeVariables = <String, String>{};
     _injectBaseVariables(runtimeVariables, botId: botId, startedAt: startedAt);
     runtimeVariables.addAll(shared_global.extractBotRuntimeDetails(gateway));
+    sessionVariableInjector?.call(runtimeVariables);
 
     // Handle Legacy Commands
     final appData = await store.getApp(botId);

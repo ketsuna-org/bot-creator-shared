@@ -21,12 +21,17 @@ class CommandExecutor {
     required this.callbacks,
     required WorkflowExecutor workflowExecutor,
     this.debugReplayCapturing = true,
+    this.sessionVariableInjector,
   }) : _workflowExecutor = workflowExecutor;
 
   final BotDataStore store;
   final BotEngineCallbacks callbacks;
   final WorkflowExecutor _workflowExecutor;
   bool debugReplayCapturing;
+
+  /// Optional callback to inject session-specific bot variables
+  /// (e.g. bot.ownerId, bot.commands, bot.uptime) into runtime variables.
+  final void Function(Map<String, String>)? sessionVariableInjector;
 
   /// Handles an [InteractionCreateEvent] and routes it to the appropriate handler.
   Future<void> handleInteraction(
@@ -117,6 +122,7 @@ class CommandExecutor {
       botId: botId,
       startedAt: startedAt,
     );
+    sessionVariableInjector?.call(runtimeVariables);
 
     runtimeVariables['interaction.isSlash'] = 'true';
 
@@ -297,6 +303,7 @@ class CommandExecutor {
       };
 
       _injectBaseVariables(runtimeVariables, botId: botId, startedAt: startedAt);
+      sessionVariableInjector?.call(runtimeVariables);
       final contextIds = _resolveContextIds(interaction, runtimeVariables);
 
       await hydrateRuntimeVariables(

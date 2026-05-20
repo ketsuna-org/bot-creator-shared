@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:nyxx/nyxx.dart';
 
 import 'command_autocomplete.dart';
@@ -109,10 +111,26 @@ Map<String, String> extractBotRuntimeDetails(NyxxRest client) {
       details['bot.ping'] = '0';
       details['ping'] = '0';
     }
+
+    // Shard info — single-shard bots always use shard 0
+    details['bot.shardId'] = '0';
   } else {
     // Fallback so expressions don't break
     details['bot.ping'] = '0';
     details['ping'] = '0';
+    details['bot.shardId'] = '0';
+  }
+
+  // Node version — report the Dart SDK version for parity with BDFD's $nodeVersion.
+  // On iOS/Android, Platform.version returns the OS version, not the Dart version.
+  // We extract the Dart version from the VM string which always starts with the version.
+  try {
+    final platformVersion = Platform.version;
+    // Platform.version e.g. "3.7.2 (stable) on ..." — extract just the version number
+    final dartVersion = platformVersion.split(' ').first;
+    details['bot.nodeVersion'] = 'Dart $dartVersion';
+  } catch (_) {
+    details['bot.nodeVersion'] = 'Dart';
   }
 
   try {

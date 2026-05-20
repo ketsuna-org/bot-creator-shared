@@ -22,12 +22,14 @@ class BotSession {
       store: store,
       callbacks: callbacks,
       workflowExecutor: _workflowExecutor,
+      sessionVariableInjector: injectVariables,
     );
     _eventDispatcher = EventDispatcher(
       store: store,
       callbacks: callbacks,
       commandExecutor: _commandExecutor,
       workflowExecutor: _workflowExecutor,
+      sessionVariableInjector: injectVariables,
     );
   }
 
