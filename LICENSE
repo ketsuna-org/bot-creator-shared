@@ -1,20 +1,178 @@
-Copyright (c) 2026 Bot-Creator. All rights reserved.
+                   GNU LESSER GENERAL PUBLIC LICENSE
+                       Version 3, 29 June 2007
 
-Proprietary and Source-Available License.
+ Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
+ Everyone is permitted to copy and distribute verbatim copies
+ of this license document, but changing it is not allowed.
 
-1. SOLE COMMERCIAL RIGHTS
-Bot-Creator retains the SOLE and EXCLUSIVE right to commercially exploit, sell, 
-sub-license, host, or monetize this software and its derivatives. Any commercial 
-use, commercial hosting, or monetization of this software by any third party 
-is strictly prohibited.
 
-2. PERMITTED NON-COMMERCIAL USE & MODIFICATIONS
-Third parties are granted the right to view, clone, modify, and use the source 
-code for strictly personal, educational, and non-commercial purposes only.
+  This version of the GNU Lesser General Public License incorporates
+the terms and conditions of version 3 of the GNU General Public
+License, supplemented by the additional permissions listed below.
 
-3. INBOUND CONTRIBUTION LICENSE GRANT
-By submitting any contribution (including but not limited to Pull Requests, bug 
-fixes, or feature implementations) to Bot-Creator, you hereby grant Bot-Creator 
-a perpetual, worldwide, irrevocable, royalty-free, transferable, and 
-sublicensable license to use, modify, distribute, and commercially exploit 
-your contribution in any way, without restriction, compensation, or credit.
+  0. Additional Definitions.
+
+  As used herein, "this License" refers to version 3 of the GNU Lesser
+General Public License, and the "GNU GPL" refers to version 3 of the
+GNU General Public License.
+
+  "The Library" refers to a covered work governed by this License,
+whereas an "Application" is a work that uses the Library along with
+other material, whether or not the other material is governed by this
+License.
+
+  A "Combined Work" is a work produced by combining or linking an
+Application with the Library.  The particular version of the Library
+with which the Combined Work was made is also called the "Linked
+Version."
+
+  The "Minimal Corresponding Source" for a Combined Work means the
+Corresponding Source for the Combined Work, excluding any source code
+for portions of the Combined Work that are considered, in isolation, to
+be an Application.
+
+  The "Corresponding Application Code" for a Combined Work means the
+object code and/or source code of the Application, excluding any
+Application code that is derived from the Linked Version of the
+Library, that is not considered a part of the Combined Work.
+
+  1. Exception to Section 3 of the GNU GPL.
+
+  You may convey a covered work under sections 3 and 4 of this License
+without being bound by section 3 of the GNU GPL.
+
+  2. Conveying Modified Versions.
+
+  If you modify a copy of the Library, and, in your modifications, a
+facility refers to or substitutes for a function or data to be
+processed by the Application that uses the facility (other than as an
+argument passed when the facility is invoked), then you may convey a
+copy of the modified version:
+
+   a) under this License, provided that you make a good faith effort to
+   ensure that, in the event an Application does not supply the
+   function or data, the facility still operates, and performs whatever
+   part of its purpose remains meaningful, or
+
+   b) under the GNU GPL, with none of the additional permissions of
+   this License applicable to the copy of the Library.
+
+  3. Object Code Incorporating Material from Library Header Files.
+
+  An Application object code that uses material from a Library header
+file may convey the object code under section 4 of this License
+provided that the object code incorporates, or is combined with, the
+Library in a way that satisfies the conditions of section 4 of this
+License, and provided that you do either of the following:
+
+   a) Give prominent notice with each copy of the object code that the
+   Library is used in it and that the Library and its use are covered
+   by this License, together with a reference to this License; or
+
+   b) Accompany the object code with a copy of the GNU GPL and this
+   License document.
+
+  4. Combined Works.
+
+  You may convey a Combined Work under terms of your choice that, taken
+together, effectively do not restrict modification of the portions of
+the Library contained in the Combined Work and reverse engineering for
+debugging such modifications, if you also do each of the following:
+
+   a) Give prominent notice with each copy of the Combined Work that
+   the Library is used in it and that the Library and its use are
+   covered by this License, together with a reference to this License;
+
+   b) Accompany the Combined Work with a copy of the GNU GPL and this
+   License document;
+
+   c) Provide the Installation Information required by section 6 of the
+   GNU GPL for the Combined Work, but only the Minimal Corresponding
+   Source of the Library, as described in section 4 of this License,
+   rather than the full Corresponding Source of the Combined Work;
+
+   d) Do one of the following:
+
+       0) Convey the Minimal Corresponding Source of the Combined
+       Work on a durable physical medium customarily used for software
+       interchange, and the Corresponding Application Code in a
+       manner consistent with the requirements of section 4 of the GNU
+       GPL; or,
+
+       1) Convey the Minimal Corresponding Source of the Combined
+       Work on a durable physical medium customarily used for software
+       interchange, and the Corresponding Application Code in a
+       manner consistent with the requirements of section 4 of the GNU
+       GPL, accompanied by a written offer, valid for at least three
+       years and valid for as long as you offer spare parts or customer
+       support for that product model, to give anyone who possesses the
+       object code either (1) a copy of the Corresponding Source for
+       all the software in the product that is governed by this
+       License, on a durable physical medium customarily used for
+       software interchange, for a charge no more than your cost of
+       physically performing this conveying of source, or (2) access to
+       copy the Corresponding Source from a network server at no
+       charge;
+
+   e) Disclaim any warranty for the Combined Work, and provide the same
+   warranty disclaimer as sections 15 and 16 of the GNU GPL for the
+   Combined Work; and,
+
+   f) State prominently in or on each copy of the Combined Work that
+   the Library is governed by this License, and include a reference to
+   this License alongside the notice that states that the Library is
+   governed by this License.
+
+  5. Conveying a Combined Work that Lacks Installation Information.
+
+  If you convey a Combined Work consisting of a Library, in whole or in
+part, under this License, and the Combined Work is a product designed
+for users to install on their own computers, you must also provide the
+Installation Information required by section 6 of the GNU GPL for the
+Library, but only the Minimal Corresponding Source of the Library, as
+described in section 4 of this License.
+
+  6. Revised Versions of the GNU Lesser General Public License.
+
+  The Free Software Foundation may publish revised and/or new versions
+of the GNU Lesser General Public License from time to time. Such new
+versions will be similar in spirit to the present version, but may
+differ in detail to address new problems or concerns.
+
+  Each version is given a distinguishing version number. If the
+Library as you received it specifies that a certain numbered version
+of the GNU Lesser General Public License "or any later version"
+applies to it, you have the option of following the terms and
+conditions either of that published version or of any later version
+published by the Free Software Foundation. If the Library as you
+received it does not specify a version number of the GNU Lesser
+General Public License, you may choose any version of the GNU Lesser
+General Public License ever published by the Free Software Foundation.
+
+  If the Library as you received it specifies that a proxy can decide
+whether future versions of the GNU Lesser General Public License shall
+apply, that proxy's public statement of acceptance of any version is
+permanent authorization for you to choose that version for the
+Library.
+
+  The terms and conditions of the GNU General Public License, version
+3, are incorporated herein by reference. A copy is available at
+<https://www.gnu.org/licenses/gpl-3.0.txt>.
+
+---
+
+Bot Creator - Shared Package
+Copyright (c) 2026 Jeremy
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.

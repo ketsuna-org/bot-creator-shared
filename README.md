@@ -29,4 +29,4 @@ dependencies:
 - `lib/bot`: Data models and storage interfaces.
 
 ---
-© 2026 Bot-Creator. All rights reserved.
+© 2026 Jeremy. Licensed under the [GNU Lesser General Public License v3.0 or later](https://www.gnu.org/licenses/lgpl-3.0.en.html).
