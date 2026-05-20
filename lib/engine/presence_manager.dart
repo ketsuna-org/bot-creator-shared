@@ -18,6 +18,7 @@ class PresenceManager {
   final void Function(String message, {String? botId})? onDebugLog;
 
   Timer? _rotationTimer;
+  Timer? _initialStatusTimer;
   final Random _random = Random();
 
   /// Starts the presence rotation based on the provided configuration.
@@ -39,6 +40,8 @@ class PresenceManager {
   void stop() {
     _rotationTimer?.cancel();
     _rotationTimer = null;
+    _initialStatusTimer?.cancel();
+    _initialStatusTimer = null;
   }
 
   void _applyPresenceOnly(String presenceStatus) {
@@ -68,7 +71,7 @@ class PresenceManager {
     await _applyStatus(firstStatus, presenceStatus);
 
     // Re-send once after READY to avoid occasional dropped first presence frame.
-    Timer(const Duration(seconds: 3), () {
+    _initialStatusTimer = Timer(const Duration(seconds: 3), () {
       unawaited(_applyStatus(firstStatus, presenceStatus));
     });
 

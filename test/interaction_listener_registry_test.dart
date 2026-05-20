@@ -149,6 +149,41 @@ void main() {
       registry.removeEntry(customId, first);
       registry.removeEntry(customId, second);
     });
+
+    test('removeAllForBot clears all listeners for a given botId', () {
+      final registry = InteractionListenerRegistry.instance;
+
+      final entry1 = ListenerEntry(
+        botId: 'bot-to-remove',
+        workflowName: 'workflow-1',
+        expiresAt: _future,
+        type: 'button',
+      );
+      final entry2 = ListenerEntry(
+        botId: 'bot-to-remove',
+        workflowName: 'workflow-2',
+        expiresAt: _future,
+        type: 'button',
+      );
+      final entry3 = ListenerEntry(
+        botId: 'bot-to-keep',
+        workflowName: 'workflow-3',
+        expiresAt: _future,
+        type: 'button',
+      );
+
+      registry.register('id-1', entry1);
+      registry.register('id-2', entry2);
+      registry.register('id-3', entry3);
+
+      registry.removeAllForBot('bot-to-remove');
+
+      expect(registry.getMatching('id-1', const ListenerMatchRequest(botId: 'bot-to-remove', type: 'button')), isNull);
+      expect(registry.getMatching('id-2', const ListenerMatchRequest(botId: 'bot-to-remove', type: 'button')), isNull);
+      expect(registry.getMatching('id-3', const ListenerMatchRequest(botId: 'bot-to-keep', type: 'button')), same(entry3));
+
+      registry.removeEntry('id-3', entry3);
+    });
   });
 }
 

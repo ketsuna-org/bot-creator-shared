@@ -220,121 +220,134 @@ class CommandExecutor {
     required NyxxGateway gateway,
     required DateTime? startedAt,
   }) async {
-    final allCommands = await store.listAppCommands(botId);
-    final action = allCommands.firstWhere(
-      (c) => c['id'] == interaction.data.id.toString(),
-      orElse: () => <String, dynamic>{},
-    );
+    try {
+      final allCommands = await store.listAppCommands(botId);
+      final action = allCommands.firstWhere(
+        (c) => c['id'] == interaction.data.id.toString(),
+        orElse: () => <String, dynamic>{},
+      );
 
-    if (action.isEmpty) {
-      await interaction.respond(const []);
-      return;
-    }
-
-    final normalized = store.normalizeCommandData(Map<String, dynamic>.from(action));
-    final normalizedData = Map<String, dynamic>.from(
-      (normalized['data'] as Map?)?.cast<String, dynamic>() ?? const {},
-    );
-
-    final autocompleteConfig = resolveAutocompleteConfigForInteraction(
-      storedOptions: normalizedData['options'],
-      interactionOptions: interaction.data.options,
-    );
-
-    if (autocompleteConfig == null || autocompleteConfig['enabled'] != true) {
-      await interaction.respond(const []);
-      return;
-    }
-
-    // Static mode
-    if ((autocompleteConfig['mode'] ?? 'workflow').toString() == 'static') {
-      final focusedOption = shared_global.findFocusedOption(interaction.data.options);
-      final query = (focusedOption?.value?.toString() ?? '').toLowerCase().trim();
-      final rawChoices = autocompleteConfig['staticChoices'];
-      final choices = <CommandOptionChoiceBuilder<dynamic>>[];
-      if (rawChoices is List) {
-        for (final raw in rawChoices) {
-          if (raw is! Map) continue;
-          final name = (raw['name'] ?? '').toString().trim();
-          if (name.isEmpty) continue;
-          if (query.isNotEmpty && !name.toLowerCase().contains(query)) continue;
-          final value = raw['value'];
-          choices.add(CommandOptionChoiceBuilder<dynamic>(
-            name: name,
-            value: value is num ? value : (value?.toString() ?? name),
-          ));
-          if (choices.length >= 25) break;
-        }
+      if (action.isEmpty) {
+        await interaction.respond(const []);
+        return;
       }
-      await interaction.respond(choices);
-      return;
-    }
 
-    // Workflow mode
-    final workflowName = (autocompleteConfig['workflow'] ?? '').toString().trim();
-    if (workflowName.isEmpty) {
-      await interaction.respond(const []);
-      return;
-    }
+      final normalized = store.normalizeCommandData(Map<String, dynamic>.from(action));
+      final normalizedData = Map<String, dynamic>.from(
+        (normalized['data'] as Map?)?.cast<String, dynamic>() ?? const {},
+      );
 
-    final workflow = await store.getWorkflowByName(botId, workflowName);
-    if (workflow == null) {
-      await interaction.respond(const []);
-      return;
-    }
+      final autocompleteConfig = resolveAutocompleteConfigForInteraction(
+        storedOptions: normalizedData['options'],
+        interactionOptions: interaction.data.options,
+      );
 
-    final focusedOption = shared_global.findFocusedOption(interaction.data.options);
-    final runtimeVariables = <String, String>{
-      ...await shared_global.generateKeyValues(interaction),
-      'bot.id': botId,
-      'interaction.isSlash': 'true',
-      'interaction.command.name': interaction.data.name,
-      'interaction.command.id': interaction.data.id.toString(),
-      'autocomplete.query': focusedOption?.value?.toString() ?? '',
-      'autocomplete.optionName': focusedOption?.name ?? '',
-      'autocomplete.optionType': focusedOption == null ? 'string' : commandOptionTypeToText(focusedOption.type),
-    };
+      if (autocompleteConfig == null || autocompleteConfig['enabled'] != true) {
+        await interaction.respond(const []);
+        return;
+      }
 
-    _injectBaseVariables(runtimeVariables, botId: botId, startedAt: startedAt);
-    final contextIds = _resolveContextIds(interaction, runtimeVariables);
+      // Static mode
+      if ((autocompleteConfig['mode'] ?? 'workflow').toString() == 'static') {
+        final focusedOption = shared_global.findFocusedOption(interaction.data.options);
+        final query = (focusedOption?.value?.toString() ?? '').toLowerCase().trim();
+        final rawChoices = autocompleteConfig['staticChoices'];
+        final choices = <CommandOptionChoiceBuilder<dynamic>>[];
+        if (rawChoices is List) {
+          for (final raw in rawChoices) {
+            if (raw is! Map) continue;
+            final name = (raw['name'] ?? '').toString().trim();
+            if (name.isEmpty) continue;
+            if (query.isNotEmpty && !name.toLowerCase().contains(query)) continue;
+            final value = raw['value'];
+            choices.add(CommandOptionChoiceBuilder<dynamic>(
+              name: name,
+              value: value is num ? value : (value?.toString() ?? name),
+            ));
+            if (choices.length >= 25) break;
+          }
+        }
+        await interaction.respond(choices);
+        return;
+      }
 
-    await hydrateRuntimeVariables(
-      store: store,
-      botId: botId,
-      runtimeVariables: runtimeVariables,
-      guildContextId: contextIds.guildId,
-      channelContextId: contextIds.channelId,
-      userContextId: contextIds.userId,
-      messageContextId: contextIds.messageId,
-    );
+      // Workflow mode
+      final workflowName = (autocompleteConfig['workflow'] ?? '').toString().trim();
+      if (workflowName.isEmpty) {
+        await interaction.respond(const []);
+        return;
+      }
 
-    final providedArguments = resolveWorkflowCallArguments(
-      autocompleteConfig['arguments'],
-      (value) => resolveTemplatePlaceholders(value, Map<String, String>.from(runtimeVariables)),
-    );
+      final workflow = await store.getWorkflowByName(botId, workflowName);
+      if (workflow == null) {
+        await interaction.respond(const []);
+        return;
+      }
 
-    applyWorkflowInvocationContext(
-      variables: runtimeVariables,
-      workflowName: workflowName,
-      entryPoint: normalizeWorkflowEntryPoint(autocompleteConfig['entryPoint'] ?? workflow['entryPoint']),
-      definitions: parseWorkflowArgumentDefinitions(workflow['arguments']),
-      providedArguments: providedArguments,
-    );
+      final focusedOption = shared_global.findFocusedOption(interaction.data.options);
+      final runtimeVariables = <String, String>{
+        ...await shared_global.generateKeyValues(interaction),
+        'bot.id': botId,
+        'interaction.isSlash': 'true',
+        'interaction.command.name': interaction.data.name,
+        'interaction.command.id': interaction.data.id.toString(),
+        'autocomplete.query': focusedOption?.value?.toString() ?? '',
+        'autocomplete.optionName': focusedOption?.name ?? '',
+        'autocomplete.optionType': focusedOption == null ? 'string' : commandOptionTypeToText(focusedOption.type),
+      };
 
-    final actions = List<Action>.from(
-      ((workflow['actions'] as List?) ?? const <dynamic>[])
-          .whereType<Map>()
-          .map((json) => Action.fromJson(Map<String, dynamic>.from(json))),
-    );
+      _injectBaseVariables(runtimeVariables, botId: botId, startedAt: startedAt);
+      final contextIds = _resolveContextIds(interaction, runtimeVariables);
 
-    if (actions.isNotEmpty) {
-      await _workflowExecutor.executeActions(
-        actions: actions,
-        context: interaction,
-        gateway: gateway,
+      await hydrateRuntimeVariables(
+        store: store,
         botId: botId,
         runtimeVariables: runtimeVariables,
+        guildContextId: contextIds.guildId,
+        channelContextId: contextIds.channelId,
+        userContextId: contextIds.userId,
+        messageContextId: contextIds.messageId,
       );
+
+      final providedArguments = resolveWorkflowCallArguments(
+        autocompleteConfig['arguments'],
+        (value) => resolveTemplatePlaceholders(value, Map<String, String>.from(runtimeVariables)),
+      );
+
+      applyWorkflowInvocationContext(
+        variables: runtimeVariables,
+        workflowName: workflowName,
+        entryPoint: normalizeWorkflowEntryPoint(autocompleteConfig['entryPoint'] ?? workflow['entryPoint']),
+        definitions: parseWorkflowArgumentDefinitions(workflow['arguments']),
+        providedArguments: providedArguments,
+        enforceRequired: false,
+      );
+
+      final actions = List<Action>.from(
+        ((workflow['actions'] as List?) ?? const <dynamic>[])
+            .whereType<Map>()
+            .map((json) => Action.fromJson(Map<String, dynamic>.from(json))),
+      );
+
+      if (actions.isNotEmpty) {
+        await _workflowExecutor.executeActions(
+          actions: actions,
+          context: interaction,
+          gateway: gateway,
+          botId: botId,
+          runtimeVariables: runtimeVariables,
+        );
+      }
+    } catch (e) {
+      final errorStr = e.toString();
+      if (errorStr.contains('10062') || errorStr.toLowerCase().contains('unknown interaction')) {
+        callbacks.onDebugLog?.call(
+          'Autocomplete interaction (ID: ${interaction.id}) was superseded or timed out gracefully (10062).',
+          botId: botId,
+        );
+        return;
+      }
+      rethrow;
     }
   }
 

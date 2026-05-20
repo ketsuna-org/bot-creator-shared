@@ -1,4 +1,4 @@
-﻿/// Registry for active interaction listeners (button clicks and modal submits).
+/// Registry for active interaction listeners (button clicks and modal submits).
 /// Listeners are stored in-memory and pruned when expired.
 library;
 
@@ -96,6 +96,20 @@ class InteractionListenerRegistry {
     listeners.remove(entry);
     if (listeners.isEmpty) {
       _listeners.remove(customId);
+    }
+  }
+
+  /// Remove all listener entries associated with a specific [botId].
+  void removeAllForBot(String botId) {
+    final emptyKeys = <String>[];
+    for (final entry in _listeners.entries) {
+      entry.value.removeWhere((listener) => listener.botId == botId);
+      if (entry.value.isEmpty) {
+        emptyKeys.add(entry.key);
+      }
+    }
+    for (final key in emptyKeys) {
+      _listeners.remove(key);
     }
   }
 

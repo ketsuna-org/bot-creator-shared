@@ -7,6 +7,7 @@ import 'package:bot_creator_shared/engine/presence_manager.dart';
 import 'package:bot_creator_shared/engine/event_dispatcher.dart';
 import 'package:bot_creator_shared/engine/command_executor.dart';
 import 'package:bot_creator_shared/engine/workflow_executor.dart';
+import 'package:bot_creator_shared/utils/interaction_listener_registry.dart';
 
 /// Represents an active bot session with its gateway connection and managers.
 class BotSession {
@@ -49,6 +50,7 @@ class BotSession {
   final List<StreamSubscription<dynamic>> _subscriptions = [];
   DateTime? _startedAt;
   Timer? _metricsTimer;
+  Timer? _initialMetricsTimer;
 
   String _ownerId = '';
   int _commandCount = 0;
@@ -138,9 +140,14 @@ class BotSession {
   Future<void> stop() async {
     _metricsTimer?.cancel();
     _metricsTimer = null;
+    _initialMetricsTimer?.cancel();
+    _initialMetricsTimer = null;
 
     _presenceManager?.stop();
     _presenceManager = null;
+
+    // Clear any registered interaction listeners for this bot
+    InteractionListenerRegistry.instance.removeAllForBot(botId);
 
     for (final sub in _subscriptions) {
       unawaited(sub.cancel());
@@ -172,7 +179,8 @@ class BotSession {
       _reportMetrics();
     });
     // Initial report
-    Timer(const Duration(seconds: 5), () => _reportMetrics());
+    _initialMetricsTimer?.cancel();
+    _initialMetricsTimer = Timer(const Duration(seconds: 5), () => _reportMetrics());
   }
 
   void _reportMetrics() {
