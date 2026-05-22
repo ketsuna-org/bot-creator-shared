@@ -17,17 +17,12 @@
           "version": 1,
           "commandType": "chatInput",
           "editorMode": "advanced",
-          "simpleConfig": {},
+          "executionMode": "workflow",
           "defaultMemberPermissions": "",
           "response": {
-            "mode": "embed",
+            "mode": "message",
             "text": "",
             "type": "normal",
-            "embed": {
-              "title": "👋 Hello ((userName))!",
-              "description": "Welcome to **((guildName))**! We are glad to have you here.",
-              "color": 5793266
-            },
             "embeds": [
               {
                 "title": "👋 Hello ((userName))!",
@@ -36,26 +31,12 @@
               }
             ],
             "components": {},
-            "modal": {},
             "workflow": {
               "autoDeferIfActions": true,
               "visibility": "public",
               "onError": "edit_error",
               "conditional": {
-                "enabled": false,
-                "variable": "",
-                "whenTrueType": "normal",
-                "whenFalseType": "normal",
-                "whenTrueText": "",
-                "whenFalseText": "",
-                "whenTrueEmbeds": [],
-                "whenFalseEmbeds": [],
-                "whenTrueNormalComponents": {},
-                "whenFalseNormalComponents": {},
-                "whenTrueComponents": {},
-                "whenFalseComponents": {},
-                "whenTrueModal": {},
-                "whenFalseModal": {}
+                "enabled": false
               }
             }
           },
@@ -69,17 +50,12 @@
           "version": 1,
           "commandType": "chatInput",
           "editorMode": "advanced",
-          "simpleConfig": {},
+          "executionMode": "workflow",
           "defaultMemberPermissions": "",
           "response": {
-            "mode": "embed",
+            "mode": "message",
             "text": "",
             "type": "normal",
-            "embed": {
-              "title": "📊 ((guildName))",
-              "description": "**Members:** ((guildCount))\n**ID:** ((guildId))",
-              "color": 3447003
-            },
             "embeds": [
               {
                 "title": "📊 ((guildName))",
@@ -88,26 +64,12 @@
               }
             ],
             "components": {},
-            "modal": {},
             "workflow": {
               "autoDeferIfActions": true,
               "visibility": "public",
               "onError": "edit_error",
               "conditional": {
-                "enabled": false,
-                "variable": "",
-                "whenTrueType": "normal",
-                "whenFalseType": "normal",
-                "whenTrueText": "",
-                "whenFalseText": "",
-                "whenTrueEmbeds": [],
-                "whenFalseEmbeds": [],
-                "whenTrueNormalComponents": {},
-                "whenFalseNormalComponents": {},
-                "whenTrueComponents": {},
-                "whenFalseComponents": {},
-                "whenTrueModal": {},
-                "whenFalseModal": {}
+                "enabled": false
               }
             }
           },
@@ -127,13 +89,20 @@
         },
         "actions": [
           {
+            "id": "action_welcome_msg",
             "type": "sendMessage",
             "enabled": true,
+            "key": "welcome_sender",
+            "depend_on": [],
+            "error": {
+              "mode": "stop"
+            },
             "payload": {
               "messageMode": "normal",
               "channelId": "((guild.systemChannelId|channelId))",
               "content": "🎉 Welcome <@((member.id))>! You are now part of the server."
-            }
+            },
+            "runtimeId": "action_welcome_msg"
           }
         ]
       }
@@ -156,11 +125,8 @@
         "data": {
           "version": 1,
           "commandType": "chatInput",
-          "editorMode": "simple",
-          "simpleConfig": {
-            "banUser": true,
-            "actionReason": "((opts.reason))"
-          },
+          "editorMode": "advanced",
+          "executionMode": "workflow",
           "defaultMemberPermissions": "4",
           "options": [
             {
@@ -177,40 +143,35 @@
             }
           ],
           "response": {
-            "mode": "text",
+            "mode": "message",
             "text": "🔨 ((opts.target)) has been banned.",
             "type": "normal",
-            "embed": {
-              "title": "",
-              "description": "",
-              "url": ""
-            },
-            "embeds": [],
-            "components": {},
-            "modal": {},
             "workflow": {
               "autoDeferIfActions": true,
               "visibility": "ephemeral",
               "onError": "edit_error",
               "conditional": {
-                "enabled": false,
-                "variable": "",
-                "whenTrueType": "normal",
-                "whenFalseType": "normal",
-                "whenTrueText": "",
-                "whenFalseText": "",
-                "whenTrueEmbeds": [],
-                "whenFalseEmbeds": [],
-                "whenTrueNormalComponents": {},
-                "whenFalseNormalComponents": {},
-                "whenTrueComponents": {},
-                "whenFalseComponents": {},
-                "whenTrueModal": {},
-                "whenFalseModal": {}
+                "enabled": false
               }
             }
           },
-          "actions": []
+          "actions": [
+            {
+              "id": "action_ban",
+              "type": "banUser",
+              "enabled": true,
+              "key": "ban_step",
+              "depend_on": [],
+              "error": {
+                "mode": "stop"
+              },
+              "payload": {
+                "userId": "((opts.target|userId))",
+                "reason": "((opts.reason))"
+              },
+              "runtimeId": "action_ban"
+            }
+          ]
         }
       },
       {
@@ -219,11 +180,8 @@
         "data": {
           "version": 1,
           "commandType": "chatInput",
-          "editorMode": "simple",
-          "simpleConfig": {
-            "kickUser": true,
-            "actionReason": "((opts.reason))"
-          },
+          "editorMode": "advanced",
+          "executionMode": "workflow",
           "defaultMemberPermissions": "2",
           "options": [
             {
@@ -240,40 +198,35 @@
             }
           ],
           "response": {
-            "mode": "text",
+            "mode": "message",
             "text": "👢 ((opts.target)) has been kicked.",
             "type": "normal",
-            "embed": {
-              "title": "",
-              "description": "",
-              "url": ""
-            },
-            "embeds": [],
-            "components": {},
-            "modal": {},
             "workflow": {
               "autoDeferIfActions": true,
               "visibility": "ephemeral",
               "onError": "edit_error",
               "conditional": {
-                "enabled": false,
-                "variable": "",
-                "whenTrueType": "normal",
-                "whenFalseType": "normal",
-                "whenTrueText": "",
-                "whenFalseText": "",
-                "whenTrueEmbeds": [],
-                "whenFalseEmbeds": [],
-                "whenTrueNormalComponents": {},
-                "whenFalseNormalComponents": {},
-                "whenTrueComponents": {},
-                "whenFalseComponents": {},
-                "whenTrueModal": {},
-                "whenFalseModal": {}
+                "enabled": false
               }
             }
           },
-          "actions": []
+          "actions": [
+            {
+              "id": "action_kick",
+              "type": "kickUser",
+              "enabled": true,
+              "key": "kick_step",
+              "depend_on": [],
+              "error": {
+                "mode": "stop"
+              },
+              "payload": {
+                "userId": "((opts.target|userId))",
+                "reason": "((opts.reason))"
+              },
+              "runtimeId": "action_kick"
+            }
+          ]
         }
       },
       {
@@ -282,12 +235,8 @@
         "data": {
           "version": 1,
           "commandType": "chatInput",
-          "editorMode": "simple",
-          "simpleConfig": {
-            "muteUser": true,
-            "muteDuration": "600",
-            "actionReason": "((opts.reason))"
-          },
+          "editorMode": "advanced",
+          "executionMode": "workflow",
           "defaultMemberPermissions": "1099511627776",
           "options": [
             {
@@ -304,40 +253,36 @@
             }
           ],
           "response": {
-            "mode": "text",
+            "mode": "message",
             "text": "🔇 ((opts.target)) has been muted.",
             "type": "normal",
-            "embed": {
-              "title": "",
-              "description": "",
-              "url": ""
-            },
-            "embeds": [],
-            "components": {},
-            "modal": {},
             "workflow": {
               "autoDeferIfActions": true,
               "visibility": "ephemeral",
               "onError": "edit_error",
               "conditional": {
-                "enabled": false,
-                "variable": "",
-                "whenTrueType": "normal",
-                "whenFalseType": "normal",
-                "whenTrueText": "",
-                "whenFalseText": "",
-                "whenTrueEmbeds": [],
-                "whenFalseEmbeds": [],
-                "whenTrueNormalComponents": {},
-                "whenFalseNormalComponents": {},
-                "whenTrueComponents": {},
-                "whenFalseComponents": {},
-                "whenTrueModal": {},
-                "whenFalseModal": {}
+                "enabled": false
               }
             }
           },
-          "actions": []
+          "actions": [
+            {
+              "id": "action_mute",
+              "type": "muteUser",
+              "enabled": true,
+              "key": "mute_step",
+              "depend_on": [],
+              "error": {
+                "mode": "stop"
+              },
+              "payload": {
+                "userId": "((opts.target|userId))",
+                "reason": "((opts.reason))",
+                "duration": 600
+              },
+              "runtimeId": "action_mute"
+            }
+          ]
         }
       },
       {
@@ -346,57 +291,47 @@
         "data": {
           "version": 1,
           "commandType": "chatInput",
-          "editorMode": "simple",
-          "simpleConfig": {
-            "deleteMessages": true,
-            "deleteMessagesDefaultCount": "((opts.amount))"
-          },
+          "editorMode": "advanced",
+          "executionMode": "workflow",
           "defaultMemberPermissions": "8192",
           "options": [
             {
               "type": "integer",
               "name": "amount",
-              "description": "Number of messages to delete (1-100)",
-              "required": true,
-              "min_value": 1,
-              "max_value": 100
+              "description": "Number of messages to delete",
+              "required": true
             }
           ],
           "response": {
-            "mode": "text",
+            "mode": "message",
             "text": "🗑️ Deleted ((opts.amount)) message(s).",
             "type": "normal",
-            "embed": {
-              "title": "",
-              "description": "",
-              "url": ""
-            },
-            "embeds": [],
-            "components": {},
-            "modal": {},
             "workflow": {
               "autoDeferIfActions": true,
               "visibility": "ephemeral",
               "onError": "edit_error",
               "conditional": {
-                "enabled": false,
-                "variable": "",
-                "whenTrueType": "normal",
-                "whenFalseType": "normal",
-                "whenTrueText": "",
-                "whenFalseText": "",
-                "whenTrueEmbeds": [],
-                "whenFalseEmbeds": [],
-                "whenTrueNormalComponents": {},
-                "whenFalseNormalComponents": {},
-                "whenTrueComponents": {},
-                "whenFalseComponents": {},
-                "whenTrueModal": {},
-                "whenFalseModal": {}
+                "enabled": false
               }
             }
           },
-          "actions": []
+          "actions": [
+            {
+              "id": "action_clear",
+              "type": "deleteMessages",
+              "enabled": true,
+              "key": "clear_step",
+              "depend_on": [],
+              "error": {
+                "mode": "stop"
+              },
+              "payload": {
+                "channelId": "((channelId))",
+                "count": "((opts.amount))"
+              },
+              "runtimeId": "action_clear"
+            }
+          ]
         }
       }
     ],
@@ -419,39 +354,18 @@
           "version": 1,
           "commandType": "chatInput",
           "editorMode": "advanced",
-          "simpleConfig": {},
+          "executionMode": "workflow",
           "defaultMemberPermissions": "",
           "response": {
-            "mode": "text",
+            "mode": "message",
             "text": "🏓 Pong!",
             "type": "normal",
-            "embed": {
-              "title": "",
-              "description": "",
-              "url": ""
-            },
-            "embeds": [],
-            "components": {},
-            "modal": {},
             "workflow": {
               "autoDeferIfActions": true,
               "visibility": "public",
               "onError": "edit_error",
               "conditional": {
-                "enabled": false,
-                "variable": "",
-                "whenTrueType": "normal",
-                "whenFalseType": "normal",
-                "whenTrueText": "",
-                "whenFalseText": "",
-                "whenTrueEmbeds": [],
-                "whenFalseEmbeds": [],
-                "whenTrueNormalComponents": {},
-                "whenFalseNormalComponents": {},
-                "whenTrueComponents": {},
-                "whenFalseComponents": {},
-                "whenTrueModal": {},
-                "whenFalseModal": {}
+                "enabled": false
               }
             }
           },
@@ -465,7 +379,7 @@
           "version": 1,
           "commandType": "chatInput",
           "editorMode": "advanced",
-          "simpleConfig": {},
+          "executionMode": "workflow",
           "defaultMemberPermissions": "",
           "options": [
             {
@@ -476,14 +390,9 @@
             }
           ],
           "response": {
-            "mode": "embed",
+            "mode": "message",
             "text": "",
             "type": "normal",
-            "embed": {
-              "title": "🖼️ ((opts.user|userName))'s avatar",
-              "image": "((avatar(opts.user.avatar|userAvatar)))",
-              "color": 3447003
-            },
             "embeds": [
               {
                 "title": "🖼️ ((opts.user|userName))'s avatar",
@@ -492,26 +401,12 @@
               }
             ],
             "components": {},
-            "modal": {},
             "workflow": {
               "autoDeferIfActions": true,
               "visibility": "public",
               "onError": "edit_error",
               "conditional": {
-                "enabled": false,
-                "variable": "",
-                "whenTrueType": "normal",
-                "whenFalseType": "normal",
-                "whenTrueText": "",
-                "whenFalseText": "",
-                "whenTrueEmbeds": [],
-                "whenFalseEmbeds": [],
-                "whenTrueNormalComponents": {},
-                "whenFalseNormalComponents": {},
-                "whenTrueComponents": {},
-                "whenFalseComponents": {},
-                "whenTrueModal": {},
-                "whenFalseModal": {}
+                "enabled": false
               }
             }
           },
@@ -525,7 +420,7 @@
           "version": 1,
           "commandType": "chatInput",
           "editorMode": "advanced",
-          "simpleConfig": {},
+          "executionMode": "workflow",
           "defaultMemberPermissions": "8",
           "options": [
             {
@@ -542,48 +437,34 @@
             }
           ],
           "response": {
-            "mode": "text",
+            "mode": "message",
             "text": "✅ Message sent!",
             "type": "normal",
-            "embed": {
-              "title": "",
-              "description": "",
-              "url": ""
-            },
-            "embeds": [],
-            "components": {},
-            "modal": {},
             "workflow": {
               "autoDeferIfActions": true,
               "visibility": "ephemeral",
               "onError": "edit_error",
               "conditional": {
-                "enabled": false,
-                "variable": "",
-                "whenTrueType": "normal",
-                "whenFalseType": "normal",
-                "whenTrueText": "",
-                "whenFalseText": "",
-                "whenTrueEmbeds": [],
-                "whenFalseEmbeds": [],
-                "whenTrueNormalComponents": {},
-                "whenFalseNormalComponents": {},
-                "whenTrueComponents": {},
-                "whenFalseComponents": {},
-                "whenTrueModal": {},
-                "whenFalseModal": {}
+                "enabled": false
               }
             }
           },
           "actions": [
             {
+              "id": "action_say",
               "type": "sendMessage",
               "enabled": true,
+              "key": "say_step",
+              "depend_on": [],
+              "error": {
+                "mode": "stop"
+              },
               "payload": {
                 "messageMode": "normal",
                 "channelId": "((opts.channel|channelId))",
                 "content": "((opts.message))"
-              }
+              },
+              "runtimeId": "action_say"
             }
           ]
         }
@@ -608,20 +489,12 @@
           "version": 1,
           "commandType": "chatInput",
           "editorMode": "advanced",
-          "simpleConfig": {},
+          "executionMode": "workflow",
           "defaultMemberPermissions": "",
           "response": {
-            "mode": "text",
+            "mode": "message",
             "text": "",
             "type": "normal",
-            "embed": {
-              "title": "",
-              "description": "",
-              "url": ""
-            },
-            "embeds": [],
-            "components": {},
-            "modal": {},
             "workflow": {
               "autoDeferIfActions": true,
               "visibility": "public",
@@ -629,18 +502,12 @@
               "conditional": {
                 "enabled": true,
                 "variable": "((coin()))",
-                "whenTrueType": "normal",
-                "whenFalseType": "normal",
+                "whenTrueType": "message",
+                "whenFalseType": "message",
                 "whenTrueText": "🪙 **Heads!**",
                 "whenFalseText": "🪙 **Tails!**",
                 "whenTrueEmbeds": [],
-                "whenFalseEmbeds": [],
-                "whenTrueNormalComponents": {},
-                "whenFalseNormalComponents": {},
-                "whenTrueComponents": {},
-                "whenFalseComponents": {},
-                "whenTrueModal": {},
-                "whenFalseModal": {}
+                "whenFalseEmbeds": []
               }
             }
           },
@@ -653,12 +520,8 @@
         "data": {
           "version": 1,
           "commandType": "chatInput",
-          "editorMode": "simple",
-          "simpleConfig": {
-            "createPoll": true,
-            "pollDurationHours": "24",
-            "pollAllowMultiselect": false
-          },
+          "editorMode": "advanced",
+          "executionMode": "workflow",
           "defaultMemberPermissions": "",
           "options": [
             {
@@ -669,40 +532,37 @@
             }
           ],
           "response": {
-            "mode": "text",
+            "mode": "message",
             "text": "📊 Poll created!",
             "type": "normal",
-            "embed": {
-              "title": "",
-              "description": "",
-              "url": ""
-            },
-            "embeds": [],
-            "components": {},
-            "modal": {},
             "workflow": {
               "autoDeferIfActions": true,
               "visibility": "public",
               "onError": "edit_error",
               "conditional": {
-                "enabled": false,
-                "variable": "",
-                "whenTrueType": "normal",
-                "whenFalseType": "normal",
-                "whenTrueText": "",
-                "whenFalseText": "",
-                "whenTrueEmbeds": [],
-                "whenFalseEmbeds": [],
-                "whenTrueNormalComponents": {},
-                "whenFalseNormalComponents": {},
-                "whenTrueComponents": {},
-                "whenFalseComponents": {},
-                "whenTrueModal": {},
-                "whenFalseModal": {}
+                "enabled": false
               }
             }
           },
-          "actions": []
+          "actions": [
+            {
+              "id": "action_poll",
+              "type": "createPoll",
+              "enabled": true,
+              "key": "poll_step",
+              "depend_on": [],
+              "error": {
+                "mode": "stop"
+              },
+              "payload": {
+                "channelId": "((channelId))",
+                "question": "((opts.question))",
+                "duration": 24,
+                "allowMultiselect": false
+              },
+              "runtimeId": "action_poll"
+            }
+          ]
         }
       },
       {
@@ -712,7 +572,7 @@
           "version": 1,
           "commandType": "chatInput",
           "editorMode": "advanced",
-          "simpleConfig": {},
+          "executionMode": "workflow",
           "defaultMemberPermissions": "",
           "options": [
             {
@@ -723,14 +583,9 @@
             }
           ],
           "response": {
-            "mode": "embed",
+            "mode": "message",
             "text": "",
             "type": "normal",
-            "embed": {
-              "title": "🎱 Magic 8-Ball",
-              "description": "**Q:** ((opts.question))\n**A:** ((randomchoice(\"Yes!\", \"No.\", \"Maybe...\", \"Ask again later.\", \"Definitely!\", \"I doubt it.\", \"Without a doubt.\", \"Better not tell you now.\")))",
-              "color": 1752220
-            },
             "embeds": [
               {
                 "title": "🎱 Magic 8-Ball",
@@ -739,26 +594,12 @@
               }
             ],
             "components": {},
-            "modal": {},
             "workflow": {
               "autoDeferIfActions": true,
               "visibility": "public",
               "onError": "edit_error",
               "conditional": {
-                "enabled": false,
-                "variable": "",
-                "whenTrueType": "normal",
-                "whenFalseType": "normal",
-                "whenTrueText": "",
-                "whenFalseText": "",
-                "whenTrueEmbeds": [],
-                "whenFalseEmbeds": [],
-                "whenTrueNormalComponents": {},
-                "whenFalseNormalComponents": {},
-                "whenTrueComponents": {},
-                "whenFalseComponents": {},
-                "whenTrueModal": {},
-                "whenFalseModal": {}
+                "enabled": false
               }
             }
           },
