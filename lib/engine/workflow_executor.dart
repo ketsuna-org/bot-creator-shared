@@ -285,7 +285,9 @@ class WorkflowExecutor {
         }
         return value;
       } else if (value is Map) {
-        return value.map((k, v) => MapEntry(k, processValue(v)));
+        return Map<String, dynamic>.from(
+          value.map((k, v) => MapEntry(k.toString(), processValue(v))),
+        );
       } else if (value is List) {
         return value.map((item) => processValue(item)).toList();
       }
@@ -294,7 +296,10 @@ class WorkflowExecutor {
 
     return actions.map((action) {
       final newPayload = processValue(action.payload);
-      return Action(type: action.type, payload: newPayload as Map<String, dynamic>);
+      return Action(
+        type: action.type,
+        payload: Map<String, dynamic>.from(newPayload as Map),
+      );
     }).toList();
   }
 }
