@@ -5,7 +5,8 @@ Map<String, String> actionError({
   required String message,
   Map<String, String>? data,
 }) {
-  return <String, String>{'error': message, 'errorCode': code, ...?data};
+  // Spread data first so that 'error' and 'errorCode' cannot be overridden
+  return <String, String>{...?data, 'error': message, 'errorCode': code};
 }
 
 Future<T> runWithTimeout<T>(
