@@ -61,7 +61,8 @@ class WorkflowExecutor {
             ? (frames, totalMs) {
                 String label = replayLabel ?? '';
                 if (label.isEmpty) {
-                  if (context is Interaction) {
+                  // Fix 2: Restrict to ApplicationCommandInteraction to avoid NoSuchMethodError
+                  if (context is ApplicationCommandInteraction) {
                     label = '/${context.data.name}';
                   } else if (runtimeVariables.containsKey('0')) {
                     label = '!${runtimeVariables['0']}';
@@ -104,36 +105,46 @@ class WorkflowExecutor {
       botId: botId,
     );
     
-    final response = Map<String, dynamic>.from(
-      (workflowData["response"] as Map?)?.cast<String, dynamic>() ?? const {},
-    );
+    // Fix 1: Safe cast for response (avoid TypeError if not a Map)
+    final rawResponse = workflowData["response"];
+    final response = rawResponse is Map
+        ? Map<String, dynamic>.from(rawResponse.cast<String, dynamic>())
+        : <String, dynamic>{};
     callbacks.onDebugLog?.call(
       'Response data in executeVisualWorkflow: $response',
       botId: botId,
     );
     
-    final workflow = Map<String, dynamic>.from(
-      (response['workflow'] as Map?)?.cast<String, dynamic>() ?? const {},
-    );
+    // Fix 1: Safe cast for workflow sub-map
+    final rawWorkflow = response['workflow'];
+    final workflow = rawWorkflow is Map
+        ? Map<String, dynamic>.from(rawWorkflow.cast<String, dynamic>())
+        : <String, dynamic>{};
 
-    var actionsJson = List<Map<String, dynamic>>.from(
-      (workflowData["actions"] as List?)?.whereType<Map>().map(
-            (e) => Map<String, dynamic>.from(e),
-          ) ??
-          const [],
-    );
+    // Fix 1: Safe cast for actions list
+    final rawActions = workflowData["actions"];
+    var actionsJson = rawActions is List
+        ? List<Map<String, dynamic>>.from(
+            rawActions.whereType<Map>().map(
+                  (e) => Map<String, dynamic>.from(e),
+                ),
+          )
+        : const <Map<String, dynamic>>[];
 
     // Load saved workflow if needed
     final workflowName = (workflow['name'] ?? '').toString().trim();
     if (workflowName.isNotEmpty && actionsJson.isEmpty) {
       final savedWorkflow = await store.getWorkflowByName(botId, workflowName);
       if (savedWorkflow != null) {
-        actionsJson = List<Map<String, dynamic>>.from(
-          (savedWorkflow['actions'] as List?)?.whereType<Map>().map(
-                (e) => Map<String, dynamic>.from(e),
-              ) ??
-              const [],
-        );
+        // Fix 1: Safe cast for saved workflow actions
+        final savedRawActions = savedWorkflow['actions'];
+        actionsJson = savedRawActions is List
+            ? List<Map<String, dynamic>>.from(
+                savedRawActions.whereType<Map>().map(
+                      (e) => Map<String, dynamic>.from(e),
+                    ),
+              )
+            : const <Map<String, dynamic>>[];
       }
     }
 
@@ -156,6 +167,8 @@ class WorkflowExecutor {
       );
       try {
         await (interaction as dynamic).acknowledge(isEphemeral: isEphemeral);
+        // Fix 3: only set didDefer on success
+        didDefer = true;
         callbacks.onDebugLog?.call(
           'Interaction acknowledged successfully',
           botId: botId,
@@ -165,8 +178,8 @@ class WorkflowExecutor {
           'Failed to acknowledge interaction: $e',
           botId: botId,
         );
+        // didDefer remains false, correct fallback in sendWorkflowResponse
       }
-      didDefer = true;
     }
 
     if (actions.isNotEmpty) {
@@ -225,12 +238,15 @@ class WorkflowExecutor {
       botId: botId,
     );
     
-    final actionsJson = List<Map<String, dynamic>>.from(
-      (workflowData["actions"] as List?)?.whereType<Map>().map(
-            (e) => Map<String, dynamic>.from(e),
-          ) ??
-          const [],
-    );
+    // Fix 5: Safe cast for actions list
+    final rawActions = workflowData["actions"];
+    final actionsJson = rawActions is List
+        ? List<Map<String, dynamic>>.from(
+            rawActions.whereType<Map>().map(
+                  (e) => Map<String, dynamic>.from(e),
+                ),
+          )
+        : const <Map<String, dynamic>>[];
 
     if (actionsJson.isEmpty) {
       callbacks.onDebugLog?.call(
@@ -279,7 +295,11 @@ class WorkflowExecutor {
                   firstAction.type == BotCreatorActionType.respondWithMessage) && 
                  firstAction.payload.containsKey('content') &&
                  compileResult.actions.length == 1) {
-                return firstAction.payload['content'];
+                // Fix 4: guard against null content
+                final compiledContent = firstAction.payload['content'];
+                if (compiledContent != null) {
+                  return compiledContent;
+                }
              }
           }
         }
