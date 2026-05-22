@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 
 import 'package:bot_creator_shared/actions/action_runtime.dart';
 import 'package:bot_creator_shared/utils/global.dart';
@@ -15,6 +15,7 @@ Future<Map<String, String>> deleteMessage(
   bool filterBots = false,
   bool filterUsers = false,
   String reason = '',
+  bool deletePinned = true,
 }) async {
   try {
     if (count <= 0) {
@@ -67,6 +68,9 @@ Future<Map<String, String>> deleteMessage(
         }
         if (onlyThisUserID.isNotEmpty &&
             message.author.id.toString() != onlyThisUserID) {
+          continue;
+        }
+        if (!deletePinned && message.isPinned) {
           continue;
         }
         if (!deleteItself &&
@@ -122,40 +126,65 @@ Future<Map<String, String>> deleteMessage(
       return deleted;
     }
 
-    final ids = <Snowflake>[];
+    final recentIds = <Snowflake>[];
+    final olderCandidates = <Message>[];
     final unique = <Snowflake>{};
-    var hasOlderThan14Days = false;
+    final cutoff = DateTime.now().subtract(const Duration(days: 14));
+
     for (final message in candidates) {
       if (!unique.add(message.id)) {
         continue;
       }
-      ids.add(message.id);
-      if (message.timestamp.isBefore(
-        DateTime.now().subtract(Duration(days: 14)),
-      )) {
-        hasOlderThan14Days = true;
+      if (message.timestamp.isAfter(cutoff)) {
+        recentIds.add(message.id);
+      } else {
+        olderCandidates.add(message);
       }
     }
 
-    if (ids.isEmpty) {
+    if (unique.isEmpty) {
       return {"count": "0", "mode": "none"};
     }
 
-    final canUseBulk =
-        ids.length >= 2 && ids.length <= 100 && !hasOlderThan14Days;
+    var totalDeleted = 0;
 
-    if (!canUseBulk) {
-      final deleted = await deleteIndividually(candidates);
-      return {"count": deleted.toString(), "mode": "single"};
+    // 1. Bulk delete recent messages in chunks of 100
+    if (recentIds.isNotEmpty) {
+      try {
+        for (var i = 0; i < recentIds.length; i += 100) {
+          final chunk = recentIds.sublist(
+            i,
+            i + 100 > recentIds.length ? recentIds.length : i + 100,
+          );
+          if (chunk.length >= 2) {
+            await runWithTimeout(() => channel.messages.bulkDelete(chunk));
+            totalDeleted += chunk.length;
+          } else if (chunk.length == 1) {
+            // A single recent message goes to olderCandidates to be deleted individually
+            final msg = candidates.firstWhere((m) => m.id == chunk[0]);
+            olderCandidates.add(msg);
+          }
+        }
+      } catch (_) {
+        // Fallback for remaining recent messages to delete them individually
+        final deletedSoFar = totalDeleted;
+        final failedRecent = recentIds
+            .skip(deletedSoFar)
+            .map((id) => candidates.firstWhere((m) => m.id == id));
+        olderCandidates.addAll(failedRecent);
+      }
     }
 
-    try {
-      await runWithTimeout(() => channel.messages.bulkDelete(ids));
-      return {"count": ids.length.toString(), "mode": "bulk"};
-    } catch (_) {
-      final deleted = await deleteIndividually(candidates);
-      return {"count": deleted.toString(), "mode": "fallback"};
+    // 2. Delete the rest individually
+    if (olderCandidates.isNotEmpty) {
+      final deleted = await deleteIndividually(olderCandidates);
+      totalDeleted += deleted;
     }
+
+    return {
+      "count": totalDeleted.toString(),
+      "mode": olderCandidates.isEmpty ? "bulk" : "mixed"
+    };
   } on TimeoutException {
     return actionError(
       code: 'network_timeout',

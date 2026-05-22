@@ -422,6 +422,7 @@ Map<String, String> extractChannelRuntimeDetails(dynamic channel) {
     }
   }
 
+  trySet('channel.id', () => _asSnowflake(channel.id));
   trySet('channel.topic', () => channel.topic);
   trySet('channel.parentId', () => _asSnowflake(channel.parentId));
   trySet('channel.position', () => channel.position);
@@ -488,6 +489,7 @@ Future<Map<String, String>> extractGuildRuntimeDetails(
     }
   } catch (_) {}
 
+  trySet('guild.id', () => _asSnowflake(guild.id));
   trySet('guild.ownerId', () => _asSnowflake(guild.ownerId));
   trySet('guild.description', () => guild.description);
   trySet('guild.vanityUrlCode', () => guild.vanityUrlCode);

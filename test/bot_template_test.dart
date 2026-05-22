@@ -1,19 +1,35 @@
-import 'package:bot_creator_shared/bot/builtin_templates.dart';
+import 'dart:convert';
+import 'dart:io';
+import 'package:bot_creator_shared/bot/bot_template.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group('BotTemplate', () {
-    test('builtInTemplates is not empty', () {
-      expect(builtInTemplates, isNotEmpty);
+  group('BotTemplate JSON validation', () {
+    late List<BotTemplate> templates;
+
+    setUpAll(() {
+      final jsonFile = File('template.json');
+      final file = jsonFile.existsSync() ? jsonFile : File('packages/shared/template.json');
+      expect(file.existsSync(), isTrue, reason: 'template.json must exist');
+      final jsonContent = file.readAsStringSync();
+      final decoded = jsonDecode(jsonContent);
+      expect(decoded, isA<List>());
+      templates = (decoded as List)
+          .map((item) => BotTemplate.fromJson(Map<String, dynamic>.from(item)))
+          .toList();
+    });
+
+    test('templates is not empty', () {
+      expect(templates, isNotEmpty);
     });
 
     test('all templates have unique ids', () {
-      final ids = builtInTemplates.map((t) => t.id).toSet();
-      expect(ids.length, builtInTemplates.length);
+      final ids = templates.map((t) => t.id).toSet();
+      expect(ids.length, templates.length);
     });
 
     test('all templates have non-empty metadata', () {
-      for (final template in builtInTemplates) {
+      for (final template in templates) {
         expect(template.id, isNotEmpty, reason: 'id should not be empty');
         expect(
           template.nameKey,
@@ -39,7 +55,7 @@ void main() {
     });
 
     test('all templates have at least one command', () {
-      for (final template in builtInTemplates) {
+      for (final template in templates) {
         expect(
           template.commands,
           isNotEmpty,
@@ -53,7 +69,7 @@ void main() {
       // 8ball is allowed by Discord as a special case
       final specialNames = {'8ball'};
 
-      for (final template in builtInTemplates) {
+      for (final template in templates) {
         for (final cmd in template.commands) {
           expect(
             validName.hasMatch(cmd.name) || specialNames.contains(cmd.name),
@@ -73,7 +89,7 @@ void main() {
         'actions',
       ];
 
-      for (final template in builtInTemplates) {
+      for (final template in templates) {
         for (final cmd in template.commands) {
           for (final key in requiredKeys) {
             expect(
@@ -87,7 +103,7 @@ void main() {
     });
 
     test('command names are unique within each template', () {
-      for (final template in builtInTemplates) {
+      for (final template in templates) {
         final names =
             template.commands.map((c) => c.name.toLowerCase()).toSet();
         expect(
@@ -99,7 +115,7 @@ void main() {
     });
 
     test('workflow names are unique within each template', () {
-      for (final template in builtInTemplates) {
+      for (final template in templates) {
         if (template.workflows.isEmpty) continue;
         final names =
             template.workflows
@@ -114,7 +130,7 @@ void main() {
     });
 
     test('welcome template has a guildMemberAdd workflow', () {
-      final welcome = builtInTemplates.firstWhere((t) => t.id == 'welcome');
+      final welcome = templates.firstWhere((t) => t.id == 'welcome');
       expect(welcome.workflows, isNotEmpty);
       final trigger =
           welcome.workflows.first['eventTrigger'] as Map<String, dynamic>;
@@ -122,7 +138,7 @@ void main() {
     });
 
     test('moderation template requires ban permissions', () {
-      final moderation = builtInTemplates.firstWhere(
+      final moderation = templates.firstWhere(
         (t) => t.id == 'moderation',
       );
       final banCmd = moderation.commands.firstWhere((c) => c.name == 'ban');

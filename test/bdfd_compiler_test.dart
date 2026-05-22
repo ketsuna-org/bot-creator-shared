@@ -2144,5 +2144,53 @@ void main() {
         );
       },
     );
+
+    test(
+      r'$deleteMessage and $deleteIn compile correctly',
+      () {
+        final compiler = BdfdCompiler();
+        final result = compiler.compile(r'$deleteMessage[123;456]');
+        expect(result.hasErrors, isFalse);
+        expect(result.actions, hasLength(1));
+        expect(result.actions[0].type, BotCreatorActionType.deleteMessages);
+        expect(result.actions[0].payload['channelId'], '123');
+        expect(result.actions[0].payload['messageId'], '456');
+
+        final result2 = compiler.compile(r'$deleteIn[5s]');
+        expect(result2.hasErrors, isFalse);
+        expect(result2.actions, hasLength(1));
+        expect(result2.actions[0].type, BotCreatorActionType.deleteMessages);
+        expect(result2.actions[0].payload['channelId'], '((channel.id))');
+        expect(result2.actions[0].payload['messageId'], '((message.id))');
+        expect(result2.actions[0].payload['delay'], '5s');
+
+        final result3 = compiler.compile(r'$clear');
+        expect(result3.hasErrors, isFalse);
+        expect(result3.actions, hasLength(1));
+        expect(result3.actions[0].type, BotCreatorActionType.deleteMessages);
+        expect(result3.actions[0].payload['channelId'], '((channel.id))');
+        expect(result3.actions[0].payload['count'], '((message.args[0]))');
+        expect(result3.actions[0].payload.containsKey('onlyUserId'), isFalse);
+        expect(result3.actions[0].payload.containsKey('removePinned'), isFalse);
+
+        final result4 = compiler.compile(r'$clear[50]');
+        expect(result4.hasErrors, isFalse);
+        expect(result4.actions, hasLength(1));
+        expect(result4.actions[0].type, BotCreatorActionType.deleteMessages);
+        expect(result4.actions[0].payload['channelId'], '((channel.id))');
+        expect(result4.actions[0].payload['count'], '50');
+        expect(result4.actions[0].payload.containsKey('onlyUserId'), isFalse);
+        expect(result4.actions[0].payload.containsKey('removePinned'), isFalse);
+
+        final result5 = compiler.compile(r'$clear[50;77777;false]');
+        expect(result5.hasErrors, isFalse);
+        expect(result5.actions, hasLength(1));
+        expect(result5.actions[0].type, BotCreatorActionType.deleteMessages);
+        expect(result5.actions[0].payload['channelId'], '((channel.id))');
+        expect(result5.actions[0].payload['count'], '50');
+        expect(result5.actions[0].payload['onlyUserId'], '77777');
+        expect(result5.actions[0].payload['removePinned'], 'false');
+      },
+    );
   });
 }

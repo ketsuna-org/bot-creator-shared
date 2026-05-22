@@ -221,13 +221,20 @@ extension _BdfdAstTranspilationScopeActionBuilders
   }
 
   Action _buildClearAction(BdfdFunctionCallAst node) {
-    // BDFD wiki: $clear takes no args — count from the author's message
-    // content at runtime.
+    // BDFD wiki: $clear[Amount;User ID;Remove pinned messages?]
+    final amountArg = node.arguments.isNotEmpty ? _stringifyArgument(node, 0).trim() : '';
+    final count = amountArg.isNotEmpty ? amountArg : '((message.args[0]))';
+    
+    final userIdArg = node.arguments.length > 1 ? _stringifyArgument(node, 1).trim() : '';
+    final removePinnedArg = node.arguments.length > 2 ? _stringifyArgument(node, 2).trim() : '';
+
     return Action(
       type: BotCreatorActionType.deleteMessages,
       payload: <String, dynamic>{
         'channelId': '((channel.id))',
-        'count': '((message.args[0]))',
+        'count': count,
+        if (userIdArg.isNotEmpty) 'onlyUserId': userIdArg,
+        if (removePinnedArg.isNotEmpty) 'removePinned': removePinnedArg,
       },
     );
   }

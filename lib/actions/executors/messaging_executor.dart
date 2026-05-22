@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'package:nyxx/nyxx.dart';
 
 import '../../types/action.dart';
+import '../../utils/bdfd_duration_parser.dart';
 import '../delete_message.dart';
 import '../edit_message.dart';
 import '../get_message.dart';
@@ -59,13 +61,21 @@ Future<bool> executeMessagingAction({
         throw Exception('Missing or invalid channelId for deleteMessages');
       }
 
-      final rawCount = payload['messageCount'];
+      final resolvedMessageIdRaw = resolveValue(
+        (payload['messageId'] ?? '').toString(),
+      );
+      final messageId = _toSnowflake(resolvedMessageIdRaw);
+
+      final delayRaw = resolveValue((payload['delay'] ?? '').toString());
+      final delayDuration = delayRaw.isNotEmpty ? parseBdfdDuration(delayRaw) : null;
+
+      final rawCount = payload['messageCount'] ?? payload['count'];
       final resolvedCountRaw = resolveValue((rawCount ?? '').toString());
       final parsedCount = double.tryParse(resolvedCountRaw);
       final count =
           parsedCount != null
               ? parsedCount.round()
-              : (rawCount is num ? rawCount.toInt() : 0);
+              : (rawCount is num ? rawCount.toInt() : (messageId != null ? 1 : 0));
 
       final onlyUserId = resolveValue((payload['onlyUserId'] ?? '').toString());
       final reason = resolveValue((payload['reason'] ?? '').toString()).trim();
@@ -76,6 +86,19 @@ Future<bool> executeMessagingAction({
           resolveValue((payload['filterUsers'] ?? '').toString()).toLowerCase();
       final filterBots = filterBotsRaw == 'true' || filterBotsRaw == '1';
       final filterUsers = filterUsersRaw == 'true' || filterUsersRaw == '1';
+
+      final removePinnedRaw = resolveValue(
+        (payload['removePinned'] ?? '').toString(),
+      ).toLowerCase();
+      var deletePinned = true;
+      if (removePinnedRaw.isNotEmpty) {
+        if (removePinnedRaw == 'no' ||
+            removePinnedRaw == 'false' ||
+            removePinnedRaw == '0' ||
+            removePinnedRaw == 'n') {
+          deletePinned = false;
+        }
+      }
 
       final beforeRaw = resolveValue(
         (payload['beforeMessageId'] ?? '').toString(),
@@ -109,6 +132,57 @@ Future<bool> executeMessagingAction({
         }
       } catch (_) {}
 
+      if (delayDuration != null) {
+        Timer(delayDuration, () async {
+          try {
+            if (messageId != null) {
+              final channel = client.channels[channelId];
+              if (channel is PartialTextChannel) {
+                await channel.messages[messageId].delete();
+              }
+            } else {
+              await deleteMessage(
+                client,
+                channelId,
+                count: count,
+                onlyThisUserID: onlyUserId,
+                beforeMessageId: beforeMessageId,
+                deleteItself: deleteItself,
+                commandMessageId: commandMessageId,
+                filterBots: filterBots,
+                filterUsers: filterUsers,
+                reason: reason,
+                deletePinned: deletePinned,
+              );
+            }
+          } catch (_) {
+            // Keep delayed deletion silent and resilient
+          }
+        });
+        results[resultKey] = 'scheduled';
+        variables['action.$resultKey.status'] = 'scheduled';
+        return true;
+      }
+
+      if (messageId != null) {
+        try {
+          final channel = client.channels[channelId];
+          if (channel is PartialTextChannel) {
+            await channel.messages[messageId].delete();
+            results[resultKey] = '1';
+            variables['action.$resultKey.count'] = '1';
+            variables['$resultKey.count'] = '1';
+            variables['action.$resultKey.mode'] = 'single';
+            variables['$resultKey.mode'] = 'single';
+            return true;
+          } else {
+            throw Exception('Channel is not a text channel');
+          }
+        } catch (e) {
+          throw Exception('Failed to delete specific message: $e');
+        }
+      }
+
       final result = await deleteMessage(
         client,
         channelId,
@@ -120,6 +194,7 @@ Future<bool> executeMessagingAction({
         filterBots: filterBots,
         filterUsers: filterUsers,
         reason: reason,
+        deletePinned: deletePinned,
       );
       if (result['error'] != null) {
         final errorCode = result['errorCode'];
@@ -238,8 +313,14 @@ Future<bool> executeMessagingAction({
 
     case BotCreatorActionType.deleteTrigger:
       // Try to find the trigger message ID from variables or interaction
-      final triggerMessageIdRaw = variables['message.id'] ?? variables['author.message.id'] ?? '';
-      final triggerChannelIdRaw = variables['channel.id'] ?? '';
+      final triggerMessageIdRaw = variables['message.id'] ??
+          variables['author.message.id'] ??
+          variables['messageId'] ??
+          '';
+      final triggerChannelIdRaw = variables['channel.id'] ??
+          variables['channelId'] ??
+          variables['message.channelId'] ??
+          '';
       final triggerMessageId = _toSnowflake(triggerMessageIdRaw);
       final triggerChannelId = _toSnowflake(triggerChannelIdRaw) ?? fallbackChannelId;
 

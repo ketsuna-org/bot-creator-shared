@@ -4,6 +4,7 @@ import 'package:test/test.dart';
 
 class _FakeChannel {
   _FakeChannel({
+    this.id,
     this.topic,
     this.parentId,
     this.position,
@@ -17,6 +18,7 @@ class _FakeChannel {
     this.autoArchiveDuration,
   });
 
+  final String? id;
   final String? topic;
   final String? parentId;
   final int? position;
@@ -32,6 +34,7 @@ class _FakeChannel {
 
 class _FakeGuild {
   _FakeGuild({
+    this.id,
     this.ownerId,
     this.description,
     this.vanityUrlCode,
@@ -45,6 +48,7 @@ class _FakeGuild {
     this.memberCount,
   });
 
+  final String? id;
   final String? ownerId;
   final String? description;
   final String? vanityUrlCode;
@@ -95,6 +99,7 @@ void main() {
     test('extracts advanced channel fields', () {
       final details = extractChannelRuntimeDetails(
         _FakeChannel(
+          id: '999',
           topic: 'alerts',
           parentId: '123',
           position: 4,
@@ -109,6 +114,7 @@ void main() {
         ),
       );
 
+      expect(details['channel.id'], '999');
       expect(details['channel.topic'], 'alerts');
       expect(details['channel.parentId'], '123');
       expect(details['channel.position'], '4');
@@ -127,6 +133,7 @@ void main() {
     test('extracts advanced guild fields', () async {
       final details = await extractGuildRuntimeDetails(
         _FakeGuild(
+          id: '888',
           ownerId: '42',
           description: 'Main guild',
           vanityUrlCode: 'myguild',
@@ -141,6 +148,7 @@ void main() {
         ),
       );
 
+      expect(details['guild.id'], '888');
       expect(details['guild.ownerId'], '42');
       expect(details['guild.description'], 'Main guild');
       expect(details['guild.vanityUrlCode'], 'myguild');
