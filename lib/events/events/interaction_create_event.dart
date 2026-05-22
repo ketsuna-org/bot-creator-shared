@@ -253,8 +253,8 @@ EventExecutionContext buildInteractionCreateEventContext(
     extra['member.nick'] = member.nick ?? '';
     extra['member.avatar'] = makeAvatarUrl(
       member.id.toString(),
-      avatarId: member.avatar?.hash,
-      isAnimated: member.avatar?.isAnimated ?? false,
+      avatarId: member.avatar?.hash ?? member.user?.avatar.hash,
+      isAnimated: member.avatar?.isAnimated ?? member.user?.avatar.isAnimated ?? false,
       legacyFormat: 'webp',
       discriminator: member.user?.discriminator,
     );

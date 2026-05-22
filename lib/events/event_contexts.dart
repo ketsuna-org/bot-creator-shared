@@ -265,8 +265,8 @@ Map<String, String> _messageContentExtra(Message message, {PartialMember? member
       'member.displayName': member.nick ?? (member.user?.globalName ?? member.user?.username ?? ''),
       'member.avatar': makeAvatarUrl(
         member.id.toString(),
-        avatarId: member.avatar?.hash,
-        isAnimated: member.avatar?.isAnimated ?? false,
+        avatarId: member.avatar?.hash ?? member.user?.avatar.hash,
+        isAnimated: member.avatar?.isAnimated ?? member.user?.avatar.isAnimated ?? false,
         legacyFormat: 'webp',
         discriminator: member.user?.discriminator,
       ),

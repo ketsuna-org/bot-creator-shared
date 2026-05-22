@@ -18,8 +18,8 @@ EventExecutionContext buildGuildMemberUpdateEventContext(
     'member.roles': member.roleIds.map((id) => id.toString()).join(','),
     'member.avatar': makeAvatarUrl(
       member.id.toString(),
-      avatarId: member.avatar?.hash,
-      isAnimated: member.avatar?.isAnimated ?? false,
+      avatarId: member.avatar?.hash ?? user?.avatar.hash,
+      isAnimated: member.avatar?.isAnimated ?? user?.avatar.isAnimated ?? false,
       legacyFormat: 'webp',
       discriminator: user?.discriminator,
     ),
@@ -31,8 +31,8 @@ EventExecutionContext buildGuildMemberUpdateEventContext(
     extra['member.old.roles'] = oldMember.roleIds.map((id) => id.toString()).join(',');
     extra['member.old.avatar'] = makeAvatarUrl(
       oldMember.id.toString(),
-      avatarId: oldMember.avatar?.hash,
-      isAnimated: oldMember.avatar?.isAnimated ?? false,
+      avatarId: oldMember.avatar?.hash ?? user?.avatar.hash,
+      isAnimated: oldMember.avatar?.isAnimated ?? user?.avatar.isAnimated ?? false,
       legacyFormat: 'webp',
       discriminator: user?.discriminator,
     );
