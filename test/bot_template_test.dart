@@ -32,14 +32,14 @@ void main() {
       for (final template in templates) {
         expect(template.id, isNotEmpty, reason: 'id should not be empty');
         expect(
-          template.nameKey,
+          template.name,
           isNotEmpty,
-          reason: '${template.id} nameKey should not be empty',
+          reason: '${template.id} name should not be empty',
         );
         expect(
-          template.descriptionKey,
+          template.description,
           isNotEmpty,
-          reason: '${template.id} descriptionKey should not be empty',
+          reason: '${template.id} description should not be empty',
         );
         expect(
           template.iconCodePoint,

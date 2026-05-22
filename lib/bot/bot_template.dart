@@ -4,11 +4,11 @@ class BotTemplate {
   /// Unique identifier for the template (e.g. 'welcome', 'moderation').
   final String id;
 
-  /// Human-readable name (i18n key).
-  final String nameKey;
+  /// Human-readable name.
+  final String name;
 
-  /// Short description (i18n key).
-  final String descriptionKey;
+  /// Short description.
+  final String description;
 
   /// Material icon code point for display.
   final int iconCodePoint;
@@ -29,8 +29,8 @@ class BotTemplate {
 
   const BotTemplate({
     required this.id,
-    required this.nameKey,
-    required this.descriptionKey,
+    required this.name,
+    required this.description,
     required this.iconCodePoint,
     required this.category,
     this.intents = const {},
@@ -40,8 +40,8 @@ class BotTemplate {
 
   Map<String, dynamic> toJson() => {
         'id': id,
-        'nameKey': nameKey,
-        'descriptionKey': descriptionKey,
+        'name': name,
+        'description': description,
         'iconCodePoint': iconCodePoint,
         'category': category,
         'intents': intents,
@@ -52,8 +52,8 @@ class BotTemplate {
   factory BotTemplate.fromJson(Map<String, dynamic> json) {
     return BotTemplate(
       id: (json['id'] ?? '').toString(),
-      nameKey: (json['nameKey'] ?? '').toString(),
-      descriptionKey: (json['descriptionKey'] ?? '').toString(),
+      name: (json['name'] ?? json['nameKey'] ?? '').toString(),
+      description: (json['description'] ?? json['descriptionKey'] ?? '').toString(),
       iconCodePoint: int.tryParse(json['iconCodePoint']?.toString() ?? '') ?? 0,
       category: (json['category'] ?? '').toString(),
       intents: Map<String, bool>.from((json['intents'] as Map?)?.map(

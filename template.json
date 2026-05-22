@@ -1,8 +1,8 @@
 [
   {
     "id": "welcome",
-    "nameKey": "template_welcome_name",
-    "descriptionKey": "template_welcome_description",
+    "name": "Welcome & Community",
+    "description": "Bootstrap your server with friendly hello messages, server analytics, and automatic member welcome workflows.",
     "iconCodePoint": 59378,
     "category": "community",
     "intents": {
@@ -110,8 +110,8 @@
   },
   {
     "id": "moderation",
-    "nameKey": "template_moderation_name",
-    "descriptionKey": "template_moderation_description",
+    "name": "Server Moderation",
+    "description": "Keep your server safe and structured with advanced mute, kick, ban, and clear commands.",
     "iconCodePoint": 59624,
     "category": "moderation",
     "intents": {
@@ -339,8 +339,8 @@
   },
   {
     "id": "utility",
-    "nameKey": "template_utility_name",
-    "descriptionKey": "template_utility_description",
+    "name": "General Utility",
+    "description": "Practical tools for everyone: ping, user avatars, and custom bot broadcasts.",
     "iconCodePoint": 59500,
     "category": "utility",
     "intents": {
@@ -474,8 +474,8 @@
   },
   {
     "id": "fun",
-    "nameKey": "template_fun_name",
-    "descriptionKey": "template_fun_description",
+    "name": "Fun & Games",
+    "description": "Add engaging interactions to your server: flip coins, run quick polls, and query the Magic 8-ball.",
     "iconCodePoint": 59379,
     "category": "fun",
     "intents": {
