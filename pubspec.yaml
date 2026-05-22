@@ -2,6 +2,7 @@ name: bot_creator_shared
 description: Shared bot logic between the Flutter app and the CLI runner.
 license: LGPL-3.0-or-later
 publish_to: none
+version: 0.0.1
 
 environment:
   sdk: ^3.7.2
