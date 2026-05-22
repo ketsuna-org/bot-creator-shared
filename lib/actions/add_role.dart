@@ -50,7 +50,9 @@ Future<Map<String, String>> addRoleAction(
     if (guild == null) {
       return {'error': 'Guild not found', 'userId': '', 'roleId': ''};
     }
-    await guild.members[userId].addRole(
+
+    final member = guild.members[userId];
+    await member.addRole(
       roleId,
       auditLogReason:
           (reason != null && reason.isNotEmpty)
