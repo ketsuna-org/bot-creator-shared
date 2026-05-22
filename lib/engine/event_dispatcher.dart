@@ -732,6 +732,18 @@ class EventDispatcher {
       botId: botId,
     );
 
+    // Re-hydrate word indexed variables so $message[1] accesses the first argument (and not the command name/prefix)
+    for (var idx = 0; idx < 10; idx++) {
+      runtimeVariables.remove('message.content[$idx]');
+    }
+    for (var idx = 0; idx < args.length && idx < 10; idx++) {
+      runtimeVariables['message.content[$idx]'] = args[idx];
+      callbacks.onDebugLog?.call(
+        'Re-hydrated message.content[$idx] with: ${args[idx]}',
+        botId: botId,
+      );
+    }
+
     // Inject guild, channel and member variables for legacy command execution
     await _hydrateEventContext(gateway, context, runtimeVariables);
 
