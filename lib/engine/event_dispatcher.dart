@@ -8,6 +8,7 @@ import 'package:bot_creator_shared/engine/bot_engine_callbacks.dart';
 import 'package:bot_creator_shared/engine/command_executor.dart';
 import 'package:bot_creator_shared/engine/workflow_executor.dart';
 import 'package:bot_creator_shared/actions/interaction_response.dart';
+import 'package:bot_creator_shared/actions/send_message.dart';
 import 'package:bot_creator_shared/utils/bdfd_compiler.dart';
 import 'package:bot_creator_shared/events/event_contexts.dart';
 
@@ -552,11 +553,15 @@ class EventDispatcher {
       (c) {
         final name = (c['name'] ?? '').toString().toLowerCase();
         final type = (c['type'] ?? '').toString().toLowerCase();
+        final data = c['data'] as Map?;
+        final legacyMode = data?['legacyModeEnabled'] == true;
         callbacks.onDebugLog?.call(
-          'Checking command: name="$name", type="$type"',
+          'Checking command: name="$name", type="$type", legacyMode=$legacyMode',
           botId: botId,
         );
-        return name == commandName && type == 'chatinput';
+        return name == commandName &&
+            (type == 'chatinput' || type.isEmpty) &&
+            legacyMode;
       },
       orElse: () {
         callbacks.onDebugLog?.call(
@@ -568,6 +573,118 @@ class EventDispatcher {
     );
 
     if (command.isEmpty) {
+      if (commandName == 'help') {
+        final appData = await store.getApp(botId);
+        final builtInHelpEnabled = appData['builtInLegacyHelpEnabled'] != false;
+        if (builtInHelpEnabled) {
+          callbacks.onDebugLog?.call(
+            'Built-in legacy help triggered',
+            botId: botId,
+          );
+          
+          final legacyCommands = allCommands.where((c) {
+            final type = (c['type'] ?? '').toString().toLowerCase();
+            final data = c['data'] as Map?;
+            final legacyMode = data?['legacyModeEnabled'] == true;
+            return (type == 'chatinput' || type.isEmpty) && legacyMode;
+          }).toList();
+
+          final prefix = (appData['prefix'] ?? '!').toString().trim();
+          final query = parts.length > 1 ? parts[1].toLowerCase().trim() : '';
+
+          if (query.isNotEmpty) {
+            final target = legacyCommands.firstWhere(
+              (c) => (c['name'] ?? '').toString().toLowerCase() == query,
+              orElse: () => <String, dynamic>{},
+            );
+            if (target.isNotEmpty) {
+              final name = (target['name'] ?? '').toString();
+              final data = target['data'] as Map?;
+              final desc = (target['description'] ??
+                      data?['commandDescription'] ??
+                      data?['description'] ??
+                      'No description provided.')
+                  .toString()
+                  .trim();
+              
+              final buffer = StringBuffer();
+              buffer.writeln('**Command:** `$prefix$name`');
+              buffer.writeln('**Description:** $desc');
+              
+              final options = (target['options'] as List?) ?? (data?['options'] as List?);
+              if (options != null && options.isNotEmpty) {
+                buffer.writeln('\n**Parameters:**');
+                for (final opt in options) {
+                  if (opt is Map) {
+                    final optName = (opt['name'] ?? '').toString();
+                    final optDesc = (opt['description'] ?? '').toString().trim();
+                    final required = opt['required'] == true ? ' (Required)' : '';
+                    if (optDesc.isNotEmpty) {
+                      buffer.writeln('• `$optName`$required - *$optDesc*');
+                    } else {
+                      buffer.writeln('• `$optName`$required');
+                    }
+                  }
+                }
+              }
+
+              unawaited(store.recordCommandExecution(botId, 'help'));
+              await sendMessageToChannel(
+                gateway,
+                event.message.channelId,
+                content: buffer.toString(),
+                botId: botId,
+                guildId: event.guildId?.toString(),
+              );
+              return;
+            } else {
+              unawaited(store.recordCommandExecution(botId, 'help'));
+              await sendMessageToChannel(
+                gateway,
+                event.message.channelId,
+                content: '❌ Command `$query` not found.',
+                botId: botId,
+                guildId: event.guildId?.toString(),
+              );
+              return;
+            }
+          }
+
+          final buffer = StringBuffer();
+          if (legacyCommands.isEmpty) {
+            buffer.writeln('**Available Legacy Commands:**');
+            buffer.writeln('No legacy commands are registered.');
+          } else {
+            buffer.writeln('**Available Legacy Commands:**');
+            for (final cmd in legacyCommands) {
+              final name = (cmd['name'] ?? '').toString();
+              final data = cmd['data'] as Map?;
+              final desc = (cmd['description'] ??
+                      data?['commandDescription'] ??
+                      data?['description'] ??
+                      '')
+                  .toString()
+                  .trim();
+              if (desc.isNotEmpty) {
+                buffer.writeln('• `$prefix$name` - *$desc*');
+              } else {
+                buffer.writeln('• `$prefix$name`');
+              }
+            }
+          }
+
+          unawaited(store.recordCommandExecution(botId, 'help'));
+          await sendMessageToChannel(
+            gateway,
+            event.message.channelId,
+            content: buffer.toString(),
+            botId: botId,
+            guildId: event.guildId?.toString(),
+          );
+          return;
+        }
+      }
+
       callbacks.onDebugLog?.call(
         'Command is empty, returning early',
         botId: botId,
@@ -735,8 +852,12 @@ class EventDispatcher {
       botId: botId,
     );
 
+    final executionValue = Map<String, dynamic>.from(
+      (workflow['data'] as Map?)?.cast<String, dynamic>() ?? workflow,
+    );
+
     final actionsJson = List<Map<String, dynamic>>.from(
-      (workflow['actions'] as List?)?.whereType<Map>().map(
+      (executionValue['actions'] as List?)?.whereType<Map>().map(
             (e) => Map<String, dynamic>.from(e),
           ) ??
           const [],
@@ -781,7 +902,7 @@ class EventDispatcher {
     }
 
     final response = Map<String, dynamic>.from(
-      (workflow['response'] as Map?)?.cast<String, dynamic>() ?? const {},
+      (executionValue['response'] as Map?)?.cast<String, dynamic>() ?? const {},
     );
     callbacks.onDebugLog?.call('Response data: $response', botId: botId);
 
