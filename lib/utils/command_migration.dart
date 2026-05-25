@@ -4,7 +4,9 @@
 ///
 /// This migration is applied at runtime by [BotDataStore.normalizeCommandData]
 /// and never persists to stored data.
+library;
 
+import 'dart:developer' as developer;
 
 const _kResponseActionTypes = {
   'respondWithMessage',
@@ -16,10 +18,85 @@ const _kResponseActionTypes = {
 /// prepended to absorb Discord's 3-second acknowledgement window.
 const _kDeferThreshold = 2;
 
+/// Action types that involve a network call to the Discord API (or an
+/// external HTTP request) and are therefore likely to exceed Discord's
+/// 3-second interaction acknowledgement window.  When any of these actions
+/// are present in the existing action list, a defer is forced regardless
+/// of the total action count.
+const _kHeavyActionTypes = {
+  // Moderation
+  'banUser',
+  'unbanUser',
+  'kickUser',
+  'muteUser',
+  'unmuteUser',
+  'serverMuteMember',
+  'serverDeafenMember',
+  // Messages
+  'sendMessage',
+  'editMessage',
+  'deleteMessages',
+  'sendDm',
+  'getMessage',
+  'pinMessage',
+  'unpinMessage',
+  // Channels
+  'createChannel',
+  'updateChannel',
+  'removeChannel',
+  'createThread',
+  'addThreadMember',
+  'removeThreadMember',
+  // Roles & permissions
+  'addRole',
+  'removeRole',
+  'editChannelPermissions',
+  'deleteChannelPermission',
+  // Webhooks
+  'sendWebhook',
+  'editWebhook',
+  'deleteWebhook',
+  // Guild / AutoMod
+  'updateGuild',
+  'updateAutoMod',
+  'createAutoModRule',
+  'deleteAutoModRule',
+  'registerGuildCommands',
+  'unregisterGuildCommands',
+  'updateGuildOnboarding',
+  // Invites
+  'createInvite',
+  'deleteInvite',
+  // Voice
+  'moveToVoiceChannel',
+  'disconnectFromVoice',
+  // Emoji
+  'createEmoji',
+  'updateEmoji',
+  'deleteEmoji',
+  // Polls
+  'createPoll',
+  'endPoll',
+  // Member
+  'setNickname',
+  'updateSelfUser',
+  'leaveGuild',
+  // External HTTP
+  'httpRequest',
+};
+
 /// Migrates [data] (the `data` sub-map of a stored command) in-place.
 ///
 /// Safe to call multiple times — idempotent via the `_migrated` sentinel.
 void migrateCommandDataResponse(Map<String, dynamic> data) {
+  _migrateResponseBlock(data);
+
+  // Also migrate subcommand workflow payloads if present.
+  _migrateSubcommandWorkflows(data);
+}
+
+/// Migrates the root `data.response` block of a command.
+void _migrateResponseBlock(Map<String, dynamic> data) {
   final rawResponse = data['response'];
   if (rawResponse is! Map) return;
 
@@ -51,10 +128,23 @@ void migrateCommandDataResponse(Map<String, dynamic> data) {
   final injectedActions = _buildRespondActions(response);
 
   // Determine whether a defer is needed.
+  // A defer is required when:
+  //   1. Any existing action is a "heavy" network-bound type, OR
+  //   2. The total action count after injection exceeds the threshold.
+  final hasHeavyAction = _hasHeavyAction(existingActions);
   final totalAfterInjection = mutableActions.length + injectedActions.length;
-  if (totalAfterInjection > _kDeferThreshold) {
+  if (hasHeavyAction || totalAfterInjection > _kDeferThreshold) {
     final isEphemeral = _resolveVisibility(response) == 'ephemeral';
     mutableActions.insert(0, _buildDeferAction(isEphemeral: isEphemeral));
+    final reason = hasHeavyAction
+        ? 'heavy action detected (network-bound type)'
+        : 'action count ($totalAfterInjection) exceeds threshold ($_kDeferThreshold)';
+    developer.log(
+      'Auto-defer injected: $reason. '
+      'existing=${existingActions.length}, injected=${injectedActions.length}',
+      name: 'CommandMigration',
+      level: 900, // INFO-level in dart:developer
+    );
   }
 
   mutableActions.addAll(injectedActions);
@@ -72,6 +162,14 @@ bool _hasExplicitResponseAction(List existingActions) {
   for (final action in existingActions) {
     final type = (action['type'] ?? '').toString();
     if (_kResponseActionTypes.contains(type)) return true;
+  }
+  return false;
+}
+
+bool _hasHeavyAction(List existingActions) {
+  for (final action in existingActions) {
+    final type = (action['type'] ?? '').toString();
+    if (_kHeavyActionTypes.contains(type)) return true;
   }
   return false;
 }
@@ -308,4 +406,80 @@ Map<String, dynamic> _buildDeferAction({required bool isEphemeral}) {
     'error': {'mode': 'stop'},
     'payload': {'ephemeral': isEphemeral},
   };
+}
+
+/// Iterates over `data.subcommandWorkflows` and migrates each payload's
+/// `response` block into inline actions, using the same logic as the root
+/// command migration.
+///
+/// Each subcommand workflow payload has the shape:
+/// ```json
+/// { "response": { ... }, "actions": [ ... ] }
+/// ```
+void _migrateSubcommandWorkflows(Map<String, dynamic> data) {
+  final rawWorkflows = data['subcommandWorkflows'];
+  if (rawWorkflows is! Map) return;
+
+  for (final entry in rawWorkflows.entries) {
+    final route = entry.key.toString();
+    final payload = entry.value;
+    if (payload is! Map) continue;
+
+    final payloadMap = Map<String, dynamic>.from(
+      payload.cast<String, dynamic>(),
+    );
+
+    // Skip if the payload has no response block.
+    final subResponse = payloadMap['response'];
+    if (subResponse is! Map) continue;
+
+    final response = Map<String, dynamic>.from(
+      subResponse.cast<String, dynamic>(),
+    );
+
+    // Already migrated in this runtime cycle.
+    if (response['_migrated'] == true) continue;
+
+    // If actions already contain an explicit respond action, do nothing.
+    final rawActions = payloadMap['actions'];
+    final existingActions =
+        rawActions is List ? rawActions.whereType<Map>().toList() : const [];
+    if (_hasExplicitResponseAction(existingActions)) continue;
+
+    // Check if the response block is actually non-trivial.
+    if (!_isLegacyResponseMigrable(response)) {
+      (payloadMap['response'] as Map)['_migrated'] = true;
+      continue;
+    }
+
+    final mutableActions = List<Map<String, dynamic>>.from(
+      existingActions.map((e) => Map<String, dynamic>.from(e)),
+    );
+
+    final injectedActions = _buildRespondActions(response);
+
+    final hasHeavyAction = _hasHeavyAction(existingActions);
+    final totalAfterInjection = mutableActions.length + injectedActions.length;
+    if (hasHeavyAction || totalAfterInjection > _kDeferThreshold) {
+      final isEphemeral = _resolveVisibility(response) == 'ephemeral';
+      mutableActions.insert(0, _buildDeferAction(isEphemeral: isEphemeral));
+      final reason = hasHeavyAction
+          ? 'heavy action detected (network-bound type)'
+          : 'action count ($totalAfterInjection) exceeds threshold ($_kDeferThreshold)';
+      developer.log(
+        'Auto-defer injected for subcommand [$route]: $reason. '
+        'existing=${existingActions.length}, injected=${injectedActions.length}',
+        name: 'CommandMigration',
+        level: 900,
+      );
+    }
+
+    mutableActions.addAll(injectedActions);
+    payloadMap['actions'] = mutableActions;
+
+    (payloadMap['response'] as Map)['_migrated'] = true;
+
+    // Write back the modified payload.
+    rawWorkflows[route] = payloadMap;
+  }
 }
