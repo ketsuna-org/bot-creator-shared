@@ -5,6 +5,7 @@
 /// This migration is applied at runtime by [BotDataStore.normalizeCommandData]
 /// and never persists to stored data.
 
+
 const _kResponseActionTypes = {
   'respondWithMessage',
   'respondWithComponentV2',
