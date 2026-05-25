@@ -267,13 +267,17 @@ extension _BdfdAstTranspilationScopeActionBuilders
     );
   }
 
-  /// $giveRoles[Role ID;Role ID;...] / $takeRoles[Role ID;Role ID;...]
+  /// $giveRoles[User ID;Role ID;Role ID;...] / $takeRoles[User ID;Role ID;Role ID;...]
   List<Action> _buildMultiRoleAction(
     BdfdFunctionCallAst node, {
     required bool give,
   }) {
+    if (node.arguments.isEmpty) return const [];
+    final userId = _stringifyArgument(node, 0).trim();
+    if (userId.isEmpty) return const [];
+
     final actions = <Action>[];
-    for (var i = 0; i < node.arguments.length; i++) {
+    for (var i = 1; i < node.arguments.length; i++) {
       final roleId = _stringifyArgument(node, i).trim();
       if (roleId.isEmpty) continue;
       actions.add(
@@ -283,7 +287,7 @@ extension _BdfdAstTranspilationScopeActionBuilders
                   ? BotCreatorActionType.addRole
                   : BotCreatorActionType.removeRole,
           payload: <String, dynamic>{
-            'userId': '((message.mentions[0]|author.id))',
+            'userId': userId,
             'roleId': roleId,
           },
         ),
@@ -875,7 +879,7 @@ extension _BdfdAstTranspilationScopeActionBuilders
       type: BotCreatorActionType.addReaction,
       payload: <String, dynamic>{
         'channelId': '((channel.id))',
-        'messageId': '((message.id))',
+        'messageId': '((lastSentMessageId))',
         'emojis': emojis,
       },
     );
@@ -913,7 +917,7 @@ extension _BdfdAstTranspilationScopeActionBuilders
       type: BotCreatorActionType.addReaction,
       payload: <String, dynamic>{
         'channelId': channelId.isEmpty ? '((channel.id))' : channelId,
-        'messageId': messageId.isEmpty ? '((message.id))' : messageId,
+        'messageId': messageId.isEmpty ? '((lastSentMessageId))' : messageId,
         'emojis': emojis,
       },
     );

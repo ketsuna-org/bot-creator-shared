@@ -194,11 +194,14 @@ Future<Map<String, String>> editMessageAction(
       } catch (_) {}
     }
 
+    final allowedMentions = _parseAllowedMentions(payload, resolve ?? (s) => s);
+
     await message.edit(
       MessageUpdateBuilder(
         content: content.isNotEmpty ? content : null,
         embeds: shouldUpdateEmbeds ? embeds : null,
         components: components,
+        allowedMentions: allowedMentions,
       ),
     );
     if (definition != null && botId != null && botId.trim().isNotEmpty) {
@@ -215,4 +218,36 @@ Future<Map<String, String>> editMessageAction(
   } catch (error) {
     return {'error': 'Failed to edit message: $error', 'messageId': ''};
   }
+}
+
+AllowedMentions? _parseAllowedMentions(Map<String, dynamic>? payload, String Function(String) resolve) {
+  if (payload == null || !payload.containsKey('allowedMentions')) {
+    return null;
+  }
+  final json = payload['allowedMentions'];
+  if (json is! Map) return null;
+
+  final parseList = (json['parse'] as List?)?.map((e) => resolve(e.toString())).toList();
+  final usersList = (json['users'] as List?)
+      ?.map((e) {
+        final resolved = resolve(e.toString());
+        final val = int.tryParse(resolved);
+        return val != null ? Snowflake(val) : null;
+      })
+      .whereType<Snowflake>()
+      .toList();
+  final rolesList = (json['roles'] as List?)
+      ?.map((e) {
+        final resolved = resolve(e.toString());
+        final val = int.tryParse(resolved);
+        return val != null ? Snowflake(val) : null;
+      })
+      .whereType<Snowflake>()
+      .toList();
+
+  return AllowedMentions(
+    parse: parseList,
+    users: usersList,
+    roles: rolesList,
+  );
 }

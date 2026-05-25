@@ -12,3 +12,4 @@
 # Custom for Bot Creator
 *.log
 .DS_Store
+scratch/

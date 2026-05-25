@@ -8,8 +8,8 @@ class _PendingResponse {
   bool _tts = false;
   bool _removeLinks = false;
   bool _allowMentions = true;
-  bool _allowUserMentions = true;
-  bool _allowRoleMentions = false;
+  List<String>? _allowedUsers;
+  List<String>? _allowedRoles;
   String? _currentSelectMenuId;
 
   /// When non-null, the pending response should be sent as a Discord reply
@@ -285,8 +285,8 @@ class _PendingResponse {
     final ephemeral = _ephemeral;
     final tts = _tts;
     final allowMentions = _allowMentions;
-    final allowUserMentions = _allowUserMentions;
-    final allowRoleMentions = _allowRoleMentions;
+    final allowedUsers = _allowedUsers;
+    final allowedRoles = _allowedRoles;
     final replyMessageId = _replyMessageId;
     final replyChannelId = _replyChannelId;
     _content.clear();
@@ -296,10 +296,28 @@ class _PendingResponse {
     _tts = false;
     _removeLinks = false;
     _allowMentions = true;
-    _allowUserMentions = true;
-    _allowRoleMentions = false;
+    _allowedUsers = null;
+    _allowedRoles = null;
     _replyMessageId = null;
     _replyChannelId = null;
+
+    final allowedMentionsPayload = <String, dynamic>{};
+    if (allowMentions) {
+      final parse = <String>[];
+      if (allowedUsers == null) {
+        parse.add('users');
+      } else if (allowedUsers.isNotEmpty) {
+        allowedMentionsPayload['users'] = allowedUsers;
+      }
+      if (allowedRoles == null) {
+        parse.add('roles');
+      } else if (allowedRoles.isNotEmpty) {
+        allowedMentionsPayload['roles'] = allowedRoles;
+      }
+      allowedMentionsPayload['parse'] = parse;
+    } else {
+      allowedMentionsPayload['parse'] = <String>[];
+    }
 
     const richV2Types = {
       'container',
@@ -343,9 +361,7 @@ class _PendingResponse {
                   : <String, dynamic>{'items': components},
           'ephemeral': ephemeral,
           if (tts) 'tts': true,
-          if (!allowMentions) 'allowMentions': false,
-          if (!allowUserMentions) 'allowUserMentions': false,
-          if (allowRoleMentions) 'allowRoleMentions': true,
+          'allowedMentions': allowedMentionsPayload,
         },
       );
     }
@@ -361,9 +377,7 @@ class _PendingResponse {
                 : <String, dynamic>{'items': components},
         'ephemeral': ephemeral,
         if (tts) 'tts': true,
-        if (!allowMentions) 'allowMentions': false,
-        if (!allowUserMentions) 'allowUserMentions': false,
-        if (allowRoleMentions) 'allowRoleMentions': true,
+        'allowedMentions': allowedMentionsPayload,
         if (channelId != null && channelId.isNotEmpty) 'channelId': channelId,
       },
     );

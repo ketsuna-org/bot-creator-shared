@@ -54,6 +54,9 @@ enum BotCreatorActionType {
   respondWithModal,
   editInteractionMessage,
   respondWithAutocomplete,
+  /// Defers the interaction response (acknowledge), preventing Discord timeout.
+  /// Injected automatically by CommandMigration when needed.
+  deferInteraction,
   listenForButtonClick,
   listenForSelectMenu,
   listenForModalSubmit,
@@ -109,6 +112,7 @@ enum BotCreatorActionType {
   slowmode,
   stop,
   randomChoice,
+  leaveGuild,
 }
 
 enum ActionOnErrorMode { stop, continueMode }

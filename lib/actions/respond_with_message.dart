@@ -228,12 +228,15 @@ Future<Map<String, dynamic>> respondWithMessageAction(
       isAcknowledged = false;
     }
 
+    final allowedMentions = _parseAllowedMentions(payload, resolve);
+
     if (isAcknowledged) {
       final message = await dynInteraction.updateOriginalResponse(
         MessageUpdateBuilder(
           content: content.trim().isEmpty ? null : content,
           embeds: embeds,
           components: componentNodes.isEmpty ? null : componentNodes,
+          allowedMentions: allowedMentions,
         ),
       );
       registerComponentWorkflowBindings(
@@ -255,6 +258,7 @@ Future<Map<String, dynamic>> respondWithMessageAction(
         embeds: embeds.isEmpty ? null : embeds,
         components: componentNodes.isEmpty ? null : componentNodes,
         flags: flags > 0 ? MessageFlags(flags) : null,
+        allowedMentions: allowedMentions,
       ),
     );
     String? messageId;
@@ -277,4 +281,36 @@ Future<Map<String, dynamic>> respondWithMessageAction(
   } catch (e) {
     return {'error': e.toString()};
   }
+}
+
+AllowedMentions? _parseAllowedMentions(Map<String, dynamic>? payload, String Function(String) resolve) {
+  if (payload == null || !payload.containsKey('allowedMentions')) {
+    return null;
+  }
+  final json = payload['allowedMentions'];
+  if (json is! Map) return null;
+
+  final parseList = (json['parse'] as List?)?.map((e) => resolve(e.toString())).toList();
+  final usersList = (json['users'] as List?)
+      ?.map((e) {
+        final resolved = resolve(e.toString());
+        final val = int.tryParse(resolved);
+        return val != null ? Snowflake(val) : null;
+      })
+      .whereType<Snowflake>()
+      .toList();
+  final rolesList = (json['roles'] as List?)
+      ?.map((e) {
+        final resolved = resolve(e.toString());
+        final val = int.tryParse(resolved);
+        return val != null ? Snowflake(val) : null;
+      })
+      .whereType<Snowflake>()
+      .toList();
+
+  return AllowedMentions(
+    parse: parseList,
+    users: usersList,
+    roles: rolesList,
+  );
 }

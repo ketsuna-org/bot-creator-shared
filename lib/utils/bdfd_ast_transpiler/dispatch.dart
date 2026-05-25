@@ -55,10 +55,11 @@ extension _BdfdAstTranspilationScopeDispatch on _BdfdAstTranspilationScope {
         embed['author'] = author;
         return true;
       case 'addfield':
+        final inlineArg = _stringifyArgument(node, 2);
         final field = <String, dynamic>{
           'name': _stringifyArgument(node, 0),
           'value': _stringifyArgument(node, 1),
-          'inline': _parseBooleanLike(_stringifyArgument(node, 2)),
+          'inline': inlineArg.isEmpty ? 'no' : inlineArg,
         };
         response.ensureEmbedFields().add(field);
         return true;
@@ -426,7 +427,12 @@ extension _BdfdAstTranspilationScopeDispatch on _BdfdAstTranspilationScope {
         response._allowMentions = true;
         return true;
       case 'allowusermentions':
-        response._allowUserMentions = true;
+        final userIds = <String>[];
+        for (var i = 0; i < node.arguments.length; i++) {
+          final id = _stringifyArgument(node, i).trim();
+          if (id.isNotEmpty) userIds.add(id);
+        }
+        response._allowedUsers = userIds;
         return true;
       case 'tts':
         response._tts = true;
@@ -435,7 +441,12 @@ extension _BdfdAstTranspilationScopeDispatch on _BdfdAstTranspilationScope {
         response._removeLinks = true;
         return true;
       case 'allowrolementions':
-        response._allowRoleMentions = true;
+        final roleIds = <String>[];
+        for (var i = 0; i < node.arguments.length; i++) {
+          final id = _stringifyArgument(node, i).trim();
+          if (id.isNotEmpty) roleIds.add(id);
+        }
+        response._allowedRoles = roleIds;
         return true;
       case 'suppresserrors':
         _suppressErrors = true;
@@ -798,8 +809,8 @@ extension _BdfdAstTranspilationScopeDispatch on _BdfdAstTranspilationScope {
       // Bot actions
       case 'botleave':
         return Action(
-          type: BotCreatorActionType.updateGuild,
-          payload: const <String, dynamic>{'leave': true},
+          type: BotCreatorActionType.leaveGuild,
+          payload: const <String, dynamic>{},
         );
       case 'bottyping':
         return Action(

@@ -160,6 +160,12 @@ Future<Map<String, String>> handleActions(
 
     void recordTrace({String? resultOverride}) {
       final traceResult = resultOverride ?? results[resultKey];
+      if (traceResult != null &&
+          RegExp(r'^\d+$').hasMatch(traceResult) &&
+          !traceResult.startsWith('Error:')) {
+        variables['lastSentMessageId'] = traceResult;
+        variables['lastMessageId'] = traceResult;
+      }
       final loopDepth = action.payload['_debugLoopDepth'] as int?;
       final loopIteration = action.payload['_debugLoopIteration'] as int?;
       final Map<String, String>? varSnapshotAfter =
@@ -456,6 +462,7 @@ Future<Map<String, String>> handleActions(
         case BotCreatorActionType.slowmode:
         case BotCreatorActionType.stop:
         case BotCreatorActionType.randomChoice:
+        case BotCreatorActionType.deferInteraction:
           throw StateError(
             'Action ${action.type.name} should have been handled by an executor before switch dispatch.',
           );
@@ -502,6 +509,18 @@ Future<Map<String, String>> handleActions(
             client,
             guildId: guildId,
             payload: action.payload,
+            resolve: resolveValue,
+          );
+          if (result['error'] != null) {
+            throw Exception(result['error']);
+          }
+          results[resultKey] = result['guildId'] ?? '';
+          break;
+        case BotCreatorActionType.leaveGuild:
+          final result = await updateGuildAction(
+            client,
+            guildId: guildId,
+            payload: const <String, dynamic>{'leave': true},
             resolve: resolveValue,
           );
           if (result['error'] != null) {

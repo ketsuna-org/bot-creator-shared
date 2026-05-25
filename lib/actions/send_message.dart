@@ -56,6 +56,7 @@ Future<Map<String, String>> sendMessageToChannel(
     }
 
     final resolvedContent = resolve != null ? resolve(content) : content;
+    final r = resolve ?? (s) => s;
     final messageMode =
         (payload?['messageMode'] ?? 'normal').toString().toLowerCase();
 
@@ -77,14 +78,13 @@ Future<Map<String, String>> sendMessageToChannel(
           isRichV2 = def.isRichV2;
           components = buildComponentNodes(
             definition: def,
-            resolve: resolve ?? (s) => s,
+            resolve: r,
           );
         } catch (_) {}
       }
     } else {
       // ── Normal mode (embeds + V1 components) ──────────────────────────
       if (payload != null) {
-        final r = resolve ?? (s) => s;
 
         // Embeds
         final embedsRaw =
@@ -226,6 +226,7 @@ Future<Map<String, String>> sendMessageToChannel(
     }
 
     final replyId = targetType == 'reply' ? _toSnowflake(payload?['messageId']) : null;
+    final allowedMentions = _parseAllowedMentions(payload, r);
 
     final message = await channel.sendMessage(
       MessageBuilder(
@@ -237,6 +238,7 @@ Future<Map<String, String>> sendMessageToChannel(
         components: components,
         referencedMessage: replyId != null ? MessageReferenceBuilder.reply(messageId: replyId) : null,
         flags: isRichV2 ? MessageFlags(32768) : null,
+        allowedMentions: allowedMentions,
       ),
     );
     if (definition != null && botId != null && botId.trim().isNotEmpty) {
@@ -253,4 +255,36 @@ Future<Map<String, String>> sendMessageToChannel(
   } catch (e) {
     return {'error': 'Failed to send message: $e', 'messageId': ''};
   }
+}
+
+AllowedMentions? _parseAllowedMentions(Map<String, dynamic>? payload, String Function(String) resolve) {
+  if (payload == null || !payload.containsKey('allowedMentions')) {
+    return null;
+  }
+  final json = payload['allowedMentions'];
+  if (json is! Map) return null;
+
+  final parseList = (json['parse'] as List?)?.map((e) => resolve(e.toString())).toList();
+  final usersList = (json['users'] as List?)
+      ?.map((e) {
+        final resolved = resolve(e.toString());
+        final val = int.tryParse(resolved);
+        return val != null ? Snowflake(val) : null;
+      })
+      .whereType<Snowflake>()
+      .toList();
+  final rolesList = (json['roles'] as List?)
+      ?.map((e) {
+        final resolved = resolve(e.toString());
+        final val = int.tryParse(resolved);
+        return val != null ? Snowflake(val) : null;
+      })
+      .whereType<Snowflake>()
+      .toList();
+
+  return AllowedMentions(
+    parse: parseList,
+    users: usersList,
+    roles: rolesList,
+  );
 }

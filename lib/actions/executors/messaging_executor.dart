@@ -369,6 +369,27 @@ Future<bool> executeMessagingAction({
       variables['$resultKey.messageId'] = result['messageId'] ?? '';
       return true;
 
+    case BotCreatorActionType.deferInteraction:
+      if (interaction == null) {
+        // No interaction context — nothing to defer.
+        results[resultKey] = 'skipped';
+        return true;
+      }
+      final ephemeralRaw = payload['ephemeral'];
+      final deferEphemeral =
+          ephemeralRaw == true ||
+          ephemeralRaw?.toString().toLowerCase() == 'true';
+      try {
+        await (interaction as dynamic).acknowledge(isEphemeral: deferEphemeral);
+        results[resultKey] = 'deferred';
+        variables['action.$resultKey.status'] = 'deferred';
+      } catch (e) {
+        // If acknowledgement fails (e.g. already acknowledged), continue silently.
+        results[resultKey] = 'skipped';
+        variables['action.$resultKey.status'] = 'skipped';
+      }
+      return true;
+
     default:
       return false;
   }
