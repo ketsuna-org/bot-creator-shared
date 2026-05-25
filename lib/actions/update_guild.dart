@@ -21,6 +21,15 @@ Future<Map<String, String>> updateGuildAction(
       return {'error': 'Missing guildId', 'guildId': ''};
     }
 
+    if (payload['leave'] == true) {
+      final guild = await client.guilds.fetch(guildId);
+      await guild.leave();
+      return {
+        'guildId': guildId.toString(),
+        'status': 'left',
+      };
+    }
+
     final permError = await checkBotGuildPermission(
       client,
       guildId: guildId,

@@ -157,7 +157,14 @@ class WorkflowExecutor {
     
     // Defer if needed
     final isEphemeral = workflow['visibility']?.toString().toLowerCase() == 'ephemeral';
-    final shouldDefer = actions.isNotEmpty && workflow['autoDeferIfActions'] != false;
+    // If a deferInteraction action was injected by CommandMigration, skip the
+    // legacy auto-defer so we don't double-acknowledge the interaction.
+    final hasDeferAction = actions.any(
+      (a) => a.type == BotCreatorActionType.deferInteraction,
+    );
+    final shouldDefer = !hasDeferAction &&
+        actions.isNotEmpty &&
+        workflow['autoDeferIfActions'] != false;
     var didDefer = false;
 
     if (shouldDefer) {

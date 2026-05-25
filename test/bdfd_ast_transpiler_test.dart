@@ -70,7 +70,7 @@ void main() {
         expect((embeds.single['fields'] as List).first, {
           'name': 'User',
           'value': 'Jeremy',
-          'inline': true,
+          'inline': 'yes',
         });
       },
     );
