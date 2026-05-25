@@ -95,6 +95,70 @@ void migrateCommandDataResponse(Map<String, dynamic> data) {
   _migrateSubcommandWorkflows(data);
 }
 
+/// Permanently migrates [data] by converting the legacy `data.response`
+/// block into inline actions and then **emptying** the response block.
+///
+/// Unlike [migrateCommandDataResponse] (which is runtime-only and sets an
+/// in-memory sentinel), this function clears the response content so the
+/// migration is persisted to storage.  The `response` key is kept with
+/// an empty default structure for backward compatibility.
+///
+/// Returns `true` if any content was migrated, `false` if the response was
+/// already empty or already permanently migrated.
+bool migrateCommandDataResponsePermanently(Map<String, dynamic> data) {
+  final rawResponse = data['response'];
+  bool rootMigrated = false;
+
+  if (rawResponse is Map) {
+    final response = Map<String, dynamic>.from(
+      rawResponse.cast<String, dynamic>(),
+    );
+
+    if (_isLegacyResponseMigrable(response)) {
+      // If actions already contain an explicit respond action, the runtime
+      // migration would be a no-op, but the response might still hold legacy
+      // content.  We still need to empty it.
+      final rawActions = data['actions'];
+      final existingActions =
+          rawActions is List ? rawActions.whereType<Map>().toList() : const [];
+      final hasRespondAction = _hasExplicitResponseAction(existingActions);
+
+      if (!hasRespondAction) {
+        // Apply runtime migration (injects respond/defer actions + sets _migrated).
+        migrateCommandDataResponse(data);
+      } else {
+        // Actions already have a respond action — still need to clear the response.
+        // Mark _migrated first so runtime migration won't duplicate.
+        (data['response'] as Map)['_migrated'] = true;
+      }
+
+      // Empty the response block permanently, keeping structural keys for
+      // backward compatibility.
+      final responseMap = data['response'] as Map;
+      responseMap.clear();
+      responseMap['mode'] = 'message';
+      responseMap['type'] = 'normal';
+      responseMap['text'] = '';
+      responseMap['embeds'] = <dynamic>[];
+      responseMap['components'] = <String, dynamic>{};
+      responseMap['modal'] = <String, dynamic>{};
+      responseMap['workflow'] = <String, dynamic>{
+        'autoDeferIfActions': true,
+        'visibility': 'public',
+        'onError': 'edit_error',
+        'conditional': <String, dynamic>{'enabled': false},
+      };
+
+      rootMigrated = true;
+    }
+  }
+
+  // Also permanently migrate subcommand workflows.
+  final subcommandMigrated = _migrateSubcommandWorkflowsPermanently(data);
+
+  return rootMigrated || subcommandMigrated;
+}
+
 /// Migrates the root `data.response` block of a command.
 void _migrateResponseBlock(Map<String, dynamic> data) {
   final rawResponse = data['response'];
@@ -406,6 +470,95 @@ Map<String, dynamic> _buildDeferAction({required bool isEphemeral}) {
     'error': {'mode': 'stop'},
     'payload': {'ephemeral': isEphemeral},
   };
+}
+
+/// Iterates over `data.subcommandWorkflows` and permanently migrates each
+/// payload's `response` block into inline actions, then empties the response.
+///
+/// Returns `true` if any subcommand was migrated.
+bool _migrateSubcommandWorkflowsPermanently(Map<String, dynamic> data) {
+  final rawWorkflows = data['subcommandWorkflows'];
+  if (rawWorkflows is! Map) return false;
+  final workflowsMap = Map<String, dynamic>.from(
+    rawWorkflows.cast<String, dynamic>(),
+  );
+
+  bool anyMigrated = false;
+
+  for (final entry in workflowsMap.entries) {
+    final route = entry.key.toString();
+    final payload = entry.value;
+    if (payload is! Map) continue;
+
+    final payloadMap = Map<String, dynamic>.from(
+      payload.cast<String, dynamic>(),
+    );
+
+    final subResponse = payloadMap['response'];
+    if (subResponse is! Map) continue;
+
+    final response = Map<String, dynamic>.from(
+      subResponse.cast<String, dynamic>(),
+    );
+
+    if (!_isLegacyResponseMigrable(response)) continue;
+
+    final rawActions = payloadMap['actions'];
+    final existingActions =
+        rawActions is List ? rawActions.whereType<Map>().toList() : const [];
+    final hasRespondAction = _hasExplicitResponseAction(existingActions);
+
+    if (!hasRespondAction) {
+      // Build and inject respond actions + defer if needed.
+      final mutableActions = List<Map<String, dynamic>>.from(
+        existingActions.map((e) => Map<String, dynamic>.from(e)),
+      );
+      final injectedActions = _buildRespondActions(response);
+
+      final hasHeavyAction = _hasHeavyAction(existingActions);
+      final totalAfterInjection = mutableActions.length + injectedActions.length;
+      if (hasHeavyAction || totalAfterInjection > _kDeferThreshold) {
+        final isEphemeral = _resolveVisibility(response) == 'ephemeral';
+        mutableActions.insert(0, _buildDeferAction(isEphemeral: isEphemeral));
+        final reason = hasHeavyAction
+            ? 'heavy action detected (network-bound type)'
+            : 'action count ($totalAfterInjection) exceeds threshold ($_kDeferThreshold)';
+        developer.log(
+          'Auto-defer injected for subcommand [$route] (permanent): $reason.',
+          name: 'CommandMigration',
+          level: 900,
+        );
+      }
+
+      mutableActions.addAll(injectedActions);
+      payloadMap['actions'] = mutableActions;
+    }
+
+    // Empty the response block permanently.
+    final responseMap = payloadMap['response'] as Map;
+    responseMap.clear();
+    responseMap['mode'] = 'message';
+    responseMap['type'] = 'normal';
+    responseMap['text'] = '';
+    responseMap['embeds'] = <dynamic>[];
+    responseMap['components'] = <String, dynamic>{};
+    responseMap['modal'] = <String, dynamic>{};
+    responseMap['workflow'] = <String, dynamic>{
+      'autoDeferIfActions': true,
+      'visibility': 'public',
+      'onError': 'edit_error',
+      'conditional': <String, dynamic>{'enabled': false},
+    };
+
+    // Write back the modified payload.
+    workflowsMap[route] = payloadMap;
+    anyMigrated = true;
+  }
+
+  // Sync migrated workflows back to data.
+  data['subcommandWorkflows'] = workflowsMap;
+
+  return anyMigrated;
 }
 
 /// Iterates over `data.subcommandWorkflows` and migrates each payload's
