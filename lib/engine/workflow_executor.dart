@@ -173,7 +173,11 @@ class WorkflowExecutor {
         botId: botId,
       );
       try {
-        await (interaction as dynamic).acknowledge(isEphemeral: isEphemeral);
+        if (interaction is MessageResponse) {
+          await interaction.acknowledge(isEphemeral: isEphemeral);
+        } else {
+          await (interaction as dynamic).acknowledge(isEphemeral: isEphemeral);
+        }
         // Fix 3: only set didDefer on success
         didDefer = true;
         callbacks.onDebugLog?.call(

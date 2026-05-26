@@ -381,7 +381,11 @@ Future<bool> executeMessagingAction({
           ephemeralRaw == true ||
           ephemeralRaw?.toString().toLowerCase() == 'true';
       try {
-        await (interaction as dynamic).acknowledge(isEphemeral: deferEphemeral);
+        if (interaction is MessageResponse) {
+          await interaction.acknowledge(isEphemeral: deferEphemeral);
+        } else {
+          await (interaction as dynamic).acknowledge(isEphemeral: deferEphemeral);
+        }
         markInteractionAcknowledged(interaction);
         results[resultKey] = 'deferred';
         variables['action.$resultKey.status'] = 'deferred';

@@ -53,6 +53,7 @@ Future<bool> executeReactionsAction({
       final emojis = resolvedPayload['emojis'];
       if (emojis is List) {
         var status = 'OK';
+        final errors = <String>[];
         for (final emoji in emojis) {
           final singlePayload = Map<String, dynamic>.from(resolvedPayload);
           singlePayload['emoji'] = emoji;
@@ -62,9 +63,13 @@ Future<bool> executeReactionsAction({
             fallbackChannelId: fallbackChannelId,
           );
           if (result['error'] != null) {
-            throw Exception(result['error']);
+            errors.add('$emoji: ${result['error']}');
+          } else {
+            status = result['status'] ?? 'OK';
           }
-          status = result['status'] ?? 'OK';
+        }
+        if (errors.isNotEmpty) {
+          throw Exception('Failed to add some reactions: ${errors.join(", ")}');
         }
         results[resultKey] = status;
         return true;

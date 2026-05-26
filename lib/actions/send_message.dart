@@ -3,6 +3,7 @@ import 'package:bot_creator_shared/utils/global.dart';
 import '../types/component.dart';
 import '../utils/component_workflow_bindings.dart';
 import '../utils/embed_fields.dart';
+import '../utils/allowed_mentions_parser.dart';
 import 'send_component_v2.dart';
 
 Snowflake? _toSnowflake(dynamic value) {
@@ -226,7 +227,7 @@ Future<Map<String, String>> sendMessageToChannel(
     }
 
     final replyId = targetType == 'reply' ? _toSnowflake(payload?['messageId']) : null;
-    final allowedMentions = _parseAllowedMentions(payload, r);
+    final allowedMentions = parseAllowedMentions(payload, r);
 
     final message = await channel.sendMessage(
       MessageBuilder(
@@ -257,34 +258,4 @@ Future<Map<String, String>> sendMessageToChannel(
   }
 }
 
-AllowedMentions? _parseAllowedMentions(Map<String, dynamic>? payload, String Function(String) resolve) {
-  if (payload == null || !payload.containsKey('allowedMentions')) {
-    return null;
-  }
-  final json = payload['allowedMentions'];
-  if (json is! Map) return null;
 
-  final parseList = (json['parse'] as List?)?.map((e) => resolve(e.toString())).toList();
-  final usersList = (json['users'] as List?)
-      ?.map((e) {
-        final resolved = resolve(e.toString());
-        final val = int.tryParse(resolved);
-        return val != null ? Snowflake(val) : null;
-      })
-      .whereType<Snowflake>()
-      .toList();
-  final rolesList = (json['roles'] as List?)
-      ?.map((e) {
-        final resolved = resolve(e.toString());
-        final val = int.tryParse(resolved);
-        return val != null ? Snowflake(val) : null;
-      })
-      .whereType<Snowflake>()
-      .toList();
-
-  return AllowedMentions(
-    parse: parseList,
-    users: usersList,
-    roles: rolesList,
-  );
-}

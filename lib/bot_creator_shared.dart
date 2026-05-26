@@ -35,3 +35,5 @@ export 'package:bot_creator_shared/types/variable_suggestion.dart';
 export 'package:bot_creator_shared/utils/variable_catalog.dart';
 export 'package:bot_creator_shared/types/workflow_event_definition.dart';
 export 'package:bot_creator_shared/utils/event_catalog.dart';
+export 'package:bot_creator_shared/utils/allowed_mentions_parser.dart';
+
