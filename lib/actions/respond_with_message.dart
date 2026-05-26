@@ -5,6 +5,7 @@ import 'package:bot_creator_shared/utils/component_workflow_bindings.dart';
 import 'package:bot_creator_shared/utils/embed_fields.dart';
 
 import 'package:bot_creator_shared/actions/send_message.dart';
+import 'package:bot_creator_shared/utils/interaction_ack_state.dart';
 
 Future<Map<String, dynamic>> respondWithMessageAction(
   Interaction? interaction, {
@@ -239,6 +240,7 @@ Future<Map<String, dynamic>> respondWithMessageAction(
           allowedMentions: allowedMentions,
         ),
       );
+      markInteractionAcknowledged(interaction);
       registerComponentWorkflowBindings(
         definition: definition,
         resolve: resolve,
@@ -261,6 +263,7 @@ Future<Map<String, dynamic>> respondWithMessageAction(
         allowedMentions: allowedMentions,
       ),
     );
+    markInteractionAcknowledged(interaction);
     String? messageId;
     try {
       final responseMessage = await dynInteraction.fetchOriginalResponse();

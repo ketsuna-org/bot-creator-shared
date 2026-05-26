@@ -12,6 +12,7 @@ const _kResponseActionTypes = {
   'respondWithMessage',
   'respondWithComponentV2',
   'respondWithModal',
+  'reply',
 };
 
 /// Threshold above which a `deferInteraction` action is automatically
@@ -175,7 +176,10 @@ void _migrateResponseBlock(Map<String, dynamic> data) {
   final rawActions = data['actions'];
   final existingActions =
       rawActions is List ? rawActions.whereType<Map>().toList() : const [];
-  if (_hasExplicitResponseAction(existingActions)) return;
+  if (_hasExplicitResponseAction(existingActions)) {
+    (data['response'] as Map)['_migrated'] = true;
+    return;
+  }
 
   // Check if the response block is actually non-trivial (has something to migrate).
   if (!_isLegacyResponseMigrable(response)) {
@@ -597,7 +601,11 @@ void _migrateSubcommandWorkflows(Map<String, dynamic> data) {
     final rawActions = payloadMap['actions'];
     final existingActions =
         rawActions is List ? rawActions.whereType<Map>().toList() : const [];
-    if (_hasExplicitResponseAction(existingActions)) continue;
+    if (_hasExplicitResponseAction(existingActions)) {
+      (payloadMap['response'] as Map)['_migrated'] = true;
+      rawWorkflows[route] = payloadMap;
+      continue;
+    }
 
     // Check if the response block is actually non-trivial.
     if (!_isLegacyResponseMigrable(response)) {

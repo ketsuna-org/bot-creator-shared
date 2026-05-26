@@ -494,10 +494,14 @@ Future<void> sendWorkflowResponse({
         embeds.isNotEmpty ||
         (componentNodes?.isNotEmpty ?? false);
 
-    // If no custom response and interaction already responded, just return
-    if (isResponded && !hasCustomResponse) {
-      onLog?.call('Actions already handled, no default response', botId: botId);
-      return;
+    // If no custom response:
+    // 1. If it's an interaction and it has already been responded to, we return.
+    // 2. If it's a prefix command/event (interaction is null), we don't need a default fallback message.
+    if (!hasCustomResponse) {
+      if (isResponded || interaction == null) {
+        onLog?.call('No custom response defined, skipping fallback', botId: botId);
+        return;
+      }
     }
 
     final useV2Flag = activeResponseType == 'componentV2';

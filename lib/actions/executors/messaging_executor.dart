@@ -8,6 +8,7 @@ import '../edit_message.dart';
 import '../get_message.dart';
 import '../permission_checks.dart';
 import '../send_message.dart';
+import '../../utils/interaction_ack_state.dart';
 
 Snowflake? _toSnowflake(dynamic value) {
   if (value == null) {
@@ -381,6 +382,7 @@ Future<bool> executeMessagingAction({
           ephemeralRaw?.toString().toLowerCase() == 'true';
       try {
         await (interaction as dynamic).acknowledge(isEphemeral: deferEphemeral);
+        markInteractionAcknowledged(interaction);
         results[resultKey] = 'deferred';
         variables['action.$resultKey.status'] = 'deferred';
       } catch (e) {
