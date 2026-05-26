@@ -212,11 +212,11 @@ const Map<String, List<String>> bdfdSignatureHints = <String, List<String>>{
   'color': ['hexColor'],
   'description': ['text'],
   'embeddedurl': ['url'],
-  'footer': ['text', 'iconURL (opt)'],
+  'footer': ['text', 'index (opt)'],
   'footericon': ['url'],
   'image': ['url'],
   'thumbnail': ['url'],
-  'title': ['text', 'hyperlink (opt)'],
+  'title': ['text', 'index (opt)'],
 
   // ── Channels ─────────────────────────────────────────────────────────
   'channelsendmessage': ['channelID', 'message', 'returnMessageID (opt)'],
@@ -272,25 +272,41 @@ const Map<String, List<String>> bdfdSignatureHints = <String, List<String>>{
   'takerole': ['userID', 'roleID'],
   'takeroles': ['userID', 'roleID1', 'roleID2 (opt)', '...'],
 
-  // ── Messages ─────────────────────────────────────────────────────────
- 'deletein': ['seconds'],
+ // ── Messages ─────────────────────────────────────────────────────────
+ 'deletein': ['duration'],
  'deletemessage': ['messageID'],
+
  'dm': ['userID', 'message'],
- 'editembedin': ['channelID', 'messageID', 'content'],
+
+ 'editembedin': [
+  'time',
+  'title (opt)',
+  'description (opt)',
+  'footer (opt)',
+  'color (opt)',
+ ],
+
  'editin': ['channelID', 'messageID', 'content'],
  'editmessage': ['messageID', 'content'],
+
  'getmessage': ['channelID', 'messageID'],
+
  'mentioned': ['index', 'returnSelf (opt)'],
  'mentionedchannels': ['index'],
  'message': ['index (opt)'],
+
  'pinmessage': ['messageID (opt)'],
  'publishmessage': ['messageID (opt)'],
  'unpinmessage': ['messageID'],
- 'reply': ['Channel ID (opt)', 'Message ID (opt)'],
- 'replyin': ['seconds'],
+
+ 'reply': ['channelID (opt)', 'messageID (opt)'],
+ 'replyin': ['duration'],
+
  'repeatmessage': ['times', 'message'],
+
  'sendmessage': ['text', 'returnMessageID (opt)'],
  'sendembedmessage': ['channelID', 'content'],
+
  'tts': ['enabled'],
 
   // ── String / text manipulation ──────────────────────────────────────
