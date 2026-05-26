@@ -35,6 +35,12 @@ import '../types/action.dart';
 
 // Helper functions for common action patterns
 
+Snowflake? _resolveSnowflake(String? value) {
+  if (value == null || value.trim().isEmpty) return null;
+  final parsed = int.tryParse(value.trim());
+  return parsed != null ? Snowflake(parsed) : null;
+}
+
 Future<Map<String, String>> handleActions(
   NyxxGateway client,
   Interaction? interaction, {
@@ -286,6 +292,9 @@ Future<Map<String, String>> handleActions(
           botId: botId,
           guildId: guildId,
           fallbackChannelId: fallbackChannelId,
+          fallbackMessageId: _resolveSnowflake(
+            variables['message.id'] ?? variables['messageId'],
+          ),
           resolveValue: resolveValue,
         );
     if (handledByComponentsInteractionsExecutor) {

@@ -14,6 +14,7 @@ Future<Map<String, dynamic>> respondWithMessageAction(
   required String botId,
   NyxxGateway? client,
   Snowflake? fallbackChannelId,
+  Snowflake? fallbackMessageId,
 }) async {
   try {
     if (interaction == null) {
@@ -36,11 +37,19 @@ Future<Map<String, dynamic>> respondWithMessageAction(
         return {'error': 'No channelId available for respondWithMessage fallback'};
       }
 
+      // Build effective payload, injecting reply context when replyToMessage is set.
+      final effectivePayload = Map<String, dynamic>.from(payload);
+      final shouldReply = payload['replyToMessage'] == true;
+      if (shouldReply && fallbackMessageId != null) {
+        effectivePayload['targetType'] = 'reply';
+        effectivePayload['messageId'] = fallbackMessageId.toString();
+      }
+
       final result = await sendMessageToChannel(
         client,
         channelId,
-        content: resolve((payload['content'] ?? '').toString()),
-        payload: payload,
+        content: resolve((effectivePayload['content'] ?? '').toString()),
+        payload: effectivePayload,
         resolve: resolve,
         botId: botId,
       );
