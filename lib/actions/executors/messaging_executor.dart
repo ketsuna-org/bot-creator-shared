@@ -8,6 +8,7 @@ import '../edit_message.dart';
 import '../get_message.dart';
 import '../permission_checks.dart';
 import '../send_message.dart';
+import '../../utils/interaction_ack_state.dart';
 
 Snowflake? _toSnowflake(dynamic value) {
   if (value == null) {
@@ -367,6 +368,32 @@ Future<bool> executeMessagingAction({
       }
       results[resultKey] = result['messageId'] ?? '';
       variables['$resultKey.messageId'] = result['messageId'] ?? '';
+      return true;
+
+    case BotCreatorActionType.deferInteraction:
+      if (interaction == null) {
+        // No interaction context — nothing to defer.
+        results[resultKey] = 'skipped';
+        return true;
+      }
+      final ephemeralRaw = payload['ephemeral'];
+      final deferEphemeral =
+          ephemeralRaw == true ||
+          ephemeralRaw?.toString().toLowerCase() == 'true';
+      try {
+        if (interaction is MessageResponse) {
+          await interaction.acknowledge(isEphemeral: deferEphemeral);
+        } else {
+          await (interaction as dynamic).acknowledge(isEphemeral: deferEphemeral);
+        }
+        markInteractionAcknowledged(interaction);
+        results[resultKey] = 'deferred';
+        variables['action.$resultKey.status'] = 'deferred';
+      } catch (e) {
+        // If acknowledgement fails (e.g. already acknowledged), continue silently.
+        results[resultKey] = 'skipped';
+        variables['action.$resultKey.status'] = 'skipped';
+      }
       return true;
 
     default:

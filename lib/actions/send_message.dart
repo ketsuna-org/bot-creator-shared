@@ -3,6 +3,7 @@ import 'package:bot_creator_shared/utils/global.dart';
 import '../types/component.dart';
 import '../utils/component_workflow_bindings.dart';
 import '../utils/embed_fields.dart';
+import '../utils/allowed_mentions_parser.dart';
 import 'send_component_v2.dart';
 
 Snowflake? _toSnowflake(dynamic value) {
@@ -56,6 +57,7 @@ Future<Map<String, String>> sendMessageToChannel(
     }
 
     final resolvedContent = resolve != null ? resolve(content) : content;
+    final r = resolve ?? (s) => s;
     final messageMode =
         (payload?['messageMode'] ?? 'normal').toString().toLowerCase();
 
@@ -77,14 +79,13 @@ Future<Map<String, String>> sendMessageToChannel(
           isRichV2 = def.isRichV2;
           components = buildComponentNodes(
             definition: def,
-            resolve: resolve ?? (s) => s,
+            resolve: r,
           );
         } catch (_) {}
       }
     } else {
       // ── Normal mode (embeds + V1 components) ──────────────────────────
       if (payload != null) {
-        final r = resolve ?? (s) => s;
 
         // Embeds
         final embedsRaw =
@@ -226,6 +227,7 @@ Future<Map<String, String>> sendMessageToChannel(
     }
 
     final replyId = targetType == 'reply' ? _toSnowflake(payload?['messageId']) : null;
+    final allowedMentions = parseAllowedMentions(payload, r);
 
     final message = await channel.sendMessage(
       MessageBuilder(
@@ -237,6 +239,7 @@ Future<Map<String, String>> sendMessageToChannel(
         components: components,
         referencedMessage: replyId != null ? MessageReferenceBuilder.reply(messageId: replyId) : null,
         flags: isRichV2 ? MessageFlags(32768) : null,
+        allowedMentions: allowedMentions,
       ),
     );
     if (definition != null && botId != null && botId.trim().isNotEmpty) {
@@ -254,3 +257,5 @@ Future<Map<String, String>> sendMessageToChannel(
     return {'error': 'Failed to send message: $e', 'messageId': ''};
   }
 }
+
+

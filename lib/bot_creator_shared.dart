@@ -18,6 +18,7 @@ export 'package:bot_creator_shared/actions/interaction_response.dart';
 export 'package:bot_creator_shared/bot/bot_data_store.dart';
 export 'package:bot_creator_shared/bot/bot_config.dart';
 export 'package:bot_creator_shared/bot/bot_template.dart';
+export 'package:bot_creator_shared/bot/builtin_templates.dart';
 export 'package:bot_creator_shared/events/event_contexts.dart';
 export 'package:bot_creator_shared/engine/bot_engine.dart';
 export 'package:bot_creator_shared/engine/bot_engine_callbacks.dart';
@@ -34,3 +35,5 @@ export 'package:bot_creator_shared/types/variable_suggestion.dart';
 export 'package:bot_creator_shared/utils/variable_catalog.dart';
 export 'package:bot_creator_shared/types/workflow_event_definition.dart';
 export 'package:bot_creator_shared/utils/event_catalog.dart';
+export 'package:bot_creator_shared/utils/allowed_mentions_parser.dart';
+

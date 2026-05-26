@@ -27,6 +27,11 @@ Future<bool> executeReactionsAction({
   if (payload.containsKey('emoji')) {
     resolvedPayload['emoji'] = resolveValue(payload['emoji'].toString());
   }
+  if (payload.containsKey('emojis') && payload['emojis'] is List) {
+    final emojisRaw = payload['emojis'] as List;
+    resolvedPayload['emojis'] =
+        emojisRaw.map((e) => resolveValue(e.toString())).toList();
+  }
 
   switch (type) {
     case BotCreatorActionType.addReaction:
@@ -45,16 +50,41 @@ Future<bool> executeReactionsAction({
           throw Exception(permError);
         }
       }
-      final result = await addReactionAction(
-        client,
-        payload: resolvedPayload,
-        fallbackChannelId: fallbackChannelId,
-      );
-      if (result['error'] != null) {
-        throw Exception(result['error']);
+      final emojis = resolvedPayload['emojis'];
+      if (emojis is List) {
+        var status = 'OK';
+        final errors = <String>[];
+        for (final emoji in emojis) {
+          final singlePayload = Map<String, dynamic>.from(resolvedPayload);
+          singlePayload['emoji'] = emoji;
+          final result = await addReactionAction(
+            client,
+            payload: singlePayload,
+            fallbackChannelId: fallbackChannelId,
+          );
+          if (result['error'] != null) {
+            errors.add('$emoji: ${result['error']}');
+          } else {
+            status = result['status'] ?? 'OK';
+          }
+        }
+        if (errors.isNotEmpty) {
+          throw Exception('Failed to add some reactions: ${errors.join(", ")}');
+        }
+        results[resultKey] = status;
+        return true;
+      } else {
+        final result = await addReactionAction(
+          client,
+          payload: resolvedPayload,
+          fallbackChannelId: fallbackChannelId,
+        );
+        if (result['error'] != null) {
+          throw Exception(result['error']);
+        }
+        results[resultKey] = result['status'] ?? 'OK';
+        return true;
       }
-      results[resultKey] = result['status'] ?? 'OK';
-      return true;
 
     case BotCreatorActionType.removeReaction:
       final result = await removeReactionAction(

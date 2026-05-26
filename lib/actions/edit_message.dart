@@ -3,6 +3,7 @@ import 'package:bot_creator_shared/utils/global.dart';
 import '../types/component.dart';
 import '../utils/component_workflow_bindings.dart';
 import '../utils/embed_fields.dart';
+import '../utils/allowed_mentions_parser.dart';
 import 'send_component_v2.dart';
 
 Snowflake? _toSnowflake(dynamic value) {
@@ -194,11 +195,14 @@ Future<Map<String, String>> editMessageAction(
       } catch (_) {}
     }
 
+    final allowedMentions = parseAllowedMentions(payload, resolve ?? (s) => s);
+
     await message.edit(
       MessageUpdateBuilder(
         content: content.isNotEmpty ? content : null,
         embeds: shouldUpdateEmbeds ? embeds : null,
         components: components,
+        allowedMentions: allowedMentions,
       ),
     );
     if (definition != null && botId != null && botId.trim().isNotEmpty) {

@@ -3,8 +3,10 @@ import 'package:bot_creator_shared/types/component.dart';
 import 'package:bot_creator_shared/actions/send_component_v2.dart';
 import 'package:bot_creator_shared/utils/component_workflow_bindings.dart';
 import 'package:bot_creator_shared/utils/embed_fields.dart';
+import 'package:bot_creator_shared/utils/allowed_mentions_parser.dart';
 
 import 'package:bot_creator_shared/actions/send_message.dart';
+import 'package:bot_creator_shared/utils/interaction_ack_state.dart';
 
 Future<Map<String, dynamic>> respondWithMessageAction(
   Interaction? interaction, {
@@ -13,6 +15,7 @@ Future<Map<String, dynamic>> respondWithMessageAction(
   required String botId,
   NyxxGateway? client,
   Snowflake? fallbackChannelId,
+  Snowflake? fallbackMessageId,
 }) async {
   try {
     if (interaction == null) {
@@ -35,11 +38,19 @@ Future<Map<String, dynamic>> respondWithMessageAction(
         return {'error': 'No channelId available for respondWithMessage fallback'};
       }
 
+      // Build effective payload, injecting reply context when replyToMessage is set.
+      final effectivePayload = Map<String, dynamic>.from(payload);
+      final shouldReply = payload['replyToMessage'] == true;
+      if (shouldReply && fallbackMessageId != null) {
+        effectivePayload['targetType'] = 'reply';
+        effectivePayload['messageId'] = fallbackMessageId.toString();
+      }
+
       final result = await sendMessageToChannel(
         client,
         channelId,
-        content: resolve((payload['content'] ?? '').toString()),
-        payload: payload,
+        content: resolve((effectivePayload['content'] ?? '').toString()),
+        payload: effectivePayload,
         resolve: resolve,
         botId: botId,
       );
@@ -228,14 +239,18 @@ Future<Map<String, dynamic>> respondWithMessageAction(
       isAcknowledged = false;
     }
 
+    final allowedMentions = parseAllowedMentions(payload, resolve);
+
     if (isAcknowledged) {
       final message = await dynInteraction.updateOriginalResponse(
         MessageUpdateBuilder(
           content: content.trim().isEmpty ? null : content,
           embeds: embeds,
           components: componentNodes.isEmpty ? null : componentNodes,
+          allowedMentions: allowedMentions,
         ),
       );
+      markInteractionAcknowledged(interaction);
       registerComponentWorkflowBindings(
         definition: definition,
         resolve: resolve,
@@ -255,8 +270,10 @@ Future<Map<String, dynamic>> respondWithMessageAction(
         embeds: embeds.isEmpty ? null : embeds,
         components: componentNodes.isEmpty ? null : componentNodes,
         flags: flags > 0 ? MessageFlags(flags) : null,
+        allowedMentions: allowedMentions,
       ),
     );
+    markInteractionAcknowledged(interaction);
     String? messageId;
     try {
       final responseMessage = await dynInteraction.fetchOriginalResponse();
@@ -278,3 +295,5 @@ Future<Map<String, dynamic>> respondWithMessageAction(
     return {'error': e.toString()};
   }
 }
+
+

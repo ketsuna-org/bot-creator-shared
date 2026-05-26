@@ -59,6 +59,7 @@ Future<bool> executeComponentsInteractionsAction({
   required String botId,
   required Snowflake? guildId,
   required Snowflake? fallbackChannelId,
+  Snowflake? fallbackMessageId,
   required String Function(String input) resolveValue,
 }) async {
   switch (type) {
@@ -117,6 +118,7 @@ Future<bool> executeComponentsInteractionsAction({
         botId: botId,
         client: client,
         fallbackChannelId: fallbackChannelId,
+        fallbackMessageId: fallbackMessageId,
       );
       if (messageResult['error'] != null) {
         throw Exception(messageResult['error']);

@@ -24,11 +24,23 @@ List<EmbedFieldBuilder> buildResolvedEmbedFields({
       return;
     }
 
+    final inlineRaw = field['inline'];
+    bool isInline = false;
+    if (inlineRaw is bool) {
+      isInline = inlineRaw;
+    } else if (inlineRaw != null) {
+      final resolvedInline = resolve(inlineRaw.toString()).trim().toLowerCase();
+      isInline = resolvedInline == 'yes' ||
+          resolvedInline == 'true' ||
+          resolvedInline == '1' ||
+          resolvedInline == 'on';
+    }
+
     fields.add(
       EmbedFieldBuilder(
         name: name,
         value: value,
-        isInline: field['inline'] == true,
+        isInline: isInline,
       ),
     );
   }
