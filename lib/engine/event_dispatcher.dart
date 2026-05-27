@@ -263,6 +263,13 @@ class EventDispatcher {
     // Typing
     reg('typingStart', gateway.onTypingStart, buildTypingStartEventContext);
 
+    // Interactions
+    reg(
+      'interactionCreate',
+      gateway.onInteractionCreate,
+      buildInteractionCreateEventContext,
+    );
+
     return subscriptions;
   }
 
@@ -841,7 +848,7 @@ class EventDispatcher {
       final label = cmdName != null ? '!$cmdName' : 'BDFD Script';
       await _workflowExecutor.executeActions(
         actions: actions,
-        context: null,
+        context: context.interaction,
         gateway: gateway,
         botId: botId,
         runtimeVariables: runtimeVariables,
@@ -892,7 +899,7 @@ class EventDispatcher {
       );
       final actionResults = await _workflowExecutor.executeActions(
         actions: actions,
-        context: null,
+        context: context.interaction,
         gateway: gateway,
         botId: botId,
         runtimeVariables: runtimeVariables,

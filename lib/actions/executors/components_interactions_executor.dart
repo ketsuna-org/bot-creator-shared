@@ -129,7 +129,7 @@ Future<bool> executeComponentsInteractionsAction({
     case BotCreatorActionType.respondWithModal:
       if (interaction == null) {
         results[resultKey] =
-            'Error: respondWithModal requires a slash command interaction';
+            'Error: respondWithModal requires an active interaction context';
         return true;
       }
       final modalResult = await respondWithModalAction(

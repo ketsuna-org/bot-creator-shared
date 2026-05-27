@@ -178,6 +178,7 @@ Map<String, String> buildInteractionRuntimeVariables(Interaction interaction) {
         }
         final value = (_safeRead(inner, () => inner.value) ?? '').toString();
         modalInputPairs['modal.$key'] = value;
+        modalInputPairs['opts.$key'] = value;
       }
     }
   }
@@ -297,6 +298,15 @@ EventExecutionContext buildInteractionCreateEventContext(
           '#${accentColor.value.toRadixString(16).padLeft(6, '0')}';
     }
   }
+
+  // Enrich with message details when available (e.g. component/modal interactions associated with a message).
+  try {
+    final dynamic dynInteraction = interaction;
+    final message = dynInteraction.message;
+    if (message is Message) {
+      extra.addAll(_messageContentExtra(message));
+    }
+  } catch (_) {}
 
   return _baseEventContext(
     eventName: 'interactionCreate',

@@ -73,17 +73,17 @@ class BotSession {
       _gateway = await Nyxx.connectGateway(
         token,
         intents,
-        options: GatewayClientOptions(
-          plugins: [logging, cliIntegration],
-        ),
+        options: GatewayClientOptions(plugins: [logging, cliIntegration]),
       );
 
       _startedAt = DateTime.now();
-      
+
       // Cache metadata
       try {
-        final app = await ((_gateway! as dynamic).client as dynamic).applications.fetchCurrentApplication();
-        _ownerId = app.owner?.id.toString() ?? '';
+        final app =
+            await (_gateway! as NyxxRest).applications
+                .fetchCurrentApplication();
+        _ownerId = (app.owner?.id.toString() ?? app.team?.ownerId.toString())!;
       } catch (_) {}
 
       try {
@@ -100,7 +100,10 @@ class BotSession {
 
       await reload();
 
-      callbacks.onDebugLog?.call('Registering event listeners...', botId: botId);
+      callbacks.onDebugLog?.call(
+        'Registering event listeners...',
+        botId: botId,
+      );
       _subscriptions.addAll(
         _eventDispatcher.registerListeners(
           _gateway!,
@@ -108,7 +111,10 @@ class BotSession {
           startedAt: _startedAt,
         ),
       );
-      callbacks.onDebugLog?.call('${_subscriptions.length} listeners registered.', botId: botId);
+      callbacks.onDebugLog?.call(
+        '${_subscriptions.length} listeners registered.',
+        botId: botId,
+      );
 
       _startMetricsReporting();
 
@@ -116,7 +122,10 @@ class BotSession {
       callbacks.onLog?.call('Bot gateway connected.', botId: botId);
     } catch (error, stackTrace) {
       callbacks.onLog?.call('Failed to start bot: $error', botId: botId);
-      callbacks.onDebugLog?.call('Start error stack: $stackTrace', botId: botId);
+      callbacks.onDebugLog?.call(
+        'Start error stack: $stackTrace',
+        botId: botId,
+      );
       rethrow;
     }
   }
@@ -171,7 +180,8 @@ class BotSession {
     variables['bot.commandsCount'] = _commandCount.toString();
     variables['bot.slashCommandsCount'] = _commandCount.toString();
     if (_startedAt != null) {
-      variables['bot.uptime'] = DateTime.now().difference(_startedAt!).inMilliseconds.toString();
+      variables['bot.uptime'] =
+          DateTime.now().difference(_startedAt!).inMilliseconds.toString();
     }
   }
 
@@ -182,7 +192,10 @@ class BotSession {
     });
     // Initial report
     _initialMetricsTimer?.cancel();
-    _initialMetricsTimer = Timer(const Duration(seconds: 5), () => _reportMetrics());
+    _initialMetricsTimer = Timer(
+      const Duration(seconds: 5),
+      () => _reportMetrics(),
+    );
   }
 
   void _reportMetrics() {
@@ -206,10 +219,16 @@ class BotSession {
       metrics = BotRuntimeMetrics(
         guildCount: gateway.guilds.cache.length,
         shardsCount: shards?.length ?? 1,
-        latencyMs: (shards != null && shards.isNotEmpty)
-            ? ((shards.first as dynamic).latency as Duration?)?.inMilliseconds ?? 0
-            : 0,
-        uptimeSeconds: _startedAt != null ? DateTime.now().difference(_startedAt!).inSeconds : 0,
+        latencyMs:
+            (shards != null && shards.isNotEmpty)
+                ? ((shards.first as dynamic).latency as Duration?)
+                        ?.inMilliseconds ??
+                    0
+                : 0,
+        uptimeSeconds:
+            _startedAt != null
+                ? DateTime.now().difference(_startedAt!).inSeconds
+                : 0,
         memoryUsageBytes: 0,
         cpuUsagePercent: 0.0,
       );
@@ -218,7 +237,10 @@ class BotSession {
         guildCount: gateway.guilds.cache.length,
         shardsCount: 1,
         latencyMs: 0,
-        uptimeSeconds: _startedAt != null ? DateTime.now().difference(_startedAt!).inSeconds : 0,
+        uptimeSeconds:
+            _startedAt != null
+                ? DateTime.now().difference(_startedAt!).inSeconds
+                : 0,
         memoryUsageBytes: 0,
         cpuUsagePercent: 0.0,
       );
@@ -229,20 +251,34 @@ class BotSession {
 
   Flags<GatewayIntents> _buildGatewayIntents(Map<String, bool> intentsMap) {
     Flags<GatewayIntents> intents = GatewayIntents.none;
-    if (intentsMap['Guild Presence'] == true) intents |= GatewayIntents.guildPresences;
-    if (intentsMap['Guild Members'] == true) intents |= GatewayIntents.guildMembers;
-    if (intentsMap['Message Content'] == true) intents |= GatewayIntents.messageContent;
-    if (intentsMap['Direct Messages'] == true) intents |= GatewayIntents.directMessages;
+    if (intentsMap['Guild Presence'] == true)
+      intents |= GatewayIntents.guildPresences;
+    if (intentsMap['Guild Members'] == true)
+      intents |= GatewayIntents.guildMembers;
+    if (intentsMap['Message Content'] == true)
+      intents |= GatewayIntents.messageContent;
+    if (intentsMap['Direct Messages'] == true)
+      intents |= GatewayIntents.directMessages;
     if (intentsMap['Guilds'] == true) intents |= GatewayIntents.guilds;
-    if (intentsMap['Guild Messages'] == true) intents |= GatewayIntents.guildMessages;
-    if (intentsMap['Guild Message Reactions'] == true) intents |= GatewayIntents.guildMessageReactions;
-    if (intentsMap['Direct Message Reactions'] == true) intents |= GatewayIntents.directMessageReactions;
-    if (intentsMap['Guild Message Typing'] == true) intents |= GatewayIntents.guildMessageTyping;
-    if (intentsMap['Direct Message Typing'] == true) intents |= GatewayIntents.directMessageTyping;
-    if (intentsMap['Guild Scheduled Events'] == true) intents |= GatewayIntents.guildScheduledEvents;
-    if (intentsMap['Auto Moderation Configuration'] == true) intents |= GatewayIntents.autoModerationConfiguration;
-    if (intentsMap['Auto Moderation Execution'] == true) intents |= GatewayIntents.autoModerationExecution;
+    if (intentsMap['Guild Messages'] == true)
+      intents |= GatewayIntents.guildMessages;
+    if (intentsMap['Guild Message Reactions'] == true)
+      intents |= GatewayIntents.guildMessageReactions;
+    if (intentsMap['Direct Message Reactions'] == true)
+      intents |= GatewayIntents.directMessageReactions;
+    if (intentsMap['Guild Message Typing'] == true)
+      intents |= GatewayIntents.guildMessageTyping;
+    if (intentsMap['Direct Message Typing'] == true)
+      intents |= GatewayIntents.directMessageTyping;
+    if (intentsMap['Guild Scheduled Events'] == true)
+      intents |= GatewayIntents.guildScheduledEvents;
+    if (intentsMap['Auto Moderation Configuration'] == true)
+      intents |= GatewayIntents.autoModerationConfiguration;
+    if (intentsMap['Auto Moderation Execution'] == true)
+      intents |= GatewayIntents.autoModerationExecution;
 
-    return intents == GatewayIntents.none ? GatewayIntents.allUnprivileged : intents;
+    return intents == GatewayIntents.none
+        ? GatewayIntents.allUnprivileged
+        : intents;
   }
 }
