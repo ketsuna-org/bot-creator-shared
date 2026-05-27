@@ -251,31 +251,45 @@ class BotSession {
 
   Flags<GatewayIntents> _buildGatewayIntents(Map<String, bool> intentsMap) {
     Flags<GatewayIntents> intents = GatewayIntents.none;
-    if (intentsMap['Guild Presence'] == true)
+    if (intentsMap['Guild Presence'] == true) {
       intents |= GatewayIntents.guildPresences;
-    if (intentsMap['Guild Members'] == true)
+    }
+    if (intentsMap['Guild Members'] == true) {
       intents |= GatewayIntents.guildMembers;
-    if (intentsMap['Message Content'] == true)
+    }
+    if (intentsMap['Message Content'] == true) {
       intents |= GatewayIntents.messageContent;
-    if (intentsMap['Direct Messages'] == true)
+    }
+    if (intentsMap['Direct Messages'] == true) {
       intents |= GatewayIntents.directMessages;
-    if (intentsMap['Guilds'] == true) intents |= GatewayIntents.guilds;
-    if (intentsMap['Guild Messages'] == true)
+    }
+    if (intentsMap['Guilds'] == true) {
+      intents |= GatewayIntents.guilds;
+    }
+    if (intentsMap['Guild Messages'] == true) {
       intents |= GatewayIntents.guildMessages;
-    if (intentsMap['Guild Message Reactions'] == true)
+    }
+    if (intentsMap['Guild Message Reactions'] == true) {
       intents |= GatewayIntents.guildMessageReactions;
-    if (intentsMap['Direct Message Reactions'] == true)
+    }
+    if (intentsMap['Direct Message Reactions'] == true) {
       intents |= GatewayIntents.directMessageReactions;
-    if (intentsMap['Guild Message Typing'] == true)
+    }
+    if (intentsMap['Guild Message Typing'] == true) {
       intents |= GatewayIntents.guildMessageTyping;
-    if (intentsMap['Direct Message Typing'] == true)
+    }
+    if (intentsMap['Direct Message Typing'] == true) {
       intents |= GatewayIntents.directMessageTyping;
-    if (intentsMap['Guild Scheduled Events'] == true)
+    }
+    if (intentsMap['Guild Scheduled Events'] == true) {
       intents |= GatewayIntents.guildScheduledEvents;
-    if (intentsMap['Auto Moderation Configuration'] == true)
+    }
+    if (intentsMap['Auto Moderation Configuration'] == true) {
       intents |= GatewayIntents.autoModerationConfiguration;
-    if (intentsMap['Auto Moderation Execution'] == true)
+    }
+    if (intentsMap['Auto Moderation Execution'] == true) {
       intents |= GatewayIntents.autoModerationExecution;
+    }
 
     return intents == GatewayIntents.none
         ? GatewayIntents.allUnprivileged
