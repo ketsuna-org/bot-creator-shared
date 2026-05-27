@@ -7,6 +7,7 @@ EventExecutionContext buildInviteDeleteEventContext(InviteDeleteEvent event) {
     channelId: _asSnowflake(event.channelId),
     userId: null,
     extra: _inviteExtra(
+      null,
       code: event.code,
       channelId: event.channelId.toString(),
       inviterId: '',

@@ -8,10 +8,6 @@ EventExecutionContext buildChannelDeleteEventContext(ChannelDeleteEvent event) {
     guildId: guildId,
     channelId: channel.id,
     userId: null,
-    extra: <String, String>{
-      'channel.id': channel.id.toString(),
-      'channel.name': _getChannelName(channel),
-      'channel.type': channel.type.toString(),
-    },
+    extra: _channelExtra(channel),
   );
 }

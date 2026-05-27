@@ -9,10 +9,13 @@ EventExecutionContext buildGuildMemberRemoveEventContext(
     guildId: event.guildId,
     channelId: null,
     userId: user.id,
-    extra: _memberBasicExtra(
-      user.id.toString(),
-      user.username,
-      user.discriminator,
-    ),
+    extra: {
+      ..._memberBasicExtra(
+        user.id.toString(),
+        user.username,
+        user.discriminator,
+      ),
+      ..._userExtra(user, enrichAuthor: true),
+    },
   );
 }

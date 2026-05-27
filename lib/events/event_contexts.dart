@@ -159,32 +159,216 @@ Map<String, String> _memberBasicExtra(
   'member.tag': discriminator ?? '',
 };
 
-Map<String, String> _inviteExtra({
-  required String code,
-  required String channelId,
-  required String inviterId,
-}) => <String, String>{
-  'invite.code': code,
-  'invite.channelId': channelId,
-  'invite.inviterId': inviterId,
-};
+Map<String, String> _userExtra(User? user, {bool enrichAuthor = false}) {
+  if (user == null) return const <String, String>{};
 
-Map<String, String> _pollVoteExtra({
-  required Snowflake messageId,
-  required int answerId,
-}) => <String, String>{
-  'message.id': messageId.toString(),
-  'poll.answer.id': answerId.toString(),
-};
+  final userAvatarUrl = makeAvatarUrl(
+    user.id.toString(),
+    avatarId: user.avatar.hash,
+    isAnimated: user.avatar.isAnimated,
+    legacyFormat: 'webp',
+    discriminator: user.discriminator,
+  );
+  String userBannerColor = '';
+  final accentColor = user.accentColor;
+  if (accentColor != null) {
+    userBannerColor =
+        '#${accentColor.value.toRadixString(16).padLeft(6, '0')}';
+  }
 
-Map<String, String> _messageContentExtra(Message message, {PartialMember? member}) {
-  final author = message.author;
+  return <String, String>{
+    'user.id': user.id.toString(),
+    'user.username': user.username,
+    'user.globalName': user.globalName ?? user.username,
+    'user.displayName': user.globalName ?? user.username,
+    'user.tag': user.discriminator,
+    'user.avatar': userAvatarUrl,
+    'user.banner': user.banner?.url.toString() ?? '',
+    'user.createdAt': user.id.timestamp.toIso8601String(),
+    'user.bannerColor': userBannerColor,
+    if (enrichAuthor) ...{
+      'author.id': user.id.toString(),
+      'author.username': user.username,
+      'author.globalName': user.globalName ?? user.username,
+      'author.tag': user.discriminator,
+      'author.avatar': userAvatarUrl,
+      'author.banner': user.banner?.url.toString() ?? '',
+      'author.displayName': user.globalName ?? user.username,
+    },
+  };
+}
+
+Map<String, String> _memberExtra(Member? member, {String prefix = 'member'}) {
+  if (member == null) return const <String, String>{};
+
+  final user = member.user;
+  return <String, String>{
+    if (prefix == 'member') ..._memberBasicExtra(
+      member.id.toString(),
+      user?.username,
+      user?.discriminator,
+    ),
+    '$prefix.id': member.id.toString(),
+    '$prefix.nick': member.nick ?? '',
+    '$prefix.displayName': member.nick ?? (user?.globalName ?? user?.username ?? ''),
+    '$prefix.avatar': makeAvatarUrl(
+      member.id.toString(),
+      avatarId: member.avatar?.hash ?? user?.avatar.hash,
+      isAnimated: member.avatar?.isAnimated ?? user?.avatar.isAnimated ?? false,
+      legacyFormat: 'webp',
+      discriminator: user?.discriminator,
+    ),
+    '$prefix.joinedAt': member.joinedAt.toIso8601String(),
+    '$prefix.roles': member.roleIds.map((id) => id.toString()).join(','),
+    '$prefix.roles.count': member.roleIds.length.toString(),
+    '$prefix.isBooster': (member.premiumSince != null).toString(),
+    '$prefix.isAdmin': member.permissions?.has(Permissions.administrator) == true
+        ? 'true'
+        : 'false',
+    if (member.communicationDisabledUntil != null)
+      '$prefix.communicationDisabledUntil': member.communicationDisabledUntil!.toIso8601String(),
+    if (user != null && prefix == 'member') ..._userExtra(user),
+  };
+}
+
+Map<String, String> _channelExtra(Channel? channel, {String prefix = 'channel'}) {
+  if (channel == null) return const <String, String>{};
+  return <String, String>{
+    '$prefix.id': channel.id.toString(),
+    '$prefix.name': _getChannelName(channel),
+    '$prefix.type': channel.type.toString(),
+  };
+}
+
+Map<String, String> _messageExtra(Message? message, {String prefix = 'message'}) {
+  if (message == null) return const <String, String>{};
+
   final content = message.content;
   final words = content.trim().split(RegExp(r'\s+'));
   final mentionIds = message.mentions.map((u) => u.id.toString()).toList();
   final roleMentionIds =
       message.roleMentionIds.map((id) => id.toString()).toList();
-  final isBot = author is User ? author.isBot : false;
+  final isBot = message.author is User ? (message.author as User).isBot : false;
+
+  final map = <String, String>{
+    '$prefix.id': message.id.toString(),
+    '$prefix.content': content,
+    '$prefix.word.count': words.length.toString(),
+    '$prefix.isBot': isBot.toString(),
+    '$prefix.channelId': message.channelId.toString(),
+    '$prefix.isDM': (message.channel is DmChannel).toString(),
+    '$prefix.isSystem': (message.type != MessageType.normal).toString(),
+    '$prefix.type': message.type.value.toString(),
+    '$prefix.mentions': mentionIds.join(','),
+    '$prefix.mention.count': mentionIds.length.toString(),
+    '$prefix.timestamp': message.timestamp.millisecondsSinceEpoch.toString(),
+    '$prefix.isEdited': (message.editedTimestamp != null).toString(),
+    '$prefix.isPinned': message.isPinned.toString(),
+    '$prefix.attachments': message.attachments
+        .map((a) => a.url.toString())
+        .join(','),
+    '$prefix.attachments.count': message.attachments.length.toString(),
+    '$prefix.embeds.count': message.embeds.length.toString(),
+    '$prefix.roleMentions': roleMentionIds.join(','),
+    '$prefix.roleMentions.count': roleMentionIds.length.toString(),
+    '$prefix.mentionsEveryone': message.mentionsEveryone.toString(),
+  };
+
+  if (message.editedTimestamp != null) {
+    map['$prefix.editedTimestamp'] =
+        message.editedTimestamp!.millisecondsSinceEpoch.toString();
+  }
+  final referencedMessage = message.referencedMessage;
+  if (referencedMessage != null) {
+    map['$prefix.referencedMessage.id'] = referencedMessage.id.toString();
+  }
+
+  for (var idx = 0; idx < words.length && idx < 10; idx++) {
+    map['$prefix.content[$idx]'] = words[idx];
+  }
+  for (var idx = 0; idx < mentionIds.length && idx < 10; idx++) {
+    map['$prefix.mentions[$idx]'] = mentionIds[idx];
+  }
+  return map;
+}
+
+Map<String, String> _inviteExtra(
+  dynamic invite, {
+  String? code,
+  String? channelId,
+  String? inviterId,
+}) {
+  if (invite == null) {
+    return <String, String>{
+      'invite.code': code ?? '',
+      'invite.channelId': channelId ?? '',
+      'invite.inviterId': inviterId ?? '',
+    };
+  }
+
+  // Safe dynamic extraction
+  String inviteCode = '';
+  String chanId = '';
+  String invId = '';
+  try {
+    inviteCode = invite.code?.toString() ?? '';
+  } catch (_) {}
+  try {
+    chanId = invite.channel?.id?.toString() ?? '';
+  } catch (_) {}
+  try {
+    invId = invite.inviter?.id?.toString() ?? '';
+  } catch (_) {}
+
+  final map = <String, String>{
+    'invite.code': inviteCode.isNotEmpty ? inviteCode : (code ?? ''),
+    'invite.channelId': chanId.isNotEmpty ? chanId : (channelId ?? ''),
+    'invite.inviterId': invId.isNotEmpty ? invId : (inviterId ?? ''),
+  };
+
+  try {
+    final dynamic dynInvite = invite;
+    final createdAt = dynInvite.createdAt;
+    if (createdAt is DateTime) {
+      map['invite.createdAt'] = createdAt.toIso8601String();
+    }
+    final maxAge = dynInvite.maxAge;
+    if (maxAge is Duration) {
+      map['invite.maxAge'] = maxAge.inSeconds.toString();
+    }
+    final maxUses = dynInvite.maxUses;
+    if (maxUses != null) {
+      map['invite.maxUses'] = maxUses.toString();
+    }
+    final temporary = dynInvite.isTemporary ?? dynInvite.temporary;
+    if (temporary != null) {
+      map['invite.isTemporary'] = temporary.toString();
+    }
+    final uses = dynInvite.uses;
+    if (uses != null) {
+      map['invite.uses'] = uses.toString();
+    }
+  } catch (_) {}
+
+  return map;
+}
+
+Map<String, String> _pollVoteExtra({
+  required Snowflake messageId,
+  required int answerId,
+  Snowflake? userId,
+  Snowflake? channelId,
+  Snowflake? guildId,
+}) => <String, String>{
+  'message.id': messageId.toString(),
+  'poll.answer.id': answerId.toString(),
+  if (userId != null) 'poll.vote.userId': userId.toString(),
+  if (channelId != null) 'poll.vote.channelId': channelId.toString(),
+  if (guildId != null) 'poll.vote.guildId': guildId.toString(),
+};
+
+Map<String, String> _messageContentExtra(Message message, {PartialMember? member}) {
+  final author = message.author;
   final authorId = author.id.toString();
   final authorName = author.username;
   final authorTag = author is User ? author.discriminator : '';
@@ -198,102 +382,40 @@ Map<String, String> _messageContentExtra(Message message, {PartialMember? member
       )
       : '';
 
-  String authorBanner = '';
-  String userCreatedAt = '';
-  String userBannerColor = '';
-  if (author is User) {
-    authorBanner = author.banner?.url.toString() ?? '';
-    userCreatedAt = author.id.timestamp.toIso8601String();
-    final accentColor = author.accentColor;
-    if (accentColor != null) {
-      userBannerColor =
-          '#${accentColor.value.toRadixString(16).padLeft(6, '0')}';
-    }
-  }
-
   final extra = <String, String>{
-    'message.id': message.id.toString(),
-    'message.content': content,
-    'message.word.count': words.length.toString(),
-    'message.isBot': isBot.toString(),
-    'message.channelId': message.channelId.toString(),
-    'message.isDM': (message.channel is DmChannel).toString(),
-    'message.isSystem': (message.type != MessageType.normal).toString(),
-    'message.type': message.type.value.toString(),
-    'message.mentions': mentionIds.join(','),
-    'message.mention.count': mentionIds.length.toString(),
-    'message.timestamp': message.timestamp.millisecondsSinceEpoch.toString(),
-    'message.isEdited': (message.editedTimestamp != null).toString(),
-    'message.isPinned': message.isPinned.toString(),
-    'message.attachments': message.attachments
-        .map((a) => a.url.toString())
-        .join(','),
-    'message.attachments.count': message.attachments.length.toString(),
-    'message.embeds.count': message.embeds.length.toString(),
-    'message.roleMentions': roleMentionIds.join(','),
-    'message.roleMentions.count': roleMentionIds.length.toString(),
-    'message.mentionsEveryone': message.mentionsEveryone.toString(),
-    'author.id': authorId,
-    'author.name': authorName,
-    'author.username': authorName,
-    'author.globalName': author is User ? (author.globalName ?? authorName) : authorName,
-    'author.tag': authorTag,
-    'author.isBot': isBot.toString(),
-    'author.avatar': authorAvatar,
-    'author.banner': authorBanner,
-    'author.displayName': author is User ? (author.globalName ?? authorName) : authorName,
+    ..._messageExtra(message),
+    if (author is User) ..._userExtra(author, enrichAuthor: true),
+    if (author is! User) ...{
+      'author.id': authorId,
+      'author.name': authorName,
+      'author.username': authorName,
+      'author.displayName': authorName,
+      'author.tag': authorTag,
+      'author.isBot': 'false',
+      'author.avatar': authorAvatar,
+      'author.banner': '',
+      'user.id': authorId,
+      'user.name': authorName,
+      'user.username': authorName,
+      'user.globalName': authorName,
+      'user.displayName': authorName,
+      'user.tag': authorTag,
+      'user.avatar': authorAvatar,
+      'user.banner': '',
+      'user.createdAt': '',
+      'user.bannerColor': '',
+    },
+    'author.isBot': (author is User ? author.isBot : false).toString(),
     'userId': authorId,
     'userName': authorName,
     'userAvatar': authorAvatar,
-    'user.id': authorId,
-    'user.name': authorName,
-    'user.username': authorName,
-    'user.globalName': author is User ? (author.globalName ?? authorName) : authorName,
-    'user.displayName': author is User ? (author.globalName ?? authorName) : authorName,
-    'user.tag': authorTag,
-    'user.avatar': authorAvatar,
-    'user.banner': authorBanner,
-    'user.createdAt': userCreatedAt,
-    'user.bannerColor': userBannerColor,
     'interaction.user.id': authorId,
     'interaction.user.username': authorName,
     'interaction.user.tag': authorTag,
     'interaction.user.avatar': authorAvatar,
-    if (member is Member) ...{
-      'member.id': member.id.toString(),
-      'member.nick': member.nick ?? '',
-      'member.displayName': member.nick ?? (member.user?.globalName ?? member.user?.username ?? ''),
-      'member.avatar': makeAvatarUrl(
-        member.id.toString(),
-        avatarId: member.avatar?.hash ?? member.user?.avatar.hash,
-        isAnimated: member.avatar?.isAnimated ?? member.user?.avatar.isAnimated ?? false,
-        legacyFormat: 'webp',
-        discriminator: member.user?.discriminator,
-      ),
-      'member.joinedAt': member.joinedAt.toIso8601String(),
-      'member.roles': member.roleIds.map((id) => id.toString()).join(','),
-      'member.isBooster': (member.premiumSince != null).toString(),
-      'member.isAdmin': member.permissions?.has(Permissions.administrator) == true
-          ? 'true'
-          : 'false',
-    },
+    if (member is Member) ..._memberExtra(member),
   };
 
-  if (message.editedTimestamp != null) {
-    extra['message.editedTimestamp'] =
-        message.editedTimestamp!.millisecondsSinceEpoch.toString();
-  }
-  final referencedMessage = message.referencedMessage;
-  if (referencedMessage != null) {
-    extra['message.referencedMessage.id'] = referencedMessage.id.toString();
-  }
-
-  for (var idx = 0; idx < words.length && idx < 10; idx++) {
-    extra['message.content[$idx]'] = words[idx];
-  }
-  for (var idx = 0; idx < mentionIds.length && idx < 10; idx++) {
-    extra['message.mentions[$idx]'] = mentionIds[idx];
-  }
   return extra;
 }
 

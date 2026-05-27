@@ -250,53 +250,13 @@ EventExecutionContext buildInteractionCreateEventContext(
   // Enrich with member details when available (guild interactions).
   final member = interaction.member;
   if (member is Member) {
-    extra['member.id'] = member.id.toString();
-    extra['member.nick'] = member.nick ?? '';
-    extra['member.avatar'] = makeAvatarUrl(
-      member.id.toString(),
-      avatarId: member.avatar?.hash ?? member.user?.avatar.hash,
-      isAnimated: member.avatar?.isAnimated ?? member.user?.avatar.isAnimated ?? false,
-      legacyFormat: 'webp',
-      discriminator: member.user?.discriminator,
-    );
-    extra['member.joinedAt'] = member.joinedAt.toIso8601String();
-    extra['member.roles'] = member.roleIds.map((id) => id.toString()).join(',');
-    extra['member.roles.count'] = member.roleIds.length.toString();
-    extra['member.isBooster'] = (member.premiumSince != null).toString();
-    if (member.communicationDisabledUntil != null) {
-      extra['member.communicationDisabledUntil'] =
-          member.communicationDisabledUntil!.toIso8601String();
-    }
+    extra.addAll(_memberExtra(member));
   }
 
   // Enrich with user details when available.
   final user = interaction.user ?? member?.user;
   if (user != null) {
-    extra['user.id'] = user.id.toString();
-    extra['user.username'] = user.username;
-    extra['user.globalName'] = user.globalName ?? user.username;
-    extra['user.tag'] = user.discriminator;
-    final userAvatarUrl = makeAvatarUrl(
-      user.id.toString(),
-      avatarId: user.avatar.hash,
-      isAnimated: user.avatar.isAnimated,
-      legacyFormat: 'webp',
-      discriminator: user.discriminator,
-    );
-    extra['user.avatar'] = userAvatarUrl;
-    extra['user.banner'] = user.banner?.url.toString() ?? '';
-    extra['user.createdAt'] = user.id.timestamp.toIso8601String();
-    extra['author.id'] = user.id.toString();
-    extra['author.username'] = user.username;
-    extra['author.globalName'] = user.globalName ?? user.username;
-    extra['author.tag'] = user.discriminator;
-    extra['author.avatar'] = userAvatarUrl;
-    extra['author.banner'] = user.banner?.url.toString() ?? '';
-    final accentColor = user.accentColor;
-    if (accentColor != null) {
-      extra['user.bannerColor'] =
-          '#${accentColor.value.toRadixString(16).padLeft(6, '0')}';
-    }
+    extra.addAll(_userExtra(user, enrichAuthor: true));
   }
 
   // Enrich with message details when available (e.g. component/modal interactions associated with a message).

@@ -10,6 +10,7 @@ EventExecutionContext buildMessageUpdateEventContext(MessageUpdateEvent event) {
     extra: {
       ..._messageContentExtra(message),
       'message.oldContent': event.oldMessage?.content ?? '',
+      if (event.oldMessage != null) ..._messageExtra(event.oldMessage, prefix: 'message.old'),
     },
   );
 }

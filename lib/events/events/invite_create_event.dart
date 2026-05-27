@@ -8,6 +8,7 @@ EventExecutionContext buildInviteCreateEventContext(InviteCreateEvent event) {
     channelId: invite.channel.id,
     userId: invite.inviter?.id,
     extra: _inviteExtra(
+      invite,
       code: invite.code,
       channelId: invite.channel.id.toString(),
       inviterId: invite.inviter?.id.toString() ?? '',
