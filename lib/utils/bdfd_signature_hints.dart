@@ -272,10 +272,9 @@ const Map<String, List<String>> bdfdSignatureHints = <String, List<String>>{
   'takerole': ['userID', 'roleID'],
   'takeroles': ['userID', 'roleID1', 'roleID2 (opt)', '...'],
 
- // ── Messages ─────────────────────────────────────────────────────────
- 'deletein': ['duration'],
- 'deletemessage': ['messageID'],
-
+  // ── Messages ─────────────────────────────────────────────────────────
+ 'deletein': ['seconds'],
+ 'deletemessage': ['channelID', 'messageID'],
  'dm': ['userID', 'message'],
 
  'editembedin': [
