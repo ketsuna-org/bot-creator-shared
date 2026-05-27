@@ -920,6 +920,39 @@ void main() {
       expect(result.actions[5].payload['content'], 'inner=1');
     });
 
+    test('transpiles multiple targeted embeds and supports inserting fields by index', () {
+      final result = BdfdCompiler().compile(
+        r'$title[First Embed;0]'
+        r'$description[This is the first embed;0]'
+        r'$title[Second Embed;1]'
+        r'$description[This is the second embed;1]'
+        r'$addField[A;1;yes]'
+        r'$addField[C;3;yes]'
+        r'$addField[B;2;yes;1]', // inserts B at index 1
+      );
+
+      expect(result.hasErrors, isFalse);
+      expect(result.actions, hasLength(1));
+      final payload = result.actions.single.payload;
+      expect(payload['embeds'], isList);
+      final embeds = payload['embeds'] as List;
+      expect(embeds, hasLength(2));
+
+      final first = embeds[0] as Map<String, dynamic>;
+      expect(first['title'], 'First Embed');
+      expect(first['description'], 'This is the first embed');
+
+      final second = embeds[1] as Map<String, dynamic>;
+      expect(second['title'], 'Second Embed');
+      expect(second['description'], 'This is the second embed');
+
+      final fields = first['fields'] as List;
+      expect(fields, hasLength(3));
+      expect(fields[0]['name'], 'A');
+      expect(fields[1]['name'], 'B');
+      expect(fields[2]['name'], 'C');
+    });
+
     test('inlines response-only loop body into pending embed', () {
       final result = BdfdCompiler().compile(
         r'$title[Test]$for[3]$addField[Item $loopCount;val $i;yes]$endfor$color[#FF0000]$footer[Done]',

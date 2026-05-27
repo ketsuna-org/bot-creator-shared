@@ -776,6 +776,71 @@ dynamic _applyBdfdBracketFunction(
       return '${now.year}-'
           '${now.month.toString().padLeft(2, '0')}-'
           '${now.day.toString().padLeft(2, '0')}';
+    case 'and':
+      if (rawArgs.isEmpty) {
+        return 'false';
+      }
+      for (final arg in rawArgs) {
+        if (!_evaluateStringCondition(arg, updates)) {
+          return 'false';
+        }
+      }
+      return 'true';
+    case 'or':
+      if (rawArgs.isEmpty) {
+        return 'false';
+      }
+      for (final arg in rawArgs) {
+        if (_evaluateStringCondition(arg, updates)) {
+          return 'true';
+        }
+      }
+      return 'false';
+    case 'listvar':
+      final sep = resolvedArgs.isNotEmpty ? _stringifyResolvedValue(resolvedArgs[0]) : ', ';
+      final varNames = <String>{};
+      for (final key in updates.keys) {
+        final idx = key.indexOf('.bc_');
+        if (idx >= 0) {
+          final name = key.substring(idx + 4);
+          if (name.isNotEmpty) {
+            varNames.add(name);
+          }
+        }
+      }
+      return varNames.join(sep);
+    case 'variablescount':
+      final type = resolvedArgs.isNotEmpty ? _stringifyResolvedValue(resolvedArgs[0]).trim() : 'global';
+      int count = 0;
+      final lowerType = type.toLowerCase();
+      for (final key in updates.keys) {
+        if (!key.contains('.bc_')) {
+          continue;
+        }
+        final lowerKey = key.toLowerCase();
+        if (lowerType == 'user') {
+          if (lowerKey.startsWith('user[') || lowerKey.contains('member[')) {
+            count++;
+          }
+        } else if (lowerType == 'guild' || lowerType == 'server') {
+          if (lowerKey.startsWith('guild[') || lowerKey.startsWith('server[')) {
+            count++;
+          }
+        } else if (lowerType == 'channel') {
+          if (lowerKey.startsWith('channel[')) {
+            count++;
+          }
+        } else if (lowerType == 'global') {
+          if (lowerKey.startsWith('variables.')) {
+            count++;
+          }
+        } else {
+          if (lowerKey.contains('$lowerType[')) {
+            count++;
+          }
+        }
+      }
+      return count.toString();
     default:
       return null;
   }
@@ -1258,6 +1323,14 @@ _ResolvedExpression _evaluateSingleExpression(
     for (final arg in rawArgs) {
       final outcome = _evaluateExpression(arg, updates);
       if (!outcome.found) {
+        final nameLower = bracketFunctionCall.name.trim().toLowerCase();
+        if (nameLower == 'and' ||
+            nameLower == 'or' ||
+            nameLower == 'listvar' ||
+            nameLower == 'variablescount') {
+          resolvedArgs.add(arg.trim());
+          continue;
+        }
         return const _ResolvedExpression(found: false);
       }
       resolvedArgs.add(outcome.value);
@@ -1424,4 +1497,84 @@ String resolveTemplatePlaceholders(
   }
 
   return buffer.toString();
+}
+
+bool _evaluateStringCondition(String expression, Map<String, String> updates) {
+  final trimmed = expression.trim();
+  if (trimmed.isEmpty) {
+    return false;
+  }
+
+  // Parse operators
+  const symbolOperators = <String, String>{
+    '>=': 'greaterOrEqual',
+    '<=': 'lessOrEqual',
+    '==': 'equals',
+    '!=': 'notEquals',
+    '>': 'greaterThan',
+    '<': 'lessThan',
+  };
+
+  for (final entry in symbolOperators.entries) {
+    final splitIndex = trimmed.indexOf(entry.key);
+    if (splitIndex > 0) {
+      final left = resolveTemplatePlaceholders(trimmed.substring(0, splitIndex).trim(), updates);
+      final right = resolveTemplatePlaceholders(trimmed.substring(splitIndex + entry.key.length).trim(), updates);
+      return _evaluateConditionValue(left, entry.value, right);
+    }
+  }
+
+  const wordOperators = <String, String>{
+    ' notcontains ': 'notContains',
+    ' contains ': 'contains',
+    ' startswith ': 'startsWith',
+    ' endswith ': 'endsWith',
+  };
+
+  final lowered = ' ${trimmed.toLowerCase()} ';
+  for (final entry in wordOperators.entries) {
+    final index = lowered.indexOf(entry.key);
+    if (index >= 0) {
+      final left = resolveTemplatePlaceholders(trimmed.substring(0, index).trim(), updates);
+      final right = resolveTemplatePlaceholders(trimmed.substring(index + entry.key.trim().length).trim(), updates);
+      return _evaluateConditionValue(left, entry.value, right);
+    }
+  }
+
+  // If no operator, check if it's truthy (not empty and not 'false' and not '0')
+  final resolved = resolveTemplatePlaceholders(trimmed, updates).trim();
+  return resolved.isNotEmpty && resolved.toLowerCase() != 'false' && resolved != '0';
+}
+
+bool _evaluateConditionValue(String left, String operator, String right) {
+  switch (operator) {
+    case 'equals':
+      return left == right;
+    case 'notEquals':
+      return left != right;
+    case 'contains':
+      return left.toLowerCase().contains(right.toLowerCase());
+    case 'notContains':
+      return !left.toLowerCase().contains(right.toLowerCase());
+    case 'startsWith':
+      return left.toLowerCase().startsWith(right.toLowerCase());
+    case 'endsWith':
+      return left.toLowerCase().endsWith(right.toLowerCase());
+    default:
+      final leftNum = num.tryParse(left);
+      final rightNum = num.tryParse(right);
+      if (leftNum != null && rightNum != null) {
+        switch (operator) {
+          case 'greaterThan':
+            return leftNum > rightNum;
+          case 'lessThan':
+            return leftNum < rightNum;
+          case 'greaterOrEqual':
+            return leftNum >= rightNum;
+          case 'lessOrEqual':
+            return leftNum <= rightNum;
+        }
+      }
+      return false;
+  }
 }

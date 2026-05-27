@@ -2,7 +2,7 @@ part of '../bdfd_ast_transpiler.dart';
 
 class _PendingResponse {
   final StringBuffer _content = StringBuffer();
-  final Map<String, dynamic> _embed = <String, dynamic>{};
+  final List<Map<String, dynamic>> _embeds = <Map<String, dynamic>>[];
   final List<Map<String, dynamic>> _components = <Map<String, dynamic>>[];
   bool _ephemeral = false;
   bool _tts = false;
@@ -11,37 +11,42 @@ class _PendingResponse {
   List<String>? _allowedUsers;
   List<String>? _allowedRoles;
   String? _currentSelectMenuId;
-
+ 
   /// When non-null, the pending response should be sent as a Discord reply
   /// (reply chain). The value is the target message ID to reply to.
   /// `'((message.id))'` means reply to the invoking message (author).
   String? _replyMessageId;
-
+ 
   /// The channel ID where the target message lives.
   /// Defaults to `'((channel.id))'` when replying to the author.
   String? _replyChannelId;
-
+ 
   bool get hasPendingContent =>
       _content.toString().isNotEmpty ||
-      _embed.isNotEmpty ||
+      _embeds.any((e) => e.isNotEmpty) ||
       _components.isNotEmpty;
-
+ 
   void appendContent(String value) {
     _content.write(value);
   }
-
-  Map<String, dynamic> ensureEmbed() => _embed;
-
+ 
+  Map<String, dynamic> ensureEmbed([int index = 0]) {
+    while (_embeds.length <= index) {
+      _embeds.add(<String, dynamic>{});
+    }
+    return _embeds[index];
+  }
+ 
   String? get lastComponentType =>
       _components.isEmpty ? null : _components.last['type']?.toString();
-
+ 
   Map<String, dynamic>? get lastComponent =>
       _components.isEmpty ? null : _components.last;
-
+ 
   void addComponent(Map<String, dynamic> component) {
     _components.add(component);
   }
-
+ 
   void addButton({
     required bool newRow,
     required String interactionIdOrUrl,
@@ -63,7 +68,7 @@ class _PendingResponse {
       if (messageId.isNotEmpty) 'messageId': messageId,
     });
   }
-
+ 
   void addSelectMenuOption({
     required String menuId,
     required String label,
@@ -82,29 +87,29 @@ class _PendingResponse {
       if (emoji.isNotEmpty) 'emoji': emoji,
     });
   }
-
+ 
   void clearComponents() {
     _components.clear();
   }
-
+ 
   /// Marks this pending response as a Discord reply to the given message.
   /// Pass `null` for both to reply to the invoking message (author).
   void markAsReply({String? channelId, String? messageId}) {
     _replyChannelId = channelId ?? '((channel.id))';
     _replyMessageId = messageId ?? '((message.id))';
   }
-
+ 
   void clearButtons() {
     _components.removeWhere((component) => component['type'] == 'button');
   }
-
+ 
   void removeComponent(String customId) {
     _components.removeWhere(
       (component) =>
           component['customId'] == customId || component['menuId'] == customId,
     );
   }
-
+ 
   /// Edits the button at the given 1-based [row] and [col] position.
   /// Only non-null arguments overwrite the existing value.
   void editButton({
@@ -145,7 +150,7 @@ class _PendingResponse {
       }
     }
   }
-
+ 
   /// Edits a button identified by its custom ID or URL.
   void editButtonByIdOrUrl({
     required String buttonIdOrUrl,
@@ -173,7 +178,7 @@ class _PendingResponse {
       break;
     }
   }
-
+ 
   /// Edits the select menu with the given [customId].
   /// Only non-null arguments overwrite the existing value.
   void editSelectMenu({
@@ -193,7 +198,7 @@ class _PendingResponse {
       break;
     }
   }
-
+ 
   /// Edits the select menu option at 1-based [index] inside menu [menuId].
   /// Empty string values are treated as "clear the field".
   void editSelectMenuOption({
@@ -232,9 +237,10 @@ class _PendingResponse {
       }
     }
   }
-
-  List<Map<String, dynamic>> ensureEmbedFields() {
-    final current = _embed['fields'];
+ 
+  List<Map<String, dynamic>> ensureEmbedFields([int index = 0]) {
+    final embed = ensureEmbed(index);
+    final current = embed['fields'];
     if (current is List<Map<String, dynamic>>) {
       return current;
     }
@@ -243,31 +249,31 @@ class _PendingResponse {
           .whereType<Map>()
           .map((entry) => Map<String, dynamic>.from(entry))
           .toList(growable: true);
-      _embed['fields'] = casted;
+      embed['fields'] = casted;
       return casted;
     }
     final fields = <Map<String, dynamic>>[];
-    _embed['fields'] = fields;
+    embed['fields'] = fields;
     return fields;
   }
-
+ 
   Action? buildAction({String? channelId}) {
     var content = _content.toString();
-    final hasEmbed = _embed.isNotEmpty;
+    final hasEmbed = _embeds.any((e) => e.isNotEmpty);
     final hasComponents = _components.isNotEmpty;
     if (content.trim().isEmpty && !hasEmbed && !hasComponents) {
       return null;
     }
-
+ 
     // $removeLinks: strip all URLs from the bot response content.
     if (_removeLinks) {
       content = content.replaceAll(RegExp(r'https?://[^\s]+'), '');
     }
-
-    final embeds =
-        hasEmbed
-            ? <Map<String, dynamic>>[_cloneMap(_embed)]
-            : <Map<String, dynamic>>[];
+ 
+    final embeds = _embeds
+        .where((e) => e.isNotEmpty)
+        .map(_cloneMap)
+        .toList(growable: false);
     final components =
         hasComponents
             ? List<Map<String, dynamic>>.from(
@@ -290,7 +296,7 @@ class _PendingResponse {
     final replyMessageId = _replyMessageId;
     final replyChannelId = _replyChannelId;
     _content.clear();
-    _embed.clear();
+    _embeds.clear();
     _components.clear();
     _ephemeral = false;
     _tts = false;

@@ -130,6 +130,7 @@ extension _BdfdAstTranspilationScopeInlineRuntime
         return _inlineRuntimeVariables['displayname'];
       // Parametric channel/guild lookups
       case 'channelid':
+      case 'channelidfromname':
         if (node.arguments.isNotEmpty) {
           final channelName = _stringifyArgument(node, 0).trim();
           if (channelName.isNotEmpty) {
@@ -727,6 +728,24 @@ extension _BdfdAstTranspilationScopeInlineRuntime
           return '((message[$edChannelId;$edMessageId].embeds[${edIndex.isEmpty ? '0' : edIndex}]${edProperty.isNotEmpty ? '.$edProperty' : ''}))';
         }
         return _inlineRuntimeVariables['getembeddata'];
+      case 'and':
+        final andArgs = <String>[];
+        for (var i = 0; i < node.arguments.length; i++) {
+          andArgs.add(_stringifyArgument(node, i));
+        }
+        return _buildRuntimeBracketExpression('and', andArgs);
+      case 'or':
+        final orArgs = <String>[];
+        for (var i = 0; i < node.arguments.length; i++) {
+          orArgs.add(_stringifyArgument(node, i));
+        }
+        return _buildRuntimeBracketExpression('or', orArgs);
+      case 'listvar':
+        final listvarSep = node.arguments.isNotEmpty ? _stringifyArgument(node, 0) : ',';
+        return _buildRuntimeBracketExpression('listvar', <String>[listvarSep]);
+      case 'variablescount':
+        final vcType = node.arguments.isNotEmpty ? _stringifyArgument(node, 0) : '';
+        return _buildRuntimeBracketExpression('variablescount', <String>[vcType]);
       default:
         return _inlineRuntimePlaceholder(node);
     }
@@ -851,6 +870,11 @@ extension _BdfdAstTranspilationScopeInlineRuntime
       case 'gettimestampms':
       // Parametric lookups
       case 'channelid':
+      case 'channelidfromname':
+      case 'and':
+      case 'or':
+      case 'listvar':
+      case 'variablescount':
       case 'guildid':
       case 'roleid':
       case 'rolename':

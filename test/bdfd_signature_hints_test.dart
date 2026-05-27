@@ -24,7 +24,7 @@ void main() {
       expect(result!.functionName, r'$description');
       expect(result.activeIndex, 0);
       expect(result.parameters, isNotEmpty);
-      expect(result.parameters.first, 'text');
+      expect(result.parameters.first, 'Message');
     });
 
     test('tracks argument index by semicolons', () {
@@ -37,7 +37,7 @@ void main() {
       // caret at 16 → after first semicolon → 2nd arg
       final r2 = ctx(source, 16);
       expect(r2!.activeIndex, 1);
-      expect(r2.parameters[1], 'value');
+      expect(r2.parameters[1], 'Value');
 
       // caret at 22 → after second semicolon → 3rd arg
       final r3 = ctx(source, 22);
@@ -79,11 +79,11 @@ void main() {
     });
 
     test('clamps activeIndex to last parameter', () {
-      // $description has 1 param. If we somehow have semicolons, clamp.
+      // $description has 2 params. If we somehow have semicolons, clamp.
       const source = r'$description[a;b;c]';
       final result = ctx(source, 16);
       expect(result, isNotNull);
-      expect(result!.activeIndex, 0); // clamped to 0 (only 1 param)
+      expect(result!.activeIndex, 1); // clamped to 1 (2 params)
     });
 
     test('handles zero-parameter functions without clamp errors', () {

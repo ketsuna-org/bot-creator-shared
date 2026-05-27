@@ -10,16 +10,20 @@ extension _BdfdAstTranspilationScopeDispatch on _BdfdAstTranspilationScope {
         response._allowMentions = false;
         return true;
       case 'title':
-        response.ensureEmbed()['title'] = _stringifyArgument(node, 0);
+        final index = _parseEmbedIndex(node, 1);
+        response.ensureEmbed(index)['title'] = _stringifyArgument(node, 0);
         return true;
       case 'description':
-        response.ensureEmbed()['description'] = _stringifyArgument(node, 0);
+        final index = _parseEmbedIndex(node, 1);
+        response.ensureEmbed(index)['description'] = _stringifyArgument(node, 0);
         return true;
       case 'color':
-        response.ensureEmbed()['color'] = _stringifyArgument(node, 0);
+        final index = _parseEmbedIndex(node, 1);
+        response.ensureEmbed(index)['color'] = _stringifyArgument(node, 0);
         return true;
       case 'footer':
-        final embed = response.ensureEmbed();
+        final index = _parseEmbedIndex(node, 2);
+        final embed = response.ensureEmbed(index);
         final footer =
             (embed['footer'] as Map<String, dynamic>?) ?? <String, dynamic>{};
         footer['text'] = _stringifyArgument(node, 0);
@@ -30,17 +34,20 @@ extension _BdfdAstTranspilationScopeDispatch on _BdfdAstTranspilationScope {
         embed['footer'] = footer;
         return true;
       case 'thumbnail':
-        response.ensureEmbed()['thumbnail'] = <String, dynamic>{
+        final index = _parseEmbedIndex(node, 1);
+        response.ensureEmbed(index)['thumbnail'] = <String, dynamic>{
           'url': _stringifyArgument(node, 0),
         };
         return true;
       case 'image':
-        response.ensureEmbed()['image'] = <String, dynamic>{
+        final index = _parseEmbedIndex(node, 1);
+        response.ensureEmbed(index)['image'] = <String, dynamic>{
           'url': _stringifyArgument(node, 0),
         };
         return true;
       case 'author':
-        final embed = response.ensureEmbed();
+        final index = _parseEmbedIndex(node, 3);
+        final embed = response.ensureEmbed(index);
         final author =
             (embed['author'] as Map<String, dynamic>?) ?? <String, dynamic>{};
         author['name'] = _stringifyArgument(node, 0);
@@ -56,37 +63,49 @@ extension _BdfdAstTranspilationScopeDispatch on _BdfdAstTranspilationScope {
         return true;
       case 'addfield':
         final inlineArg = _stringifyArgument(node, 2);
+        final indexArg = _stringifyArgument(node, 3).trim();
         final field = <String, dynamic>{
           'name': _stringifyArgument(node, 0),
           'value': _stringifyArgument(node, 1),
           'inline': inlineArg.isEmpty ? 'no' : inlineArg,
         };
-        response.ensureEmbedFields().add(field);
+        final fields = response.ensureEmbedFields(0);
+        final index = int.tryParse(indexArg);
+        if (index != null && index >= 0 && index <= fields.length) {
+          fields.insert(index, field);
+        } else {
+          fields.add(field);
+        }
         return true;
       case 'addtimestamp':
         final timestamp = _stringifyArgument(node, 0);
-        response.ensureEmbed()['timestamp'] =
+        final index = _parseEmbedIndex(node, 1);
+        response.ensureEmbed(index)['timestamp'] =
             timestamp.isEmpty ? 'now' : timestamp;
         return true;
       case 'authoricon':
-        final embed = response.ensureEmbed();
+        final index = _parseEmbedIndex(node, 1);
+        final embed = response.ensureEmbed(index);
         final author =
             (embed['author'] as Map<String, dynamic>?) ?? <String, dynamic>{};
         author['icon_url'] = _stringifyArgument(node, 0);
         embed['author'] = author;
         return true;
       case 'authorurl':
-        final embed = response.ensureEmbed();
+        final index = _parseEmbedIndex(node, 1);
+        final embed = response.ensureEmbed(index);
         final author =
             (embed['author'] as Map<String, dynamic>?) ?? <String, dynamic>{};
         author['url'] = _stringifyArgument(node, 0);
         embed['author'] = author;
         return true;
       case 'embeddedurl':
-        response.ensureEmbed()['url'] = _stringifyArgument(node, 0);
+        final index = _parseEmbedIndex(node, 1);
+        response.ensureEmbed(index)['url'] = _stringifyArgument(node, 0);
         return true;
       case 'footericon':
-        final embed = response.ensureEmbed();
+        final index = _parseEmbedIndex(node, 1);
+        final embed = response.ensureEmbed(index);
         final footer =
             (embed['footer'] as Map<String, dynamic>?) ?? <String, dynamic>{};
         footer['icon_url'] = _stringifyArgument(node, 0);
@@ -1853,6 +1872,10 @@ extension _BdfdAstTranspilationScopeDispatch on _BdfdAstTranspilationScope {
       group = 'and';
     } else if (lowered.startsWith(r'$or[')) {
       group = 'or';
+    } else if (lowered.startsWith(r'((and[')) {
+      group = 'and';
+    } else if (lowered.startsWith(r'((or[')) {
+      group = 'or';
     }
 
     if (group == null) {
@@ -1878,7 +1901,10 @@ extension _BdfdAstTranspilationScopeDispatch on _BdfdAstTranspilationScope {
     }
 
     final body = expression.substring(bracketStart + 1, bracketEnd);
-    final trailing = expression.substring(bracketEnd + 1).trim();
+    var trailing = expression.substring(bracketEnd + 1).trim();
+    if (trailing.startsWith('))')) {
+      trailing = trailing.substring(2).trim();
+    }
     final conditionStrings = _splitTopLevel(body, ';')
         .map((entry) => entry.trim())
         .where((entry) => entry.isNotEmpty)
@@ -2047,5 +2073,38 @@ extension _BdfdAstTranspilationScopeDispatch on _BdfdAstTranspilationScope {
       }
     }
     return buffer.toString();
+  }
+
+  String _stringifyRawArgument(BdfdFunctionCallAst node, int index) {
+    if (index >= node.arguments.length) {
+      return '';
+    }
+    return _stringifyRawNodes(node.arguments[index]);
+  }
+
+  String _stringifyRawNodes(List<BdfdAstNode> nodes) {
+    final buffer = StringBuffer();
+    for (final node in nodes) {
+      if (node is BdfdTextAst) {
+        buffer.write(node.value);
+      } else if (node is BdfdFunctionCallAst) {
+        final functionName =
+            node.name.startsWith(r'$') ? node.name : '${r'$'}${node.name}';
+        if (node.arguments.isEmpty) {
+          buffer.write(functionName);
+        } else {
+          final arguments = node.arguments.map(_stringifyRawNodes).join(';');
+          buffer.write('$functionName[$arguments]');
+        }
+      }
+    }
+    return buffer.toString();
+  }
+  int _parseEmbedIndex(BdfdFunctionCallAst node, int parameterIndex) {
+    if (parameterIndex >= node.arguments.length) {
+      return 0;
+    }
+    final arg = _stringifyArgument(node, parameterIndex).trim();
+    return int.tryParse(arg) ?? 0;
   }
 }

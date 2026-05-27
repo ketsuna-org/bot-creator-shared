@@ -419,4 +419,44 @@ void main() {
       expect(resolved, '');
     });
   });
+
+  group('logical and variable bracket functions', () {
+    test('and() evaluates conditions correctly', () {
+      expect(resolveTemplatePlaceholders('((and[1==1; 2>=1]))', {}), 'true');
+      expect(resolveTemplatePlaceholders('((and[1==1; 2<1]))', {}), 'false');
+      expect(resolveTemplatePlaceholders('((and[]))', {}), 'false');
+    });
+
+    test('or() evaluates conditions correctly', () {
+      expect(resolveTemplatePlaceholders('((or[1==2; 2>=1]))', {}), 'true');
+      expect(resolveTemplatePlaceholders('((or[1==2; 2<1]))', {}), 'false');
+      expect(resolveTemplatePlaceholders('((or[]))', {}), 'false');
+    });
+
+    test('listvar() lists all custom variables', () {
+      final updates = {
+        'variables.bc_first': '1',
+        'user[123].bc_second': '2',
+        'guild[456].bc_third': '3',
+        'ignored_var': '4',
+      };
+      final resolved = resolveTemplatePlaceholders('((listvar["; "]))', updates);
+      // Sort the list because map entry order is not guaranteed.
+      final listed = resolved.split('; ')..sort();
+      expect(listed, ['first', 'second', 'third']);
+    });
+
+    test('variablescount() counts correct types', () {
+      final updates = {
+        'variables.bc_a': '1',
+        'variables.bc_b': '2',
+        'user[123].bc_c': '3',
+        'guild[456].bc_d': '4',
+        'ignored_var': '5',
+      };
+      expect(resolveTemplatePlaceholders('((variablescount["global"]))', updates), '2');
+      expect(resolveTemplatePlaceholders('((variablescount["user"]))', updates), '1');
+      expect(resolveTemplatePlaceholders('((variablescount["guild"]))', updates), '1');
+    });
+  });
 }
