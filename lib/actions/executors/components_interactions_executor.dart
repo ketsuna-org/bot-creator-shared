@@ -283,6 +283,138 @@ Future<bool> executeComponentsInteractionsAction({
       results[resultKey] = 'listening:$customId';
       return true;
 
+    case BotCreatorActionType.listenAndExecute:
+      final customId = resolveValue((payload['customId'] ?? '').toString());
+      if (customId.isEmpty) {
+        throw Exception('customId is required for ${type.name}');
+      }
+      final rawActions = payload['actions'];
+      final inlineActions = <Action>[];
+      if (rawActions is List) {
+        for (final item in rawActions) {
+          if (item is Map) {
+            inlineActions.add(Action.fromJson(Map<String, dynamic>.from(item)));
+          }
+        }
+      }
+
+      final workflowName = resolveValue(
+        (payload['workflowName'] ?? '').toString(),
+      );
+      final workflowEntryPoint =
+          resolveValue((payload['entryPoint'] ?? '').toString()).trim();
+      final workflowArguments = resolveWorkflowCallArguments(
+        payload['arguments'],
+        resolveValue,
+      );
+
+      final ttlRaw = payload['ttlMinutes'];
+      final ttlMinutes = (ttlRaw is num
+              ? ttlRaw.toInt()
+              : int.tryParse(ttlRaw?.toString() ?? '') ?? 60)
+          .clamp(1, 60);
+
+      // Register for button
+      InteractionListenerRegistry.instance.register(
+        customId,
+        ListenerEntry(
+          botId: botId,
+          inlineActions: inlineActions.isNotEmpty ? inlineActions : null,
+          workflowName: workflowName,
+          workflowEntryPoint: workflowEntryPoint.isNotEmpty ? workflowEntryPoint : 'main',
+          workflowArguments: workflowArguments,
+          expiresAt: DateTime.now().add(Duration(minutes: ttlMinutes)),
+          type: 'button',
+          oneShot: false,
+          guildId: guildId?.toString(),
+          channelId: fallbackChannelId?.toString(),
+          messageId: variables['workflow.type'] == workflowTypeEvent
+              ? _resolveExplicitListenerMessageId(payload, resolveValue)
+              : _resolveListenerMessageId(
+                  payload: payload,
+                  variables: variables,
+                  resolveValue: resolveValue,
+                  interaction: interaction,
+                ),
+        ),
+      );
+
+      // Register for select
+      InteractionListenerRegistry.instance.register(
+        customId,
+        ListenerEntry(
+          botId: botId,
+          inlineActions: inlineActions.isNotEmpty ? inlineActions : null,
+          workflowName: workflowName,
+          workflowEntryPoint: workflowEntryPoint.isNotEmpty ? workflowEntryPoint : 'main',
+          workflowArguments: workflowArguments,
+          expiresAt: DateTime.now().add(Duration(minutes: ttlMinutes)),
+          type: 'select',
+          oneShot: false,
+          guildId: guildId?.toString(),
+          channelId: fallbackChannelId?.toString(),
+          messageId: variables['workflow.type'] == workflowTypeEvent
+              ? _resolveExplicitListenerMessageId(payload, resolveValue)
+              : _resolveListenerMessageId(
+                  payload: payload,
+                  variables: variables,
+                  resolveValue: resolveValue,
+                  interaction: interaction,
+                ),
+        ),
+      );
+
+      // Register for modal
+      InteractionListenerRegistry.instance.register(
+        customId,
+        ListenerEntry(
+          botId: botId,
+          inlineActions: inlineActions.isNotEmpty ? inlineActions : null,
+          workflowName: workflowName,
+          workflowEntryPoint: workflowEntryPoint.isNotEmpty ? workflowEntryPoint : 'main',
+          workflowArguments: workflowArguments,
+          expiresAt: DateTime.now().add(Duration(minutes: ttlMinutes)),
+          type: 'modal',
+          oneShot: true,
+          guildId: guildId?.toString(),
+          channelId: fallbackChannelId?.toString(),
+          messageId: _resolveExplicitListenerMessageId(payload, resolveValue),
+        ),
+      );
+
+      // Immediate Execution Check!
+      final currentCustomId = (interaction as dynamic)?.data?.customId?.toString();
+      if (currentCustomId == customId && store != null && client != null) {
+        if (inlineActions.isNotEmpty) {
+          unawaited(
+            runListenerInlineActions(
+              client: client,
+              store: store,
+              botId: botId,
+              inlineActions: inlineActions,
+              variables: variables,
+              interaction: interaction,
+            ),
+          );
+        } else if (workflowName.isNotEmpty) {
+          unawaited(
+            runListenerWorkflow(
+              client: client,
+              store: store,
+              botId: botId,
+              workflowName: workflowName,
+              workflowEntryPoint: workflowEntryPoint,
+              workflowArguments: workflowArguments,
+              variables: variables,
+              interaction: interaction,
+            ),
+          );
+        }
+      }
+
+      results[resultKey] = 'listening:$customId';
+      return true;
+
     default:
       return false;
   }

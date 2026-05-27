@@ -72,16 +72,27 @@ Future<void> handleComponentInteraction(
   final clickedValue = values.isNotEmpty ? values : customId;
   variables['message.content'] = clickedValue;
 
-  await runListenerWorkflow(
-    client: client,
-    store: store,
-    botId: entry.botId,
-    workflowName: entry.workflowName,
-    workflowEntryPoint: entry.workflowEntryPoint,
-    workflowArguments: entry.workflowArguments,
-    variables: variables,
-    interaction: interaction,
-  );
+  if (entry.inlineActions != null && entry.inlineActions!.isNotEmpty) {
+    await runListenerInlineActions(
+      client: client,
+      store: store,
+      botId: entry.botId,
+      inlineActions: entry.inlineActions!,
+      variables: variables,
+      interaction: interaction,
+    );
+  } else {
+    await runListenerWorkflow(
+      client: client,
+      store: store,
+      botId: entry.botId,
+      workflowName: entry.workflowName,
+      workflowEntryPoint: entry.workflowEntryPoint,
+      workflowArguments: entry.workflowArguments,
+      variables: variables,
+      interaction: interaction,
+    );
+  }
 }
 
 /// Called when a ModalSubmitInteraction arrives.
@@ -124,16 +135,74 @@ Future<void> handleModalSubmitInteraction(
     ...buildInteractionRuntimeVariables(interaction),
   };
 
-  await runListenerWorkflow(
-    client: client,
-    store: store,
-    botId: entry.botId,
-    workflowName: entry.workflowName,
-    workflowEntryPoint: entry.workflowEntryPoint,
-    workflowArguments: entry.workflowArguments,
-    variables: variables,
-    interaction: interaction,
-  );
+  if (entry.inlineActions != null && entry.inlineActions!.isNotEmpty) {
+    await runListenerInlineActions(
+      client: client,
+      store: store,
+      botId: entry.botId,
+      inlineActions: entry.inlineActions!,
+      variables: variables,
+      interaction: interaction,
+    );
+  } else {
+    await runListenerWorkflow(
+      client: client,
+      store: store,
+      botId: entry.botId,
+      workflowName: entry.workflowName,
+      workflowEntryPoint: entry.workflowEntryPoint,
+      workflowArguments: entry.workflowArguments,
+      variables: variables,
+      interaction: interaction,
+    );
+  }
+}
+
+/// Shared helper that executes inline callback actions.
+Future<void> runListenerInlineActions({
+  required NyxxGateway client,
+  required BotDataStore store,
+  required String botId,
+  required List<Action> inlineActions,
+  required Map<String, String> variables,
+  Interaction? interaction,
+}) async {
+  try {
+    variables.addAll(extractBotRuntimeDetails(client));
+
+    await hydrateRuntimeVariables(
+      store: store,
+      botId: botId,
+      runtimeVariables: variables,
+      guildContextId: variables['interaction.guildId'],
+      channelContextId: variables['interaction.channelId'],
+      userContextId: variables['interaction.userId'],
+      messageContextId:
+          variables['messageId'] ??
+          variables['message.id'] ??
+          variables['interaction.messageId'],
+    );
+
+    String resolveTemplate(String input) =>
+        resolveTemplatePlaceholders(input, variables);
+
+    await handleListenerWorkflowActions(
+      client,
+      actions: inlineActions,
+      store: store,
+      botId: botId,
+      variables: variables,
+      resolveTemplate: resolveTemplate,
+      interaction: interaction,
+    );
+  } catch (e) {
+    if (interaction != null) {
+      await _safeInteractionRespond(
+        interaction,
+        'An internal error prevented this interaction from completing.',
+      );
+    }
+  }
 }
 
 /// Shared helper that loads and executes a saved workflow with injected variables.

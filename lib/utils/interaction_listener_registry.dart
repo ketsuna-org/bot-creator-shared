@@ -2,11 +2,14 @@
 /// Listeners are stored in-memory and pruned when expired.
 library;
 
+import '../types/action.dart';
+
 class ListenerEntry {
   final String botId;
   final String workflowName;
   final String workflowEntryPoint;
   final Map<String, String> workflowArguments;
+  final List<Action>? inlineActions;
   final DateTime expiresAt;
   final bool oneShot;
   final String type; // 'button' | 'select' | 'modal'
@@ -17,9 +20,10 @@ class ListenerEntry {
 
   const ListenerEntry({
     required this.botId,
-    required this.workflowName,
+    this.workflowName = '',
     this.workflowEntryPoint = 'main',
     this.workflowArguments = const <String, String>{},
+    this.inlineActions,
     required this.expiresAt,
     required this.type,
     this.oneShot = true,
