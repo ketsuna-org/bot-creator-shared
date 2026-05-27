@@ -2075,31 +2075,6 @@ extension _BdfdAstTranspilationScopeDispatch on _BdfdAstTranspilationScope {
     return buffer.toString();
   }
 
-  String _stringifyRawArgument(BdfdFunctionCallAst node, int index) {
-    if (index >= node.arguments.length) {
-      return '';
-    }
-    return _stringifyRawNodes(node.arguments[index]);
-  }
-
-  String _stringifyRawNodes(List<BdfdAstNode> nodes) {
-    final buffer = StringBuffer();
-    for (final node in nodes) {
-      if (node is BdfdTextAst) {
-        buffer.write(node.value);
-      } else if (node is BdfdFunctionCallAst) {
-        final functionName =
-            node.name.startsWith(r'$') ? node.name : '${r'$'}${node.name}';
-        if (node.arguments.isEmpty) {
-          buffer.write(functionName);
-        } else {
-          final arguments = node.arguments.map(_stringifyRawNodes).join(';');
-          buffer.write('$functionName[$arguments]');
-        }
-      }
-    }
-    return buffer.toString();
-  }
   int _parseEmbedIndex(BdfdFunctionCallAst node, int parameterIndex) {
     if (parameterIndex >= node.arguments.length) {
       return 0;
