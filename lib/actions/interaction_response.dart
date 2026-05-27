@@ -575,6 +575,7 @@ Future<void> sendWorkflowResponse({
         try {
           final updatedMessage = await (interaction as dynamic)
               .updateOriginalResponse(updateBuilder);
+          markInteractionAcknowledged(interaction);
           responseMessageId = (updatedMessage as dynamic)?.id?.toString();
           onLog?.call(
             'Response edited after defer (dynamic fallback)',

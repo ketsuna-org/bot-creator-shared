@@ -265,6 +265,14 @@ EventExecutionContext buildInteractionCreateEventContext(
     final message = dynInteraction.message;
     if (message is Message) {
       extra.addAll(_messageContentExtra(message));
+      // Overwrite message.content with clicked values so $message matches the select option / button customId
+      if (interaction is MessageComponentInteraction) {
+        final interactionVariables = buildInteractionRuntimeVariables(interaction);
+        final values = interactionVariables['interaction.values'] ?? '';
+        final customId = interactionVariables['interaction.customId'] ?? '';
+        final clickedValue = values.isNotEmpty ? values : customId;
+        extra['message.content'] = clickedValue;
+      }
     }
   } catch (_) {}
 

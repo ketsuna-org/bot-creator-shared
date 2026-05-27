@@ -1,4 +1,4 @@
-﻿import 'package:nyxx/nyxx.dart';
+import 'package:nyxx/nyxx.dart';
 import 'package:bot_creator_shared/utils/interaction_listener_registry.dart';
 import 'package:bot_creator_shared/bot/bot_data_store.dart';
 import 'package:bot_creator_shared/events/event_contexts.dart';
@@ -62,12 +62,17 @@ Future<void> handleComponentInteraction(
   }
 
   // Build variables for the workflow
+  final interactionVariables = buildInteractionRuntimeVariables(interaction);
   final variables = <String, String>{
     ...await generateInteractionContextKeyValues(interaction),
-    ...buildInteractionRuntimeVariables(interaction),
+    ...interactionVariables,
   };
 
-  await _runListenerWorkflow(
+  final values = interactionVariables['interaction.values'] ?? '';
+  final clickedValue = values.isNotEmpty ? values : customId;
+  variables['message.content'] = clickedValue;
+
+  await runListenerWorkflow(
     client: client,
     store: store,
     botId: entry.botId,
@@ -119,7 +124,7 @@ Future<void> handleModalSubmitInteraction(
     ...buildInteractionRuntimeVariables(interaction),
   };
 
-  await _runListenerWorkflow(
+  await runListenerWorkflow(
     client: client,
     store: store,
     botId: entry.botId,
@@ -132,7 +137,7 @@ Future<void> handleModalSubmitInteraction(
 }
 
 /// Shared helper that loads and executes a saved workflow with injected variables.
-Future<void> _runListenerWorkflow({
+Future<void> runListenerWorkflow({
   required NyxxGateway client,
   required BotDataStore store,
   required String botId,

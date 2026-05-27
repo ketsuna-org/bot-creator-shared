@@ -60,6 +60,7 @@ enum BotCreatorActionType {
   listenForButtonClick,
   listenForSelectMenu,
   listenForModalSubmit,
+  listenAndExecute,
   // Math & Calculation
   calculate,
   // Message management

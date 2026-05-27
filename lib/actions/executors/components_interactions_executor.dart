@@ -1,13 +1,16 @@
+import 'dart:async';
 import 'package:nyxx/nyxx.dart';
 
 import '../../types/action.dart';
 import '../../utils/interaction_listener_registry.dart';
 import '../../utils/workflow_call.dart';
+import '../../bot/bot_data_store.dart';
 import '../edit_component_v2.dart';
 import '../edit_interaction_response.dart';
 import '../respond_modal.dart';
 import '../respond_with_message.dart';
 import '../send_component_v2.dart';
+import '../handle_component_interaction.dart';
 
 String? _resolveListenerMessageId({
   required Map<String, dynamic> payload,
@@ -61,6 +64,7 @@ Future<bool> executeComponentsInteractionsAction({
   required Snowflake? fallbackChannelId,
   Snowflake? fallbackMessageId,
   required String Function(String input) resolveValue,
+  BotDataStore? store,
 }) async {
   switch (type) {
     case BotCreatorActionType.sendComponentV2:
@@ -259,6 +263,23 @@ Future<bool> executeComponentsInteractionsAction({
                   ),
         ),
       );
+
+      final currentCustomId = (interaction as dynamic)?.data?.customId?.toString();
+      if (currentCustomId == customId && store != null && client != null) {
+        unawaited(
+          runListenerWorkflow(
+            client: client,
+            store: store,
+            botId: botId,
+            workflowName: workflowName,
+            workflowEntryPoint: workflowEntryPoint,
+            workflowArguments: workflowArguments,
+            variables: variables,
+            interaction: interaction,
+          ),
+        );
+      }
+
       results[resultKey] = 'listening:$customId';
       return true;
 

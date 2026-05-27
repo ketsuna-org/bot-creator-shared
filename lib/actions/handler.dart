@@ -296,6 +296,7 @@ Future<Map<String, String>> handleActions(
             variables['message.id'] ?? variables['messageId'],
           ),
           resolveValue: resolveValue,
+          store: store,
         );
     if (handledByComponentsInteractionsExecutor) {
       recordTrace();
@@ -439,6 +440,7 @@ Future<Map<String, String>> handleActions(
         case BotCreatorActionType.listenForButtonClick:
         case BotCreatorActionType.listenForSelectMenu:
         case BotCreatorActionType.listenForModalSubmit:
+        case BotCreatorActionType.listenAndExecute:
         case BotCreatorActionType.setScopedVariable:
         case BotCreatorActionType.getScopedVariable:
         case BotCreatorActionType.removeScopedVariable:

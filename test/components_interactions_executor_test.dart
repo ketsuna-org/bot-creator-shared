@@ -1,6 +1,7 @@
 import 'package:bot_creator_shared/actions/executors/components_interactions_executor.dart';
 import 'package:bot_creator_shared/types/action.dart';
 import 'package:bot_creator_shared/utils/workflow_call.dart';
+import 'package:nyxx/nyxx.dart';
 import 'package:test/test.dart';
 
 // The listen registration path never calls NyxxGateway.
@@ -116,5 +117,64 @@ void main() {
         expect(results['listener'], equals('listening:btn-command'));
       },
     );
+
+    test(
+      'listenForSelectMenu with matching interaction custom ID triggers immediate execution path without throwing',
+      () async {
+        final results = <String, String>{};
+        final fakeInteraction = _FakeInteraction(
+          data: _FakeComponentData(
+            customId: 'select-ok',
+            values: ['first-option'],
+          ),
+          type: InteractionType.messageComponent,
+        );
+
+        final handled = await executeComponentsInteractionsAction(
+          type: BotCreatorActionType.listenForSelectMenu,
+          client: null,
+          interaction: fakeInteraction,
+          payload: <String, dynamic>{
+            'customId': 'select-ok',
+            'workflowName': 'my-workflow',
+          },
+          resultKey: 'listener',
+          results: results,
+          variables: <String, String>{'workflow.type': workflowTypeEvent},
+          botId: 'bot-1',
+          guildId: null,
+          fallbackChannelId: null,
+          resolveValue: (input) => input,
+        );
+
+        expect(handled, isTrue);
+        expect(results['listener'], equals('listening:select-ok'));
+      },
+    );
   });
+}
+
+class _FakeComponentData {
+  _FakeComponentData({
+    required this.customId,
+    this.values = const <String>[],
+  });
+
+  final String customId;
+  final List<String> values;
+}
+
+class _FakeInteraction implements Interaction<dynamic> {
+  _FakeInteraction({
+    required this.data,
+    required this.type,
+  });
+
+  @override
+  final dynamic data;
+  @override
+  final InteractionType type;
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }

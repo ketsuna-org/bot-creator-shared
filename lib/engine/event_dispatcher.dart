@@ -11,6 +11,7 @@ import 'package:bot_creator_shared/actions/interaction_response.dart';
 import 'package:bot_creator_shared/actions/send_message.dart';
 import 'package:bot_creator_shared/utils/bdfd_compiler.dart';
 import 'package:bot_creator_shared/events/event_contexts.dart';
+import 'package:bot_creator_shared/utils/interaction_listener_registry.dart';
 
 /// Central dispatcher for Discord gateway events.
 class EventDispatcher {
@@ -305,6 +306,58 @@ class EventDispatcher {
       '_handleEvent started for event: $eventName',
       botId: botId,
     );
+
+    // Prevent generic interactionCreate workflows from running if the interaction
+    // is already handled by a registered listener (e.g. reply_menu).
+    if (event is InteractionCreateEvent) {
+      final interaction = event.interaction;
+      if (interaction is MessageComponentInteraction) {
+        final customId = interaction.data.customId;
+        final userId = interaction.user?.id.toString() ?? interaction.member?.user?.id.toString() ?? '';
+        final fallbackChannelId = (interaction as dynamic)?.channel?.id as Snowflake?;
+        final guildId = (interaction as dynamic)?.guildId as Snowflake?;
+        final interactionType = (interaction.data.values?.isNotEmpty ?? false) ? 'select' : 'button';
+        final hasListener = InteractionListenerRegistry.instance.getMatching(
+          customId,
+          ListenerMatchRequest(
+            botId: botId,
+            type: interactionType,
+            guildId: guildId?.toString(),
+            channelId: fallbackChannelId?.toString(),
+            messageId: interaction.message?.id.toString(),
+            userId: userId,
+          ),
+        ) != null;
+        if (hasListener) {
+          callbacks.onDebugLog?.call(
+            'Skipping generic interactionCreate workflows for component interaction handled by registry: $customId',
+            botId: botId,
+          );
+          return;
+        }
+      } else if (interaction is ModalSubmitInteraction) {
+        final customId = interaction.data.customId;
+        final userId = interaction.user?.id.toString() ?? interaction.member?.user?.id.toString() ?? '';
+        final hasListener = InteractionListenerRegistry.instance.getMatching(
+          customId,
+          ListenerMatchRequest(
+            botId: botId,
+            type: 'modal',
+            guildId: interaction.guildId?.toString(),
+            channelId: interaction.channelId?.toString(),
+            messageId: ((interaction as dynamic).message?.id as Snowflake?)?.toString(),
+            userId: userId,
+          ),
+        ) != null;
+        if (hasListener) {
+          callbacks.onDebugLog?.call(
+            'Skipping generic interactionCreate workflows for modal submit interaction handled by registry: $customId',
+            botId: botId,
+          );
+          return;
+        }
+      }
+    }
 
     // Prevent bots from triggering event workflows for message events to avoid infinite loops.
     if (event is MessageCreateEvent) {
