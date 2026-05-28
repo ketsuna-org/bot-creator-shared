@@ -180,12 +180,18 @@ Future<Map<String, String>> editMessageAction(
       }
     }
 
+    final clearComponents = payload['clearComponents'] == true;
     List<ComponentBuilder>? components;
     ComponentV2Definition? definition;
-    if (payload.containsKey('componentV2') && payload['componentV2'] is Map) {
+    final componentsDef = payload['components'] ?? payload['componentV2'];
+    if (clearComponents) {
+      components = [];
+    } else if (componentsDef is Map && componentsDef.isNotEmpty) {
       try {
         final def = ComponentV2Definition.fromJson(
-          Map<String, dynamic>.from(payload['componentV2']),
+          Map<String, dynamic>.from(
+            componentsDef.map((k, v) => MapEntry(k.toString(), v)),
+          ),
         );
         definition = def;
         components = buildComponentNodes(
@@ -197,14 +203,20 @@ Future<Map<String, String>> editMessageAction(
 
     final allowedMentions = parseAllowedMentions(payload, resolve ?? (s) => s);
 
-    await message.edit(
-      MessageUpdateBuilder(
-        content: content.isNotEmpty ? content : null,
-        embeds: shouldUpdateEmbeds ? embeds : null,
-        components: components,
-        allowedMentions: allowedMentions,
-      ),
+    final builder = MessageUpdateBuilder(
+      allowedMentions: allowedMentions,
     );
+    if (content.isNotEmpty) {
+      builder.content = content;
+    }
+    if (shouldUpdateEmbeds) {
+      builder.embeds = embeds;
+    }
+    if (clearComponents || (componentsDef is Map && componentsDef.isNotEmpty)) {
+      builder.components = components;
+    }
+
+    await message.edit(builder);
     if (definition != null && botId != null && botId.trim().isNotEmpty) {
       registerComponentWorkflowBindings(
         definition: definition,

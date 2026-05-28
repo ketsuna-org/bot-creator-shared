@@ -355,4 +355,79 @@ void main() {
       expect(mapped['isAdmin.byId.243117191774470146'], 'true');
     });
   });
+
+  group('extractBotRuntimeDetails', () {
+    test('extracts bot details and tracks uptime via botStartTimes registry', () {
+      final client = _FakeNyxxRest();
+      final botId = '12345';
+      
+      // Default fallback when not registered
+      final initialDetails = extractBotRuntimeDetails(client);
+      expect(initialDetails['bot.uptime'], '0');
+      expect(initialDetails['bot.uptimeMs'], '0');
+      
+      // Register bot start time
+      final startTime = DateTime.now().subtract(const Duration(seconds: 10));
+      botStartTimes[botId] = startTime;
+      
+      final details = extractBotRuntimeDetails(client);
+      expect(details['bot.id'], botId);
+      expect(details['bot.uptime'], isNot('0'));
+      
+      final parsedUptime = int.parse(details['bot.uptime']!);
+      expect(parsedUptime, greaterThan(8000));
+      expect(parsedUptime, lessThan(12000));
+      expect(details['bot.uptimeMs'], details['bot.uptime']);
+      
+      // Cleanup
+      botStartTimes.remove(botId);
+    });
+  });
+}
+
+class _FakePartialUser implements PartialUser {
+  @override
+  final Snowflake id = Snowflake(12345);
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _FakeGuildsManager implements GuildManager {
+  @override
+  final cache = _FakeCache<Guild>();
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _FakeUsersManager implements UserManager {
+  @override
+  final cache = _FakeCache<User>();
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _FakeCache<T> implements Cache<T> {
+  @override
+  final int length = 0;
+
+  @override
+  final Iterable<T> values = const [];
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _FakeNyxxRest implements NyxxRest {
+  @override
+  final user = _FakePartialUser();
+  @override
+  final guilds = _FakeGuildsManager();
+  @override
+  final users = _FakeUsersManager();
+  
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }

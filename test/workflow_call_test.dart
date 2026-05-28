@@ -79,7 +79,9 @@ void main() {
 
       expect(variables['workflow.name'], 'test_workflow');
       expect(variables['workflow.entryPoint'], 'main');
+      expect(variables['arg.name'], '');
       expect(variables['workflow.arg.name'], '');
+      expect(variables['opts.name'], '');
     });
   });
 }

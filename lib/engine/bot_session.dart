@@ -8,6 +8,7 @@ import 'package:bot_creator_shared/engine/event_dispatcher.dart';
 import 'package:bot_creator_shared/engine/command_executor.dart';
 import 'package:bot_creator_shared/engine/workflow_executor.dart';
 import 'package:bot_creator_shared/utils/interaction_listener_registry.dart';
+import 'package:bot_creator_shared/utils/global.dart';
 
 /// Represents an active bot session with its gateway connection and managers.
 class BotSession {
@@ -77,6 +78,7 @@ class BotSession {
       );
 
       _startedAt = DateTime.now();
+      botStartTimes[botId] = _startedAt!;
 
       // Cache metadata
       try {
@@ -149,6 +151,7 @@ class BotSession {
 
   /// Stops the bot session and cleans up resources.
   Future<void> stop() async {
+    botStartTimes.remove(botId);
     _metricsTimer?.cancel();
     _metricsTimer = null;
     _initialMetricsTimer?.cancel();

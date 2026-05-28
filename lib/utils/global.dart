@@ -6,6 +6,8 @@ import 'command_autocomplete.dart';
 
 const String discordUrl = "https://discord.com/api/v10";
 
+final Map<String, DateTime> botStartTimes = {};
+
 Snowflake? _asSnowflake(dynamic value) {
   if (value == null) {
     return null;
@@ -112,6 +114,16 @@ Map<String, String> extractBotRuntimeDetails(NyxxRest client) {
       details['ping'] = '0';
     }
 
+    final startedAt = botStartTimes[botUserId.toString()];
+    if (startedAt != null) {
+      final uptimeMs = DateTime.now().difference(startedAt).inMilliseconds;
+      details['bot.uptime'] = uptimeMs.toString();
+      details['bot.uptimeMs'] = uptimeMs.toString();
+    } else {
+      details['bot.uptime'] = '0';
+      details['bot.uptimeMs'] = '0';
+    }
+
     // Shard info — single-shard bots always use shard 0
     details['bot.shardId'] = '0';
   } else {
@@ -119,6 +131,15 @@ Map<String, String> extractBotRuntimeDetails(NyxxRest client) {
     details['bot.ping'] = '0';
     details['ping'] = '0';
     details['bot.shardId'] = '0';
+    final startedAt = botStartTimes[botUserId.toString()];
+    if (startedAt != null) {
+      final uptimeMs = DateTime.now().difference(startedAt).inMilliseconds;
+      details['bot.uptime'] = uptimeMs.toString();
+      details['bot.uptimeMs'] = uptimeMs.toString();
+    } else {
+      details['bot.uptime'] = '0';
+      details['bot.uptimeMs'] = '0';
+    }
   }
 
   // Node version — report the Dart SDK version for parity with BDFD's $nodeVersion.
@@ -850,6 +871,8 @@ Future<Map<String, String>> generateKeyValues(
           // with other keys
           for (final entry in subKeyValues.entries) {
             listOfArgs["opts.${entry.key}"] = entry.value;
+            listOfArgs["arg.${entry.key}"] = entry.value;
+            listOfArgs["workflow.arg.${entry.key}"] = entry.value;
           }
         }
       } else if (option.type == CommandOptionType.subCommandGroup) {
@@ -867,6 +890,8 @@ Future<Map<String, String>> generateKeyValues(
             // with other keys
             for (final entry in subKeyValues.entries) {
               listOfArgs["opts.${entry.key}"] = entry.value;
+              listOfArgs["arg.${entry.key}"] = entry.value;
+              listOfArgs["workflow.arg.${entry.key}"] = entry.value;
             }
           }
         }
@@ -879,6 +904,8 @@ Future<Map<String, String>> generateKeyValues(
         // with other keys
         for (final entry in keyValues.entries) {
           listOfArgs["opts.${entry.key}"] = entry.value;
+          listOfArgs["arg.${entry.key}"] = entry.value;
+          listOfArgs["workflow.arg.${entry.key}"] = entry.value;
         }
       }
     }

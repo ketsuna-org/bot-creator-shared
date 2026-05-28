@@ -264,7 +264,9 @@ Future<bool> executeComponentsInteractionsAction({
         ),
       );
 
-      final currentCustomId = (interaction as dynamic)?.data?.customId?.toString();
+      final currentCustomId = (interaction is MessageComponentInteraction || interaction is ModalSubmitInteraction)
+          ? (interaction as dynamic).data.customId.toString()
+          : null;
       if (currentCustomId == customId && store != null && client != null) {
         unawaited(
           runListenerWorkflow(
@@ -383,7 +385,9 @@ Future<bool> executeComponentsInteractionsAction({
       );
 
       // Immediate Execution Check!
-      final currentCustomId = (interaction as dynamic)?.data?.customId?.toString();
+      final currentCustomId = (interaction is MessageComponentInteraction || interaction is ModalSubmitInteraction)
+          ? (interaction as dynamic).data.customId.toString()
+          : null;
       if (currentCustomId == customId && store != null && client != null) {
         if (inlineActions.isNotEmpty) {
           unawaited(
@@ -393,6 +397,7 @@ Future<bool> executeComponentsInteractionsAction({
               botId: botId,
               inlineActions: inlineActions,
               variables: variables,
+              workflowArguments: workflowArguments,
               interaction: interaction,
             ),
           );

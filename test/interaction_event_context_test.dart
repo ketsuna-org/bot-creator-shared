@@ -1,4 +1,5 @@
 import 'package:bot_creator_shared/events/event_contexts.dart';
+import 'package:bot_creator_shared/utils/global.dart';
 import 'package:bot_creator_shared/utils/template_resolver.dart';
 import 'package:nyxx/nyxx.dart';
 import 'package:test/test.dart';
@@ -35,6 +36,16 @@ class _FakeModalData {
   final List<_FakeModalRow> components;
 }
 
+class _FakeUserAvatar implements CdnAsset {
+  @override
+  final String hash = 'dummy';
+  @override
+  final bool isAnimated = false;
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => null;
+}
+
 class _FakeUser implements User {
   _FakeUser(this.idString);
 
@@ -44,7 +55,16 @@ class _FakeUser implements User {
   Snowflake get id => Snowflake(int.parse(idString));
 
   @override
-  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+  final String username = 'TestUser';
+  @override
+  final String discriminator = '0000';
+  @override
+  final CdnAsset avatar = _FakeUserAvatar();
+  @override
+  final String? globalName = 'Test User';
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => null;
 }
 
 class _FakeMember implements Member {
@@ -60,6 +80,45 @@ class _FakeMember implements Member {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
+class _FakeGuildsManager implements GuildManager {
+  @override
+  final cache = _FakeCache<Guild>();
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _FakeCache<T> implements Cache<T> {
+  @override
+  final int length = 0;
+
+  @override
+  final Iterable<T> values = const [];
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _FakeNyxxGateway implements NyxxGateway {
+  @override
+  final user = _FakeUser('999');
+  @override
+  final guilds = _FakeGuildsManager();
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _FakeInteractionManager implements InteractionManager {
+  _FakeInteractionManager(this.client);
+
+  @override
+  final NyxxGateway client;
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
 class _FakeInteraction implements Interaction<dynamic> {
   _FakeInteraction({
     required this.data,
@@ -67,8 +126,10 @@ class _FakeInteraction implements Interaction<dynamic> {
     this.member,
     this.channelId,
     this.guildId,
-    this.message, required this.type,
-  });
+    this.message,
+    required this.type,
+    InteractionManager? manager,
+  }) : manager = manager ?? _FakeInteractionManager(_FakeNyxxGateway());
 
   @override
   final dynamic data;
@@ -84,6 +145,8 @@ class _FakeInteraction implements Interaction<dynamic> {
   final Message? message;
   @override
   final InteractionType type;
+  @override
+  final InteractionManager manager;
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
@@ -211,8 +274,139 @@ void main() {
 
       expect(variables['modal.customId'], 'modal:feedback');
       expect(variables['modal.title'], 'Hello');
+      expect(variables['opts.title'], 'Hello');
+      expect(variables['arg.title'], 'Hello');
+      expect(variables['workflow.arg.title'], 'Hello');
       expect(variables['modal.body'], 'World');
+      expect(variables['opts.body'], 'World');
+      expect(variables['arg.body'], 'World');
+      expect(variables['workflow.arg.body'], 'World');
       expect(variables['interaction.userId'], '77');
     });
   });
+
+  group('generateKeyValues command options prefixing', () {
+    test('extracts slash command options under all three namespaces', () async {
+      final fakeData = _FakeApplicationCommandInteractionData(
+        name: 'test_cmd',
+        id: Snowflake(111),
+        options: [
+          _FakeInteractionOption(
+            name: 'target',
+            value: '555',
+            type: CommandOptionType.string,
+          ),
+          _FakeInteractionOption(
+            name: 'reason',
+            value: 'Banned for spam',
+            type: CommandOptionType.string,
+          ),
+        ],
+      );
+
+      final fakeInteraction = _FakeApplicationCommandInteraction(
+        data: fakeData,
+        type: InteractionType.applicationCommand,
+        user: _FakeUser('77'),
+      );
+
+      final keyValues = await generateKeyValues(
+        fakeInteraction,
+      );
+
+      // Verify that all options are present with all three prefixes
+      expect(keyValues['opts.target'], '555');
+      expect(keyValues['arg.target'], '555');
+      expect(keyValues['workflow.arg.target'], '555');
+
+      expect(keyValues['opts.reason'], 'Banned for spam');
+      expect(keyValues['arg.reason'], 'Banned for spam');
+      expect(keyValues['workflow.arg.reason'], 'Banned for spam');
+    });
+  });
+}
+
+class _FakeApplicationCommandInteraction implements Interaction<ApplicationCommandInteractionData> {
+  _FakeApplicationCommandInteraction({
+    required this.data,
+    this.user,
+    this.member,
+    this.channelId,
+    this.guildId,
+    this.message,
+    required this.type,
+    InteractionManager? manager,
+  }) : manager = manager ?? _FakeInteractionManager(_FakeNyxxGateway());
+
+  @override
+  final ApplicationCommandInteractionData data;
+  @override
+  final User? user;
+  @override
+  final Member? member;
+  @override
+  final Snowflake? channelId;
+  @override
+  final Snowflake? guildId;
+  @override
+  final PartialGuild? guild = null;
+  @override
+  final PartialChannel? channel = null;
+  @override
+  final Message? message;
+  @override
+  final InteractionType type;
+  @override
+  final InteractionManager manager;
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _FakeApplicationCommandInteractionData implements ApplicationCommandInteractionData {
+  _FakeApplicationCommandInteractionData({
+    required this.name,
+    required this.id,
+    required this.options,
+  });
+
+  @override
+  final String name;
+  @override
+  final Snowflake id;
+  @override
+  final List<InteractionOption> options;
+  @override
+  final ApplicationCommandType type = ApplicationCommandType.chatInput;
+  @override
+  final Snowflake? targetId = null;
+  @override
+  final ResolvedData? resolved = null;
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _FakeInteractionOption implements InteractionOption {
+  _FakeInteractionOption({
+    required this.name,
+    required this.value,
+    required this.type,
+    this.options = const [],
+  });
+
+  @override
+  final String name;
+  @override
+  final dynamic value;
+  @override
+  final CommandOptionType type;
+  @override
+  final List<InteractionOption> options;
+
+  @override
+  final dynamic focused = false;
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }

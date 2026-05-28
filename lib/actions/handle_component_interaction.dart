@@ -79,6 +79,7 @@ Future<void> handleComponentInteraction(
       botId: entry.botId,
       inlineActions: entry.inlineActions!,
       variables: variables,
+      workflowArguments: entry.workflowArguments,
       interaction: interaction,
     );
   } else {
@@ -142,6 +143,7 @@ Future<void> handleModalSubmitInteraction(
       botId: entry.botId,
       inlineActions: entry.inlineActions!,
       variables: variables,
+      workflowArguments: entry.workflowArguments,
       interaction: interaction,
     );
   } else {
@@ -165,10 +167,12 @@ Future<void> runListenerInlineActions({
   required String botId,
   required List<Action> inlineActions,
   required Map<String, String> variables,
+  required Map<String, String> workflowArguments,
   Interaction? interaction,
 }) async {
   try {
     variables.addAll(extractBotRuntimeDetails(client));
+    variables.addAll(workflowArguments);
 
     await hydrateRuntimeVariables(
       store: store,
@@ -195,7 +199,8 @@ Future<void> runListenerInlineActions({
       resolveTemplate: resolveTemplate,
       interaction: interaction,
     );
-  } catch (e) {
+  } catch (e, st) {
+    print('ERROR in runListenerInlineActions: $e\n$st');
     if (interaction != null) {
       await _safeInteractionRespond(
         interaction,
@@ -297,7 +302,8 @@ Future<void> runListenerWorkflow({
         didDefer: false,
       );
     }
-  } catch (e) {
+  } catch (e, st) {
+    print('ERROR in runListenerWorkflow: $e\n$st');
     if (interaction != null) {
       await _safeInteractionRespond(
         interaction,

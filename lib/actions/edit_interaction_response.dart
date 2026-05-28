@@ -3,6 +3,7 @@ import 'package:bot_creator_shared/utils/component_workflow_bindings.dart';
 import 'package:bot_creator_shared/types/component.dart';
 import 'package:bot_creator_shared/actions/send_component_v2.dart';
 import 'package:bot_creator_shared/utils/embed_fields.dart';
+import 'package:bot_creator_shared/utils/interaction_ack_state.dart';
 
 /// Edit the original/deferred interaction response.
 /// Can update content, and/or components.
@@ -13,7 +14,8 @@ Future<Map<String, dynamic>> editInteractionMessageAction(
   String? botId,
 }) async {
   try {
-    if (interaction is! MessageResponse) {
+    if (interaction is! MessageResponse &&
+        interaction is! ModalSubmitInteraction) {
       return {'error': 'Interaction does not support message responses'};
     }
 
@@ -144,7 +146,7 @@ Future<Map<String, dynamic>> editInteractionMessageAction(
     // Build components if defined
     List<ComponentBuilder>? actionRows;
     ComponentV2Definition? definition;
-    final componentsDef = payload['components'];
+    final componentsDef = payload['components'] ?? payload['componentV2'];
     if (clearComponents) {
       actionRows = [];
     } else if (componentsDef is Map && componentsDef.isNotEmpty) {
@@ -159,13 +161,46 @@ Future<Map<String, dynamic>> editInteractionMessageAction(
       );
     }
 
-    final builder = MessageUpdateBuilder(
-      content: content.isNotEmpty ? content : null,
-      embeds: shouldUpdateEmbeds ? embeds : null,
-      components: actionRows,
-    );
+    final builder = MessageUpdateBuilder();
+    if (content.isNotEmpty) {
+      builder.content = content;
+    }
+    if (shouldUpdateEmbeds) {
+      builder.embeds = embeds;
+    }
+    if (clearComponents || (componentsDef is Map && componentsDef.isNotEmpty)) {
+      builder.components = actionRows;
+    }
 
-    final message = await msgInteraction.updateOriginalResponse(builder);
+    final Message message;
+    if (interaction is MessageComponentInteraction && !isInteractionAcknowledged(interaction)) {
+      await interaction.respond(builder, updateMessage: true);
+      markInteractionAcknowledged(interaction);
+      Message? tempMsg = interaction.message;
+      if (tempMsg == null) {
+        try {
+          tempMsg = await interaction.fetchOriginalResponse();
+        } catch (_) {
+          tempMsg = _FakeMessage(id: Snowflake(0));
+        }
+      }
+      message = tempMsg;
+    } else {
+      if (!isInteractionAcknowledged(interaction)) {
+        try {
+          await (interaction as dynamic).acknowledge();
+          markInteractionAcknowledged(interaction);
+        } catch (_) {}
+      }
+      Message tempMsg;
+      try {
+        tempMsg = await (msgInteraction as dynamic).updateOriginalResponse(builder) as Message;
+      } catch (_) {
+        tempMsg = interaction.message ?? _FakeMessage(id: Snowflake(0));
+      }
+      message = tempMsg;
+    }
+
     if (definition != null && botId != null && botId.trim().isNotEmpty) {
       registerComponentWorkflowBindings(
         definition: definition,
@@ -180,4 +215,14 @@ Future<Map<String, dynamic>> editInteractionMessageAction(
   } catch (e) {
     return {'error': e.toString()};
   }
+}
+
+class _FakeMessage implements Message {
+  @override
+  final Snowflake id;
+
+  _FakeMessage({required this.id});
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }

@@ -179,6 +179,8 @@ Map<String, String> buildInteractionRuntimeVariables(Interaction interaction) {
         final value = (_safeRead(inner, () => inner.value) ?? '').toString();
         modalInputPairs['modal.$key'] = value;
         modalInputPairs['opts.$key'] = value;
+        modalInputPairs['arg.$key'] = value;
+        modalInputPairs['workflow.arg.$key'] = value;
       }
     }
   }

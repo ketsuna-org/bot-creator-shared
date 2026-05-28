@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 
 const String workflowTypeGeneral = 'general';
 const String workflowTypeEvent = 'event';
@@ -257,5 +257,6 @@ void applyWorkflowInvocationContext({
   for (final entry in args.entries) {
     variables['arg.${entry.key}'] = entry.value;
     variables['workflow.arg.${entry.key}'] = entry.value;
+    variables['opts.${entry.key}'] = entry.value;
   }
 }
