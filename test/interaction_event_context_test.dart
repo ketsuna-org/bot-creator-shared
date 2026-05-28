@@ -330,10 +330,6 @@ class _FakeApplicationCommandInteraction implements Interaction<ApplicationComma
   _FakeApplicationCommandInteraction({
     required this.data,
     this.user,
-    this.member,
-    this.channelId,
-    this.guildId,
-    this.message,
     required this.type,
     InteractionManager? manager,
   }) : manager = manager ?? _FakeInteractionManager(_FakeNyxxGateway());
@@ -343,17 +339,17 @@ class _FakeApplicationCommandInteraction implements Interaction<ApplicationComma
   @override
   final User? user;
   @override
-  final Member? member;
+  final Member? member = null;
   @override
-  final Snowflake? channelId;
+  final Snowflake? channelId = null;
   @override
-  final Snowflake? guildId;
+  final Snowflake? guildId = null;
   @override
   final PartialGuild? guild = null;
   @override
   final PartialChannel? channel = null;
   @override
-  final Message? message;
+  final Message? message = null;
   @override
   final InteractionType type;
   @override
@@ -392,7 +388,6 @@ class _FakeInteractionOption implements InteractionOption {
     required this.name,
     required this.value,
     required this.type,
-    this.options = const [],
   });
 
   @override
@@ -402,9 +397,8 @@ class _FakeInteractionOption implements InteractionOption {
   @override
   final CommandOptionType type;
   @override
-  final List<InteractionOption> options;
+  final List<InteractionOption> options = const [];
 
-  @override
   final dynamic focused = false;
 
   @override
