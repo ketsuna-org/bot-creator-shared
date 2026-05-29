@@ -299,6 +299,8 @@ void main() {
         expect(results['getProfile'], 'dark');
         expect(variables['user.bc_profile'], 'dark');
         expect(variables['user.profile'], 'dark');
+        expect(variables['user[user-42].bc_profile'], 'dark');
+        expect(variables['user[user-42].profile'], 'dark');
       },
     );
 
@@ -373,6 +375,41 @@ void main() {
         expect(store.scopedVariables['user']?['user-100']?['streak'], '5');
         expect(variables['user.bc_streak'], '5');
         expect(variables['user.streak'], '5');
+      },
+    );
+
+    test(
+      'getScopedVariable resolves defaultValue with case-insensitive and legacy key matching',
+      () async {
+        final store = _MemoryBotDataStore();
+        await store.setScopedVariableDefinition(
+          'bot-1',
+          'bc_DAILY_STREAK',
+          'User',
+          '42',
+          valueType: 'string',
+        );
+
+        final results = <String, String>{};
+        final variables = <String, String>{'userId': 'user-100'};
+
+        final handled = await executeVariablesAction(
+          type: BotCreatorActionType.getScopedVariable,
+          store: store,
+          botId: 'bot-1',
+          payload: <String, dynamic>{'scope': 'user', 'key': 'daily_streak'},
+          resultKey: 'getStreak',
+          results: results,
+          variables: variables,
+          resolveValue: (input) => input,
+          guildId: null,
+          fallbackChannelId: null,
+          interaction: null,
+        );
+
+        expect(handled, isTrue);
+        expect(results['getStreak'], '42');
+        expect(variables['user.bc_daily_streak'], '42');
       },
     );
 

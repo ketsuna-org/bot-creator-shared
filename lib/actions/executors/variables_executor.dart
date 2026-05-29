@@ -60,13 +60,13 @@ Future<void> _ensureScopedDefinitionExists({
 }) async {
   final definitions = await store.getScopedVariableDefinitions(botId);
   final exists = definitions.any((entry) {
-    final entryScope = (entry['scope'] ?? '').toString().trim();
-    final entryKeyRaw = (entry['key'] ?? '').toString().trim();
-    if (entryScope != scope || entryKeyRaw.isEmpty) {
+    final entryScope = (entry['scope'] ?? '').toString().trim().toLowerCase();
+    final entryKeyRaw = (entry['key'] ?? '').toString().trim().toLowerCase();
+    if (entryScope != scope.toLowerCase() || entryKeyRaw.isEmpty) {
       return false;
     }
     try {
-      return _scopedStorageKey(entryKeyRaw) == storageKey;
+      return _scopedStorageKey(entryKeyRaw).toLowerCase() == storageKey.toLowerCase();
     } catch (_) {
       return false;
     }
@@ -1073,6 +1073,12 @@ Future<bool> executeVariablesAction({
           variables['$scope[$contextId].$rawKey'] = runtimeValue;
         }
 
+        onLog?.call(
+          '[SetScopedVariable] scope: $scope, key: $rawKey (normalized storageKey: $storageKey, referenceKey: $referenceKey), '
+          'contextId: $contextId, defaultContextId: $defaultContextId, '
+          'value: $runtimeValue',
+        );
+
         variables['temp.debug_last_var'] = 'Key: $specificKey, Value: $runtimeValue';
 
         variables['$resultKey.value'] = runtimeValue;
@@ -1177,22 +1183,26 @@ Future<bool> executeVariablesAction({
           }
         }
       }
+      var defaulted = false;
       if (value == null) {
+        defaulted = true;
         // Auto-create missing scoped variables on first read.
         dynamic defaultValue = '';
         try {
           final definitions = await store.getScopedVariableDefinitions(botId);
           final def = definitions.firstWhere(
             (entry) {
-              final entryScope = (entry['scope'] ?? '').toString().trim();
-              final entryKeyRaw = (entry['key'] ?? '').toString().trim();
-              return entryScope == scope &&
-                  _scopedStorageKey(entryKeyRaw) == storageKey;
+              final entryScope = (entry['scope'] ?? '').toString().trim().toLowerCase();
+              final entryKeyRaw = (entry['key'] ?? '').toString().trim().toLowerCase();
+              return entryScope == scope.toLowerCase() &&
+                  _scopedStorageKey(entryKeyRaw).toLowerCase() == storageKey.toLowerCase();
             },
             orElse: () => const <String, dynamic>{},
           );
           if (def.containsKey('defaultValue')) {
             defaultValue = def['defaultValue'];
+          } else if (def.containsKey('default_value')) {
+            defaultValue = def['default_value'];
           }
         } catch (_) {}
 
@@ -1220,10 +1230,36 @@ Future<bool> executeVariablesAction({
       if (storeAs.isNotEmpty) {
         variables[storeAs] = runtimeValue;
       }
-      variables['$scope.$referenceKey'] = runtimeValue;
-      if (rawKey.isNotEmpty && rawKey != referenceKey) {
-        variables['$scope.$rawKey'] = runtimeValue;
+
+      final defaultContextId = resolveScopeContextId(
+        scope: scope,
+        variables: variables,
+        guildId: guildId,
+        channelId: fallbackChannelId,
+        interaction: interaction,
+      );
+
+      // Update default key if this is the default context
+      if (contextId == defaultContextId) {
+        variables['$scope.$referenceKey'] = runtimeValue;
+        if (rawKey.isNotEmpty && rawKey != referenceKey) {
+          variables['$scope.$rawKey'] = runtimeValue;
+        }
       }
+
+      // Always update the specific context key to ensure placeholders like ((user[ID].key)) work
+      final specificKey = '$scope[$contextId].$referenceKey';
+      variables[specificKey] = runtimeValue;
+      if (rawKey.isNotEmpty && rawKey != referenceKey) {
+        variables['$scope[$contextId].$rawKey'] = runtimeValue;
+      }
+
+      onLog?.call(
+        '[GetScopedVariable] scope: $scope, key: $rawKey (normalized storageKey: $storageKey, referenceKey: $referenceKey), '
+        'contextId: $contextId, defaultContextId: $defaultContextId, '
+        'value: $runtimeValue, defaulted: $defaulted, storeAs: $storeAs',
+      );
+
       results[resultKey] = runtimeValue;
       return true;
 
