@@ -251,16 +251,30 @@ extension _BdfdAstTranspilationScopeInlineRuntime
           }
         }
         return _inlineRuntimeVariables['userperms'];
+      case 'isbot':
+        if (node.arguments.isNotEmpty) {
+          final userId = _stringifyArgument(node, 0).trim();
+          if (userId.isNotEmpty) {
+            return '((user[$userId].isBot))';
+          }
+        }
+        return _inlineRuntimeVariables['isbot'];
       // Mentioned helper with index
       case 'mentioned':
+        final returnSelf = node.arguments.length > 1 &&
+            _stringifyArgument(node, 1).trim().toLowerCase() == 'yes';
         if (node.arguments.isNotEmpty) {
           final indexRaw = _stringifyArgument(node, 0).trim();
           final index = int.tryParse(indexRaw);
           if (index != null && index >= 1) {
-            return '((message.mentions[${index - 1}]))';
+            return returnSelf
+                ? '((message.mentions[${index - 1}]|author.id))'
+                : '((message.mentions[${index - 1}]))';
           }
         }
-        return '((message.mentions[0]))';
+        return returnSelf
+            ? '((message.mentions[0]|author.id))'
+            : '((message.mentions[0]))';
       // All mentions (comma-separated user IDs)
       case 'mentions':
         return '((message.mentions))';
@@ -883,6 +897,7 @@ extension _BdfdAstTranspilationScopeInlineRuntime
       case 'roleperms':
       case 'roleposition':
       case 'getrolecolor':
+      case 'isbot':
       case 'ishoisted':
       case 'ismentionable':
       case 'findrole':

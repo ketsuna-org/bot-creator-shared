@@ -340,6 +340,43 @@ void main() {
     );
 
     test(
+      'getScopedVariable falls back to defaultValue from definitions when missing in database',
+      () async {
+        final store = _MemoryBotDataStore();
+        await store.setScopedVariableDefinition(
+          'bot-1',
+          'streak',
+          'user',
+          '5',
+          valueType: 'string',
+        );
+
+        final results = <String, String>{};
+        final variables = <String, String>{'userId': 'user-100'};
+
+        final handled = await executeVariablesAction(
+          type: BotCreatorActionType.getScopedVariable,
+          store: store,
+          botId: 'bot-1',
+          payload: <String, dynamic>{'scope': 'user', 'key': 'streak'},
+          resultKey: 'getStreak',
+          results: results,
+          variables: variables,
+          resolveValue: (input) => input,
+          guildId: null,
+          fallbackChannelId: null,
+          interaction: null,
+        );
+
+        expect(handled, isTrue);
+        expect(results['getStreak'], '5');
+        expect(store.scopedVariables['user']?['user-100']?['streak'], '5');
+        expect(variables['user.bc_streak'], '5');
+        expect(variables['user.streak'], '5');
+      },
+    );
+
+    test(
       'runtimeJsonBlock bootstraps empty source and supports append/index',
       () async {
         final store = _MemoryBotDataStore();
@@ -1131,12 +1168,15 @@ class _MemoryBotDataStore implements BotDataStore {
   _MemoryBotDataStore({
     Map<String, dynamic>? globalVariables,
     Map<String, Map<String, Map<String, dynamic>>>? scopedVariables,
+    List<Map<String, dynamic>>? scopedDefinitions,
   }) : globalVariables = globalVariables ?? <String, dynamic>{},
        scopedVariables =
-           scopedVariables ?? <String, Map<String, Map<String, dynamic>>>{};
+           scopedVariables ?? <String, Map<String, Map<String, dynamic>>>{},
+       scopedDefinitions = scopedDefinitions ?? <Map<String, dynamic>>[];
 
   final Map<String, dynamic> globalVariables;
   final Map<String, Map<String, Map<String, dynamic>>> scopedVariables;
+  final List<Map<String, dynamic>> scopedDefinitions;
 
   @override
   Future<List<Map<String, dynamic>>> getCommands(String botId) async =>
@@ -1146,7 +1186,7 @@ class _MemoryBotDataStore implements BotDataStore {
   Future<List<Map<String, dynamic>>> getScopedVariableDefinitions(
     String botId,
   ) async {
-    return const <Map<String, dynamic>>[];
+    return scopedDefinitions;
   }
 
   @override
@@ -1156,7 +1196,14 @@ class _MemoryBotDataStore implements BotDataStore {
     String scope,
     dynamic defaultValue, {
     String valueType = 'string',
-  }) async {}
+  }) async {
+    scopedDefinitions.add(<String, dynamic>{
+      'key': key,
+      'scope': scope,
+      'defaultValue': defaultValue,
+      'valueType': valueType,
+    });
+  }
 
   @override
   Future<Map<String, dynamic>> getGlobalVariables(String botId) async =>

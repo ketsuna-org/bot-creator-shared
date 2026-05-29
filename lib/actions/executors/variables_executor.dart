@@ -1179,7 +1179,24 @@ Future<bool> executeVariablesAction({
       }
       if (value == null) {
         // Auto-create missing scoped variables on first read.
-        value = '';
+        dynamic defaultValue = '';
+        try {
+          final definitions = await store.getScopedVariableDefinitions(botId);
+          final def = definitions.firstWhere(
+            (entry) {
+              final entryScope = (entry['scope'] ?? '').toString().trim();
+              final entryKeyRaw = (entry['key'] ?? '').toString().trim();
+              return entryScope == scope &&
+                  _scopedStorageKey(entryKeyRaw) == storageKey;
+            },
+            orElse: () => const <String, dynamic>{},
+          );
+          if (def.containsKey('defaultValue')) {
+            defaultValue = def['defaultValue'];
+          }
+        } catch (_) {}
+
+        value = defaultValue;
         await store.setScopedVariable(
           botId,
           scope,

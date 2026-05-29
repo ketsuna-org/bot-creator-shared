@@ -2200,6 +2200,58 @@ void main() {
       );
     });
 
+    test(r'$mentioned[1;yes] transpiles to targeted mentions with author fallback', () {
+      final result = BdfdAstTranspiler().transpile(
+        const BdfdScriptAst(
+          nodes: [
+            BdfdFunctionCallAst(
+              name: r'$mentioned',
+              arguments: [
+                <BdfdAstNode>[BdfdTextAst('1')],
+                <BdfdAstNode>[BdfdTextAst('yes')],
+              ],
+            ),
+          ],
+        ),
+      );
+
+      expect(result.diagnostics, isEmpty);
+      expect(result.actions.single.payload['content'], '((message.mentions[0]|author.id))');
+    });
+
+    test(r'$isbot[userID] transpiles to user dynamic isBot check', () {
+      final result = BdfdAstTranspiler().transpile(
+        const BdfdScriptAst(
+          nodes: [
+            BdfdFunctionCallAst(
+              name: r'$isbot',
+              arguments: [
+                <BdfdAstNode>[BdfdTextAst('123456')],
+              ],
+            ),
+          ],
+        ),
+      );
+
+      expect(result.diagnostics, isEmpty);
+      expect(result.actions.single.payload['content'], '((user[123456].isBot))');
+    });
+
+    test(r'$isbot without args transpiles to author.isBot', () {
+      final result = BdfdAstTranspiler().transpile(
+        const BdfdScriptAst(
+          nodes: [
+            BdfdFunctionCallAst(
+              name: r'$isbot',
+            ),
+          ],
+        ),
+      );
+
+      expect(result.diagnostics, isEmpty);
+      expect(result.actions.single.payload['content'], '((author.isBot))');
+    });
+
     test(r'$jsonParse with runtime placeholder emits runtimeJsonBlock', () {
       final result = BdfdAstTranspiler().transpile(
         const BdfdScriptAst(

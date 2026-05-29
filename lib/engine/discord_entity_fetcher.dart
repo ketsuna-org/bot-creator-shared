@@ -191,6 +191,7 @@ class DiscordEntityFetcher {
     set('globalName', user.globalName ?? user.username);
     set('displayName', user.globalName ?? user.username);
     set('createdAt', user.id.timestamp.toIso8601String());
+    set('isBot', user.isBot.toString());
   }
 
   // Using dynamic to avoid type issues across different library versions
@@ -261,7 +262,13 @@ class DiscordEntityFetcher {
     dynamic avatar,
     String? discriminator,
   }) {
-    if (avatar == null) return '';
+    if (avatar == null) {
+      return makeAvatarUrl(
+        id,
+        avatarId: null,
+        discriminator: discriminator,
+      );
+    }
     final avatarHash = avatar.hash;
     final isAnimated = avatar.isAnimated ?? false;
     return makeAvatarUrl(
