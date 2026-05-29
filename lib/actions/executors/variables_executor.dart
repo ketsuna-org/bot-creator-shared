@@ -1183,11 +1183,17 @@ Future<bool> executeVariablesAction({
           }
         }
       }
+      bool isValueEmpty(dynamic v) {
+        if (v == null) return true;
+        final s = v.toString().trim();
+        return s.isEmpty || s == 'null' || s == 'empty/null';
+      }
+
       var defaulted = false;
-      if (value == null) {
-        defaulted = true;
-        // Auto-create missing scoped variables on first read.
+      if (isValueEmpty(value)) {
+        // Resolve definition default value
         dynamic defaultValue = '';
+        var hasDef = false;
         try {
           final definitions = await store.getScopedVariableDefinitions(botId);
           final def = definitions.firstWhere(
@@ -1201,26 +1207,45 @@ Future<bool> executeVariablesAction({
           );
           if (def.containsKey('defaultValue')) {
             defaultValue = def['defaultValue'];
+            hasDef = true;
           } else if (def.containsKey('default_value')) {
             defaultValue = def['default_value'];
+            hasDef = true;
           }
         } catch (_) {}
 
-        value = defaultValue;
-        await store.setScopedVariable(
-          botId,
-          scope,
-          contextId,
-          storageKey,
-          value,
-        );
-        await _ensureScopedDefinitionExists(
-          store: store,
-          botId: botId,
-          scope: scope,
-          storageKey: storageKey,
-          defaultValue: value,
-        );
+        // If the current value is missing/empty, and the definition has a non-empty/non-null default value,
+        // we apply the definition-based default value.
+        if (hasDef && !isValueEmpty(defaultValue)) {
+          value = defaultValue;
+          defaulted = true;
+          await store.setScopedVariable(
+            botId,
+            scope,
+            contextId,
+            storageKey,
+            value,
+          );
+          await _ensureScopedDefinitionExists(
+            store: store,
+            botId: botId,
+            scope: scope,
+            storageKey: storageKey,
+            defaultValue: value,
+          );
+        } else if (value == null) {
+          // If no non-empty default value definition exists, but value was completely null,
+          // we fallback to empty string and write it.
+          value = '';
+          defaulted = true;
+          await store.setScopedVariable(
+            botId,
+            scope,
+            contextId,
+            storageKey,
+            value,
+          );
+        }
       }
       final runtimeValue = _stringifyRuntimeValue(value);
       final storeAs =

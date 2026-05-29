@@ -414,6 +414,70 @@ void main() {
     );
 
     test(
+      'getScopedVariable upgrades empty/null variables to non-empty default value while preserving non-empty stored values',
+      () async {
+        final store = _MemoryBotDataStore();
+        await store.setScopedVariableDefinition(
+          'bot-1',
+          'bc_points',
+          'user',
+          '100',
+          valueType: 'string',
+        );
+
+        // Scenario A: User has empty value in database
+        await store.setScopedVariable('bot-1', 'user', 'user-1', 'points', '');
+        
+        // Scenario B: User has non-empty value in database
+        await store.setScopedVariable('bot-1', 'user', 'user-2', 'points', '50');
+
+        final resultsA = <String, String>{};
+        final variablesA = <String, String>{'userId': 'user-1'};
+
+        final handledA = await executeVariablesAction(
+          type: BotCreatorActionType.getScopedVariable,
+          store: store,
+          botId: 'bot-1',
+          payload: <String, dynamic>{'scope': 'user', 'key': 'points'},
+          resultKey: 'getPoints',
+          results: resultsA,
+          variables: variablesA,
+          resolveValue: (input) => input,
+          guildId: null,
+          fallbackChannelId: null,
+          interaction: null,
+        );
+
+        expect(handledA, isTrue);
+        // Should upgrade empty string to definition's defaultValue of '100'
+        expect(resultsA['getPoints'], '100');
+        expect(store.scopedVariables['user']?['user-1']?['points'], '100');
+
+        final resultsB = <String, String>{};
+        final variablesB = <String, String>{'userId': 'user-2'};
+
+        final handledB = await executeVariablesAction(
+          type: BotCreatorActionType.getScopedVariable,
+          store: store,
+          botId: 'bot-1',
+          payload: <String, dynamic>{'scope': 'user', 'key': 'points'},
+          resultKey: 'getPoints',
+          results: resultsB,
+          variables: variablesB,
+          resolveValue: (input) => input,
+          guildId: null,
+          fallbackChannelId: null,
+          interaction: null,
+        );
+
+        expect(handledB, isTrue);
+        // Should preserve existing value '50'
+        expect(resultsB['getPoints'], '50');
+        expect(store.scopedVariables['user']?['user-2']?['points'], '50');
+      },
+    );
+
+    test(
       'runtimeJsonBlock bootstraps empty source and supports append/index',
       () async {
         final store = _MemoryBotDataStore();
