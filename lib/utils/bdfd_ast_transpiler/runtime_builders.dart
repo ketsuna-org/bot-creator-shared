@@ -1039,8 +1039,28 @@ extension _BdfdAstTranspilationScopeRuntimeBuilders
   }) {
     final key = _normalizeScopedVariableKey(_stringifyArgument(node, 0));
     final value = _stringifyArgument(node, 1);
-    final contextId =
-        node.arguments.length > 2 ? _stringifyArgument(node, 2).trim() : '';
+
+    var resolvedScope = scope;
+    var contextId = '';
+
+    if (scope == 'user') {
+      final gvUserId =
+          node.arguments.length > 2 ? _stringifyArgument(node, 2).trim() : '';
+      final gvGuildId =
+          node.arguments.length > 3 ? _stringifyArgument(node, 3).trim() : '';
+
+      if (gvGuildId.isNotEmpty) {
+        resolvedScope = 'guildMember';
+        contextId = gvUserId.isEmpty
+            ? '((author.id))-$gvGuildId'
+            : '$gvUserId-$gvGuildId';
+      } else {
+        contextId = gvUserId;
+      }
+    } else {
+      contextId =
+          node.arguments.length > 2 ? _stringifyArgument(node, 2).trim() : '';
+    }
 
     if (key.isEmpty) {
       _diagnostics.add(
@@ -1056,7 +1076,7 @@ extension _BdfdAstTranspilationScopeRuntimeBuilders
     return Action(
       type: BotCreatorActionType.setScopedVariable,
       payload: <String, dynamic>{
-        'scope': scope,
+        'scope': resolvedScope,
         'key': key,
         'valueType': 'string',
         'value': value,

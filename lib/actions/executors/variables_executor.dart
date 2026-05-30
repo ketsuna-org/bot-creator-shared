@@ -1299,13 +1299,17 @@ Future<bool> executeVariablesAction({
       final rawKey = resolveValue((payload['key'] ?? '').toString()).trim();
       final storageKey = _scopedStorageKey(rawKey);
       final referenceKey = _scopedReferenceKey(rawKey);
-      final contextId = resolveScopeContextId(
-        scope: scope,
-        variables: variables,
-        guildId: guildId,
-        channelId: fallbackChannelId,
-        interaction: interaction,
-      );
+      final explicitContextId =
+          resolveValue((payload['contextId'] ?? '').toString()).trim();
+      final contextId = explicitContextId.isNotEmpty
+          ? explicitContextId
+          : resolveScopeContextId(
+              scope: scope,
+              variables: variables,
+              guildId: guildId,
+              channelId: fallbackChannelId,
+              interaction: interaction,
+            );
       if (contextId == null || contextId.trim().isEmpty) {
         throw Exception('Unable to resolve context ID for scope "$scope"');
       }

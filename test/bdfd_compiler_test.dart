@@ -2225,5 +2225,60 @@ void main() {
         expect(result5.actions[0].payload['removePinned'], 'false');
       },
     );
+
+    group('scoped variable operations', () {
+      test('setUserVar with 2 or 3 arguments compiles to scope user', () {
+        final compiler = BdfdCompiler();
+        final result = compiler.compile(r'$setUserVar[money;100]');
+        expect(result.hasErrors, isFalse);
+        expect(result.actions, hasLength(1));
+        expect(result.actions[0].type, BotCreatorActionType.setScopedVariable);
+        expect(result.actions[0].payload['scope'], 'user');
+        expect(result.actions[0].payload['key'], 'money');
+        expect(result.actions[0].payload['value'], '100');
+        expect(result.actions[0].payload.containsKey('contextId'), isFalse);
+
+        final result2 = compiler.compile(r'$setUserVar[money;100;12345]');
+        expect(result2.hasErrors, isFalse);
+        expect(result2.actions, hasLength(1));
+        expect(result2.actions[0].type, BotCreatorActionType.setScopedVariable);
+        expect(result2.actions[0].payload['scope'], 'user');
+        expect(result2.actions[0].payload['key'], 'money');
+        expect(result2.actions[0].payload['value'], '100');
+        expect(result2.actions[0].payload['contextId'], '12345');
+      });
+
+      test('setUserVar with 4 arguments compiles to scope guildMember', () {
+        final compiler = BdfdCompiler();
+        final result = compiler.compile(r'$setUserVar[money;100;12345;67890]');
+        expect(result.hasErrors, isFalse);
+        expect(result.actions, hasLength(1));
+        expect(result.actions[0].type, BotCreatorActionType.setScopedVariable);
+        expect(result.actions[0].payload['scope'], 'guildMember');
+        expect(result.actions[0].payload['key'], 'money');
+        expect(result.actions[0].payload['value'], '100');
+        expect(result.actions[0].payload['contextId'], '12345-67890');
+
+        final result2 = compiler.compile(r'$setUserVar[money;100;;67890]');
+        expect(result2.hasErrors, isFalse);
+        expect(result2.actions, hasLength(1));
+        expect(result2.actions[0].type, BotCreatorActionType.setScopedVariable);
+        expect(result2.actions[0].payload['scope'], 'guildMember');
+        expect(result2.actions[0].payload['key'], 'money');
+        expect(result2.actions[0].payload['value'], '100');
+        expect(result2.actions[0].payload['contextId'], '((author.id))-67890');
+      });
+
+      test('resetUserVar with 3 arguments compiles to scope guildMember', () {
+        final compiler = BdfdCompiler();
+        final result = compiler.compile(r'$resetUserVar[money;12345;67890]');
+        expect(result.hasErrors, isFalse);
+        expect(result.actions, hasLength(1));
+        expect(result.actions[0].type, BotCreatorActionType.removeScopedVariable);
+        expect(result.actions[0].payload['scope'], 'guildMember');
+        expect(result.actions[0].payload['key'], 'money');
+        expect(result.actions[0].payload['contextId'], '12345-67890');
+      });
+    });
   });
 }

@@ -1088,9 +1088,36 @@ extension _BdfdAstTranspilationScopeActionBuilders
     required BdfdFunctionCallAst node,
   }) {
     final key = _normalizeScopedVariableKey(_stringifyArgument(node, 0));
+
+    var resolvedScope = scope;
+    var contextId = '';
+
+    if (scope == 'user') {
+      final gvUserId =
+          node.arguments.length > 1 ? _stringifyArgument(node, 1).trim() : '';
+      final gvGuildId =
+          node.arguments.length > 2 ? _stringifyArgument(node, 2).trim() : '';
+
+      if (gvGuildId.isNotEmpty) {
+        resolvedScope = 'guildMember';
+        contextId = gvUserId.isEmpty
+            ? '((author.id))-$gvGuildId'
+            : '$gvUserId-$gvGuildId';
+      } else {
+        contextId = gvUserId;
+      }
+    } else {
+      contextId =
+          node.arguments.length > 1 ? _stringifyArgument(node, 1).trim() : '';
+    }
+
     return Action(
       type: BotCreatorActionType.removeScopedVariable,
-      payload: <String, dynamic>{'scope': scope, 'key': key},
+      payload: <String, dynamic>{
+        'scope': resolvedScope,
+        'key': key,
+        if (contextId.isNotEmpty) 'contextId': contextId,
+      },
     );
   }
 
