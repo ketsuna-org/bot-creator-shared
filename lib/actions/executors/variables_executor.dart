@@ -643,12 +643,11 @@ Future<dynamic> _readPersistedVariable({
       );
     }
   }
-  if (value == null) {
-    // Look up the configured default from the variable definition before
-    // falling back to an empty string. This ensures that a definition with
-    // default=0 (or any other value) is honoured on first access.
+
+  // Helper: find the configured defaultValue for this variable from its
+  // definition. Returns null if no definition exists or has no default.
+  Future<dynamic> lookupConfiguredDefault() async {
     final definitions = await store.getScopedVariableDefinitions(botId);
-    dynamic configuredDefault;
     for (final entry in definitions) {
       final entryScope =
           (entry['scope'] ?? '').toString().trim().toLowerCase();
@@ -663,13 +662,16 @@ Future<dynamic> _readPersistedVariable({
       }
       if (entryStorage == binding.storageKey.toLowerCase()) {
         final raw = entry['defaultValue'] ?? entry['default_value'];
-        if (raw != null) {
-          configuredDefault = raw;
-        }
-        break;
+        return raw; // may be null if no default configured
       }
     }
+    return null;
+  }
 
+  if (value == null) {
+    // Variable row doesn't exist yet — initialise with the configured
+    // default, falling back to '' only when there is no definition.
+    final configuredDefault = await lookupConfiguredDefault();
     value = configuredDefault ?? '';
     await store.setScopedVariable(
       botId,
@@ -685,6 +687,24 @@ Future<dynamic> _readPersistedVariable({
       storageKey: binding.storageKey,
       defaultValue: value,
     );
+  } else if (value is String && value.isEmpty) {
+    // Row exists but is empty — could be a row that was corrupted by the
+    // old bug (which always wrote '' on first access). Heal it: if the
+    // definition has a non-empty default, promote it.
+    // Per product rule: an intentionally empty value means deletion, so ''
+    // in the DB always means "not set" and the default should be applied.
+    final configuredDefault = await lookupConfiguredDefault();
+    if (configuredDefault != null &&
+        configuredDefault.toString().isNotEmpty) {
+      value = configuredDefault;
+      await store.setScopedVariable(
+        botId,
+        binding.scope,
+        binding.contextId,
+        binding.storageKey,
+        value,
+      );
+    }
   }
   return value;
 }
