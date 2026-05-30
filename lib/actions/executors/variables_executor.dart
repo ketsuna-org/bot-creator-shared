@@ -644,8 +644,33 @@ Future<dynamic> _readPersistedVariable({
     }
   }
   if (value == null) {
-    // Auto-create missing scoped variables to simplify BDFD imports.
-    value = '';
+    // Look up the configured default from the variable definition before
+    // falling back to an empty string. This ensures that a definition with
+    // default=0 (or any other value) is honoured on first access.
+    final definitions = await store.getScopedVariableDefinitions(botId);
+    dynamic configuredDefault;
+    for (final entry in definitions) {
+      final entryScope =
+          (entry['scope'] ?? '').toString().trim().toLowerCase();
+      if (entryScope != binding.scope.toLowerCase()) continue;
+      final entryKeyRaw = (entry['key'] ?? '').toString().trim();
+      if (entryKeyRaw.isEmpty) continue;
+      String entryStorage;
+      try {
+        entryStorage = _scopedStorageKey(entryKeyRaw).toLowerCase();
+      } catch (_) {
+        continue;
+      }
+      if (entryStorage == binding.storageKey.toLowerCase()) {
+        final raw = entry['defaultValue'] ?? entry['default_value'];
+        if (raw != null) {
+          configuredDefault = raw;
+        }
+        break;
+      }
+    }
+
+    value = configuredDefault ?? '';
     await store.setScopedVariable(
       botId,
       binding.scope,
