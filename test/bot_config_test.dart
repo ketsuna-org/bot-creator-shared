@@ -70,4 +70,28 @@ void main() {
       'event': 'messageCreate',
     });
   });
+
+  test('BotConfig.fromJson normalizes scopedVariableDefinitions with defaultValue or default_value', () {
+    final config = BotConfig.fromJson(<String, dynamic>{
+      'token': 'discord-token',
+      'scopedVariableDefinitions': <Map<String, dynamic>>[
+        <String, dynamic>{
+          'key': 'streak',
+          'scope': 'user',
+          'defaultValue': '5',
+        },
+        <String, dynamic>{
+          'key': 'cash',
+          'scope': 'user',
+          'default_value': 0,
+        },
+      ],
+    });
+
+    expect(config.scopedVariableDefinitions, hasLength(2));
+    expect(config.scopedVariableDefinitions[0]['key'], 'streak');
+    expect(config.scopedVariableDefinitions[0]['defaultValue'], '5');
+    expect(config.scopedVariableDefinitions[1]['key'], 'cash');
+    expect(config.scopedVariableDefinitions[1]['defaultValue'], 0);
+  });
 }

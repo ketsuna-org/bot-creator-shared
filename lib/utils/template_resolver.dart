@@ -202,6 +202,19 @@ String? _lookupVariableValue(String key, Map<String, String> updates) {
         '${secs.toString().padLeft(2, '0')}';
   }
 
+  // Numeric member count fallbacks for BDFD compliance
+  if (loweredKey == 'guild.onlinemembers' ||
+      loweredKey == 'guild.offlinemembers' ||
+      loweredKey == 'guild.idlemembers' ||
+      loweredKey == 'guild.dndmembers' ||
+      loweredKey == 'guild.invisiblemembers' ||
+      loweredKey == 'onlinemembers' ||
+      loweredKey == 'guild.membercount' ||
+      loweredKey == 'membercount' ||
+      loweredKey == 'allmemberscount') {
+    return '0';
+  }
+
   // Boolean property fallbacks for BDFD compliance
   if (loweredKey.endsWith('.isbot') ||
       loweredKey.endsWith('.isadmin') ||
@@ -901,6 +914,16 @@ dynamic _applyBdfdBracketFunction(
 
       final resultList = (returnAmount >= 0) ? bdfdPerms.take(returnAmount).toList() : bdfdPerms;
       return resultList.join(separator);
+    case 'servernames':
+      final amount = resolvedArgs.isNotEmpty ? _coerceInt(resolvedArgs[0]) ?? -1 : -1;
+      final separator = (rawArgs.length > 1 && rawArgs[1].isNotEmpty) ? rawArgs[1] : ', ';
+      final rawNames = _lookupVariableValue('bot.guildNames', updates) ?? '';
+      if (rawNames.isEmpty) {
+        return '';
+      }
+      final list = rawNames.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
+      final resultList = (amount >= 0) ? list.take(amount).toList() : list;
+      return resultList.join(separator);
     case 'variablescount':
       final type = resolvedArgs.isNotEmpty ? _stringifyResolvedValue(resolvedArgs[0]).trim() : 'global';
       int count = 0;
@@ -1420,7 +1443,8 @@ _ResolvedExpression _evaluateSingleExpression(
             nameLower == 'or' ||
             nameLower == 'listvar' ||
             nameLower == 'variablescount' ||
-            nameLower == 'userperms') {
+            nameLower == 'userperms' ||
+            nameLower == 'servernames') {
           resolvedArgs.add(arg.trim());
           continue;
         }

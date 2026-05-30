@@ -539,5 +539,67 @@ void main() {
         expect(resolveTemplatePlaceholders('((exists))', updates), 'false');
       });
     });
+
+    group('BDFD aligning functions and fallbacks', () {
+      test('resolves nickname fallbacks for current and specific users', () {
+        final updates = {
+          'member.nick': 'JeremyNick',
+          'member.displayName': 'JeremyDisp',
+          'author.displayName': 'JeremyAuthDisp',
+          'author.username': 'jeremy_user',
+        };
+        // Current user nickname resolves directly
+        expect(resolveTemplatePlaceholders('((member.nick|member.displayName|author.displayName|author.username))', updates), 'JeremyNick');
+
+        // Missing nick falls back to displayName
+        final updates2 = {
+          'member.displayName': 'JeremyDisp',
+          'author.displayName': 'JeremyAuthDisp',
+          'author.username': 'jeremy_user',
+        };
+        expect(resolveTemplatePlaceholders('((member.nick|member.displayName|author.displayName|author.username))', updates2), 'JeremyDisp');
+
+        // Parameterized nickname fallbacks
+        final updates3 = {
+          'member[123].nick': 'AliceNick',
+        };
+        expect(resolveTemplatePlaceholders('((member[123].nick|member[123].displayName|user[123].displayName|user[123].username))', updates3), 'AliceNick');
+
+        final updates4 = {
+          'member[123].displayName': 'AliceDisp',
+        };
+        expect(resolveTemplatePlaceholders('((member[123].nick|member[123].displayName|user[123].displayName|user[123].username))', updates4), 'AliceDisp');
+      });
+
+      test('resolves presence count fallbacks to 0 when missing', () {
+        final updates = <String, String>{};
+        expect(resolveTemplatePlaceholders('((guild.onlineMembers))', updates), '0');
+        expect(resolveTemplatePlaceholders('((guild.offlineMembers))', updates), '0');
+        expect(resolveTemplatePlaceholders('((guild.idleMembers))', updates), '0');
+        expect(resolveTemplatePlaceholders('((guild.dndMembers))', updates), '0');
+        expect(resolveTemplatePlaceholders('((guild.invisibleMembers))', updates), '0');
+      });
+
+      test('resolves servernames bracket function with slice and separator', () {
+        final updates = {
+          'bot.guildNames': 'Server A, Server B, Server C, Server D',
+        };
+        // Return all with custom separator
+        expect(
+          resolveTemplatePlaceholders('((servernames[-1; | ]))', updates),
+          'Server A | Server B | Server C | Server D',
+        );
+        // Slice top 2 with custom separator
+        expect(
+          resolveTemplatePlaceholders('((servernames[2; + ]))', updates),
+          'Server A + Server B',
+        );
+        // Default separation when missing
+        expect(
+          resolveTemplatePlaceholders('((servernames[3;]))', updates),
+          'Server A, Server B, Server C',
+        );
+      });
+    });
   });
 }

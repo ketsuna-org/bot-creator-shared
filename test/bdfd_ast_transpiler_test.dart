@@ -2014,7 +2014,7 @@ void main() {
       expect(embeds.single['description'], '((user[123456].username))');
     });
 
-    test(r'$nickname without args resolves to ((member.nick))', () {
+    test(r'$nickname without args resolves with fallback chains', () {
       final result = BdfdAstTranspiler().transpile(
         const BdfdScriptAst(
           nodes: [
@@ -2032,10 +2032,10 @@ void main() {
       final embeds = List<Map<String, dynamic>>.from(
         result.actions.single.payload['embeds'] as List,
       );
-      expect(embeds.single['description'], '((member.nick))');
+      expect(embeds.single['description'], '((member.nick|member.displayName|author.displayName|author.username))');
     });
 
-    test(r'$nickname[userID] resolves to ((member[id].nick))', () {
+    test(r'$nickname[userID] resolves with fallback chains', () {
       final result = BdfdAstTranspiler().transpile(
         const BdfdScriptAst(
           nodes: [
@@ -2060,7 +2060,7 @@ void main() {
       final embeds = List<Map<String, dynamic>>.from(
         result.actions.single.payload['embeds'] as List,
       );
-      expect(embeds.single['description'], '((member[789].nick))');
+      expect(embeds.single['description'], '((member[789].nick|member[789].displayName|user[789].displayName|user[789].username))');
     });
 
     test(r'$displayName without args resolves to fallback', () {

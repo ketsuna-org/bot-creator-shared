@@ -402,7 +402,7 @@ List<Map<String, dynamic>> _normalizeScopedVariableDefinitions(dynamic raw) {
         return <String, dynamic>{
           'key': (map['key'] ?? '').toString(),
           'scope': (map['scope'] ?? '').toString(),
-          'defaultValue': _normalizeVariableValue(map['defaultValue']),
+          'defaultValue': _normalizeVariableValue(map['defaultValue'] ?? map['default_value']),
           'valueType': (map['valueType'] ?? 'string').toString(),
         };
       })

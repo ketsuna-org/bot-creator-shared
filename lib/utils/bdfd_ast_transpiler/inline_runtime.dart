@@ -113,13 +113,14 @@ extension _BdfdAstTranspilationScopeInlineRuntime
         }
         return _inlineRuntimeVariables['username'];
       case 'nickname':
+      case 'membernick':
         if (node.arguments.isNotEmpty) {
           final userId = _stringifyArgument(node, 0).trim();
           if (userId.isNotEmpty) {
-            return '((member[$userId].nick))';
+            return '((member[$userId].nick|member[$userId].displayName|user[$userId].displayName|user[$userId].username))';
           }
         }
-        return _inlineRuntimeVariables['nickname'];
+        return _inlineRuntimeVariables[node.normalizedName];
       case 'displayname':
         if (node.arguments.isNotEmpty) {
           final userId = _stringifyArgument(node, 0).trim();
@@ -128,6 +129,64 @@ extension _BdfdAstTranspilationScopeInlineRuntime
           }
         }
         return _inlineRuntimeVariables['displayname'];
+      case 'isadmin':
+        if (node.arguments.isNotEmpty) {
+          final userId = _stringifyArgument(node, 0).trim();
+          if (userId.isNotEmpty) {
+            return '((member[$userId].isAdmin))';
+          }
+        }
+        return _inlineRuntimeVariables['isadmin'];
+      case 'isbooster':
+        if (node.arguments.isNotEmpty) {
+          final userId = _stringifyArgument(node, 0).trim();
+          if (userId.isNotEmpty) {
+            return '((member[$userId].isBooster))';
+          }
+        }
+        return _inlineRuntimeVariables['isbooster'];
+      case 'userexists':
+        if (node.arguments.isNotEmpty) {
+          final userId = _stringifyArgument(node, 0).trim();
+          if (userId.isNotEmpty) {
+            return '((user[$userId].exists))';
+          }
+        }
+        return _inlineRuntimeVariables['userexists'];
+      case 'channelexists':
+      case 'serverchannelexists':
+        if (node.arguments.isNotEmpty) {
+          final channelId = _stringifyArgument(node, 0).trim();
+          if (channelId.isNotEmpty) {
+            return '((channel[$channelId].exists))';
+          }
+        }
+        return _inlineRuntimeVariables[node.normalizedName] ?? 'false';
+      case 'guildexists':
+      case 'serverexists':
+        if (node.arguments.isNotEmpty) {
+          final guildId = _stringifyArgument(node, 0).trim();
+          if (guildId.isNotEmpty) {
+            return '((guild[$guildId].exists))';
+          }
+        }
+        return _inlineRuntimeVariables[node.normalizedName] ?? 'false';
+      case 'memberscount':
+      case 'allmemberscount':
+        if (node.arguments.isNotEmpty) {
+          final presence = _stringifyArgument(node, 0).trim().toLowerCase();
+          if (presence.isNotEmpty) {
+            return '((guild.${presence}Members))';
+          }
+        }
+        return _inlineRuntimeVariables[node.normalizedName];
+      case 'servernames':
+        if (node.arguments.isNotEmpty) {
+          final amount = _stringifyArgument(node, 0).trim();
+          final separator = node.arguments.length > 1 ? _stringifyArgument(node, 1).trim() : ', ';
+          return '((servernames[$amount;$separator]))';
+        }
+        return _inlineRuntimeVariables['servernames'];
       // Parametric channel/guild lookups
       case 'channelid':
       case 'channelidfromname':
