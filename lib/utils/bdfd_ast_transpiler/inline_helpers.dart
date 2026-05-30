@@ -443,11 +443,6 @@ extension _BdfdAstTranspilationScopeInlineHelpers
     return '((randomtext[$args]))';
   }
 
-  // ── Date helper ──────────────────────────────────────────
-
-  String _inlineDate() {
-    return '((date))';
-  }
 
   // ── getMessage helper ──────────────────────────────────────
 
