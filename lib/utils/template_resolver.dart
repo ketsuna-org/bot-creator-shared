@@ -160,6 +160,66 @@ String? _lookupVariableValue(String key, Map<String, String> updates) {
   if (loweredKey == 'gettimestampms') {
     return DateTime.now().toUtc().millisecondsSinceEpoch.toString();
   }
+  if (loweredKey == 'day') {
+    return DateTime.now().toUtc().day.toString();
+  }
+  if (loweredKey == 'month') {
+    return DateTime.now().toUtc().month.toString();
+  }
+  if (loweredKey == 'year') {
+    return DateTime.now().toUtc().year.toString();
+  }
+  if (loweredKey == 'hour') {
+    return DateTime.now().toUtc().hour.toString();
+  }
+  if (loweredKey == 'minute') {
+    return DateTime.now().toUtc().minute.toString();
+  }
+  if (loweredKey == 'second') {
+    return DateTime.now().toUtc().second.toString();
+  }
+  if (loweredKey == 'time') {
+    final now = DateTime.now().toUtc();
+    return '${now.hour.toString().padLeft(2, '0')}:'
+        '${now.minute.toString().padLeft(2, '0')}:'
+        '${now.second.toString().padLeft(2, '0')}';
+  }
+  if (loweredKey == 'date') {
+    final now = DateTime.now().toUtc();
+    return '${now.year}-'
+        '${now.month.toString().padLeft(2, '0')}-'
+        '${now.day.toString().padLeft(2, '0')}';
+  }
+  if (loweredKey == 'bot.uptime' || loweredKey == 'uptime') {
+    final rawUptime = updates['bot.uptime'] ?? '0';
+    final uptimeMs = int.tryParse(rawUptime) ?? 0;
+    final seconds = uptimeMs ~/ 1000;
+    final hrs = seconds ~/ 3600;
+    final mins = (seconds % 3600) ~/ 60;
+    final secs = seconds % 60;
+    return '${hrs.toString().padLeft(2, '0')}:'
+        '${mins.toString().padLeft(2, '0')}:'
+        '${secs.toString().padLeft(2, '0')}';
+  }
+
+  // Boolean property fallbacks for BDFD compliance
+  if (loweredKey.endsWith('.isbot') ||
+      loweredKey.endsWith('.isadmin') ||
+      loweredKey.endsWith('.isbooster') ||
+      loweredKey.endsWith('.exists') ||
+      loweredKey.endsWith('.isnsfw') ||
+      loweredKey.endsWith('.nsfw') ||
+      loweredKey.endsWith('.istimedout') ||
+      loweredKey.endsWith('.isbanned') ||
+      loweredKey == 'isbot' ||
+      loweredKey == 'isadmin' ||
+      loweredKey == 'isbooster' ||
+      loweredKey == 'isnsfw' ||
+      loweredKey == 'istimedout' ||
+      loweredKey == 'isbanned' ||
+      loweredKey == 'exists') {
+    return 'false';
+  }
 
   return null;
 }

@@ -624,26 +624,23 @@ extension _BdfdAstTranspilationScopeInlineRuntime
         return _inlineRandomString(node);
       case 'randomtext':
         return _inlineRandomText(node);
-      // Date/Time functions (compile-time current time)
+      // Date/Time functions (runtime dynamic)
       case 'date':
-        return _inlineDate();
+        return '((date))';
       case 'day':
-        return DateTime.now().toUtc().day.toString();
+        return '((day))';
       case 'hour':
-        return DateTime.now().toUtc().hour.toString();
+        return '((hour))';
       case 'minute':
-        return DateTime.now().toUtc().minute.toString();
+        return '((minute))';
       case 'month':
-        return DateTime.now().toUtc().month.toString();
+        return '((month))';
       case 'second':
-        return DateTime.now().toUtc().second.toString();
+        return '((second))';
       case 'year':
-        return DateTime.now().toUtc().year.toString();
+        return '((year))';
       case 'time':
-        final now = DateTime.now().toUtc();
-        return '${now.hour.toString().padLeft(2, '0')}:'
-            '${now.minute.toString().padLeft(2, '0')}:'
-            '${now.second.toString().padLeft(2, '0')}';
+        return '((time))';
       case 'gettimestamp':
         return '((getTimestamp))';
       case 'gettimestampms':

@@ -504,5 +504,40 @@ void main() {
         );
       });
     });
+
+    group('BDFD dynamic runtime & boolean compliance', () {
+      test('resolves day, month, year, hour, minute, second, time, date dynamically', () {
+        final updates = <String, String>{};
+        expect(resolveTemplatePlaceholders('((year))', updates), DateTime.now().toUtc().year.toString());
+        expect(resolveTemplatePlaceholders('((month))', updates), DateTime.now().toUtc().month.toString());
+        expect(resolveTemplatePlaceholders('((day))', updates), DateTime.now().toUtc().day.toString());
+        expect(resolveTemplatePlaceholders('((hour))', updates), isNotEmpty);
+        expect(resolveTemplatePlaceholders('((minute))', updates), isNotEmpty);
+        expect(resolveTemplatePlaceholders('((second))', updates), isNotEmpty);
+        expect(resolveTemplatePlaceholders('((time))', updates), isNotEmpty);
+        expect(resolveTemplatePlaceholders('((date))', updates), isNotEmpty);
+      });
+
+      test('resolves formatted uptime dynamically', () {
+        final updates = {
+          'bot.uptime': '8952000', // 2 hours, 29 minutes, 12 seconds
+        };
+        expect(
+          resolveTemplatePlaceholders('((uptime))', updates),
+          '02:29:12',
+        );
+      });
+
+      test('returns false as fallback for BDFD boolean checks', () {
+        final updates = <String, String>{};
+        expect(resolveTemplatePlaceholders('((isbot))', updates), 'false');
+        expect(resolveTemplatePlaceholders('((author.isBot))', updates), 'false');
+        expect(resolveTemplatePlaceholders('((user[123].isBot))', updates), 'false');
+        expect(resolveTemplatePlaceholders('((isadmin))', updates), 'false');
+        expect(resolveTemplatePlaceholders('((member.isAdmin))', updates), 'false');
+        expect(resolveTemplatePlaceholders('((isnsfw))', updates), 'false');
+        expect(resolveTemplatePlaceholders('((exists))', updates), 'false');
+      });
+    });
   });
 }
