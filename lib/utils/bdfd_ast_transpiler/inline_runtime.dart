@@ -387,7 +387,7 @@ extension _BdfdAstTranspilationScopeInlineRuntime
 
         if (gvGuildId.isNotEmpty) {
           final contextId =
-              gvUserId.isEmpty ? '((author.id))-$gvGuildId' : '$gvUserId-$gvGuildId';
+              gvUserId.isEmpty ? '$gvGuildId:((author.id))' : '$gvGuildId:$gvUserId';
           return _scopedVariablePlaceholder('guildMember', gvVarName, contextId);
         }
         return _scopedVariablePlaceholder('user', gvVarName, gvUserId);
@@ -405,12 +405,18 @@ extension _BdfdAstTranspilationScopeInlineRuntime
       case 'getmembervar':
       case 'getguildmembervar':
         final gmvVarName = _stringifyArgument(node, 0);
-        final gmvContextId =
+        final gmvUserId =
             node.arguments.length > 1 ? _stringifyArgument(node, 1).trim() : '';
+        final gmvGuildId =
+            node.arguments.length > 2 ? _stringifyArgument(node, 2).trim() : '';
+
+        final guildPart = gmvGuildId.isNotEmpty ? gmvGuildId : '((guild.id))';
+        final userPart = gmvUserId.isNotEmpty ? gmvUserId : '((author.id))';
+        final contextId = '$guildPart:$userPart';
         return _scopedVariablePlaceholder(
           'guildMember',
           gmvVarName,
-          gmvContextId,
+          contextId,
         );
       case 'getmessagevar':
         final gmvVarName = _stringifyArgument(node, 0);

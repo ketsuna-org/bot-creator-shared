@@ -1052,11 +1052,20 @@ extension _BdfdAstTranspilationScopeRuntimeBuilders
       if (gvGuildId.isNotEmpty) {
         resolvedScope = 'guildMember';
         contextId = gvUserId.isEmpty
-            ? '((author.id))-$gvGuildId'
-            : '$gvUserId-$gvGuildId';
+            ? '$gvGuildId:((author.id))'
+            : '$gvGuildId:$gvUserId';
       } else {
         contextId = gvUserId;
       }
+    } else if (scope == 'guildMember') {
+      final gmvUserId =
+          node.arguments.length > 2 ? _stringifyArgument(node, 2).trim() : '';
+      final gmvGuildId =
+          node.arguments.length > 3 ? _stringifyArgument(node, 3).trim() : '';
+
+      final guildPart = gmvGuildId.isNotEmpty ? gmvGuildId : '((guild.id))';
+      final userPart = gmvUserId.isNotEmpty ? gmvUserId : '((author.id))';
+      contextId = '$guildPart:$userPart';
     } else {
       contextId =
           node.arguments.length > 2 ? _stringifyArgument(node, 2).trim() : '';
