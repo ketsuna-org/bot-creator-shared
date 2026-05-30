@@ -1227,7 +1227,7 @@ void main() {
       expect(content, contains('((author.id))'));
       expect(content, contains('((target.message.author.id|author.id))'));
       expect(content, contains('((member.nick|author.displayName|author.username))'));
-      expect(content, contains('((member.permissions))'));
+      expect(content, contains('((userperms[;-1;, ]))'));
       expect(content, contains('((member.avatar))'));
       expect(content, contains('((user.id))'));
     });

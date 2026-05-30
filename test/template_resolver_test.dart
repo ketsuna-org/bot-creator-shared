@@ -458,5 +458,51 @@ void main() {
       expect(resolveTemplatePlaceholders('((variablescount["user"]))', updates), '1');
       expect(resolveTemplatePlaceholders('((variablescount["guild"]))', updates), '1');
     });
+
+    group('userperms function', () {
+      test('resolves author permissions formatted in standard BDFD format', () {
+        final updates = {
+          'author.id': '111',
+          'member.permissions': 'administrator,addreactions,connect',
+        };
+        expect(
+          resolveTemplatePlaceholders('((userperms[111;-1;, ]))', updates),
+          'ADMINISTRATOR, ADD_REACTIONS, CONNECT',
+        );
+      });
+
+      test('resolves with defaults when arguments are empty', () {
+        final updates = {
+          'author.id': '111',
+          'member.permissions': 'banmembers,kickmembers',
+        };
+        expect(
+          resolveTemplatePlaceholders('((userperms[;-1;, ]))', updates),
+          'BAN_MEMBERS, KICK_MEMBERS',
+        );
+      });
+
+      test('respects return amount limit and custom separator', () {
+        final updates = {
+          'author.id': '111',
+          'member.permissions': 'banmembers,kickmembers,administrator',
+        };
+        expect(
+          resolveTemplatePlaceholders('((userperms[;2; | ]))', updates),
+          'BAN_MEMBERS | KICK_MEMBERS',
+        );
+      });
+
+      test('resolves other user permissions by ID', () {
+        final updates = {
+          'author.id': '111',
+          'permissions.byId.222': 'banmembers,stream',
+        };
+        expect(
+          resolveTemplatePlaceholders('((userperms[222;-1;, ]))', updates),
+          'BAN_MEMBERS, STREAM',
+        );
+      });
+    });
   });
 }

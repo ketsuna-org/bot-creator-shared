@@ -292,8 +292,9 @@ Map<String, String> extractMemberRuntimeDetails({
 
 List<String> _permissionTokensFromPermissions(Permissions permissions) {
   final tokens = <String>[];
+  final isAdmin = permissions.has(Permissions.administrator);
   for (final entry in _permissionTokenFlags) {
-    if (permissions.has(entry.key)) {
+    if (isAdmin || permissions.has(entry.key)) {
       tokens.add(entry.value);
     }
   }

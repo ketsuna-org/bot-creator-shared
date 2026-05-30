@@ -244,13 +244,10 @@ extension _BdfdAstTranspilationScopeInlineRuntime
         }
         return _inlineRuntimeVariables['userbanner'];
       case 'userperms':
-        if (node.arguments.isNotEmpty) {
-          final userId = _stringifyArgument(node, 0).trim();
-          if (userId.isNotEmpty) {
-            return '((permissions.byId.$userId|member.permissions))';
-          }
-        }
-        return _inlineRuntimeVariables['userperms'];
+        final userId = node.arguments.isNotEmpty ? _stringifyArgument(node, 0).trim() : '';
+        final returnAmount = node.arguments.length > 1 ? _stringifyArgument(node, 1).trim() : '-1';
+        final separator = node.arguments.length > 2 ? _stringifyArgument(node, 2).trim() : ', ';
+        return '((userperms[$userId;$returnAmount;$separator]))';
       case 'isbot':
         if (node.arguments.isNotEmpty) {
           final userId = _stringifyArgument(node, 0).trim();

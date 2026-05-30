@@ -166,7 +166,7 @@ void main() {
           result.actions.single.payload['content']?.toString() ?? '';
       expect(content, contains('((author.avatar))'));
       expect(content, contains('((author.id))'));
-      expect(content, contains('((member.permissions))'));
+      expect(content, contains('((userperms[;-1;, ]))'));
       expect(content, contains('((user.id))'));
     });
 
@@ -878,7 +878,7 @@ void main() {
           result.actions.single.payload['content']?.toString() ?? '';
       expect(
         content,
-        contains('((permissions.byId.((author.id))|member.permissions))'),
+        contains('((userperms[((author.id));-1;, ]))'),
       );
     });
 

@@ -809,6 +809,38 @@ dynamic _applyBdfdBracketFunction(
         }
       }
       return varNames.join(sep);
+    case 'userperms':
+      var userId = resolvedArgs.isNotEmpty ? _stringifyResolvedValue(resolvedArgs[0]).trim() : '';
+      if (userId.isEmpty) {
+        userId = _lookupVariableValue('author.id', updates) ?? '';
+      }
+      final returnAmount = resolvedArgs.length > 1 ? _coerceInt(resolvedArgs[1]) ?? -1 : -1;
+      final separator = rawArgs.length > 2 ? rawArgs[2] : ', ';
+
+      final authorId = _lookupVariableValue('author.id', updates) ?? '';
+      String? rawPerms;
+      if (userId == authorId) {
+        rawPerms = _lookupVariableValue('member.permissions', updates);
+      } else {
+        rawPerms = _lookupVariableValue('permissions.byId.$userId', updates);
+      }
+      rawPerms ??= _lookupVariableValue('member.permissions', updates) ?? '';
+
+      if (rawPerms.isEmpty) {
+        return '';
+      }
+
+      final list = rawPerms.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
+      final bdfdPerms = <String>[];
+      for (final p in list) {
+        final bdfdName = _mapToLowercaseToBdfdPerm(p);
+        if (bdfdName != null) {
+          bdfdPerms.add(bdfdName);
+        }
+      }
+
+      final resultList = (returnAmount >= 0) ? bdfdPerms.take(returnAmount).toList() : bdfdPerms;
+      return resultList.join(separator);
     case 'variablescount':
       final type = resolvedArgs.isNotEmpty ? _stringifyResolvedValue(resolvedArgs[0]).trim() : 'global';
       int count = 0;
@@ -1327,7 +1359,8 @@ _ResolvedExpression _evaluateSingleExpression(
         if (nameLower == 'and' ||
             nameLower == 'or' ||
             nameLower == 'listvar' ||
-            nameLower == 'variablescount') {
+            nameLower == 'variablescount' ||
+            nameLower == 'userperms') {
           resolvedArgs.add(arg.trim());
           continue;
         }
@@ -1576,5 +1609,53 @@ bool _evaluateConditionValue(String left, String operator, String right) {
         }
       }
       return false;
+  }
+}
+
+String? _mapToLowercaseToBdfdPerm(String lowercasePerm) {
+  switch (lowercasePerm.trim().toLowerCase()) {
+    case 'addreactions': return 'ADD_REACTIONS';
+    case 'administrator': return 'ADMINISTRATOR';
+    case 'attachfiles': return 'ATTACH_FILES';
+    case 'banmembers': return 'BAN_MEMBERS';
+    case 'changenickname': return 'CHANGE_NICKNAME';
+    case 'connect': return 'CONNECT';
+    case 'createinstantinvite': return 'CREATE_INSTANT_INVITE';
+    case 'createprivatethreads': return 'CREATE_PRIVATE_THREADS';
+    case 'createpublicthreads': return 'CREATE_PUBLIC_THREADS';
+    case 'deafenmembers': return 'DEAFEN_MEMBERS';
+    case 'embedlinks': return 'EMBED_LINKS';
+    case 'kickmembers': return 'KICK_MEMBERS';
+    case 'managechannels': return 'MANAGE_CHANNELS';
+    case 'manageevents': return 'MANAGE_EVENTS';
+    case 'manageguild': return 'MANAGE_GUILD';
+    case 'manageguildexpressions': return 'MANAGE_GUILD_EXPRESSIONS';
+    case 'managemessages': return 'MANAGE_MESSAGES';
+    case 'managenicknames': return 'MANAGE_NICKNAMES';
+    case 'manageroles': return 'MANAGE_ROLES';
+    case 'managethreads': return 'MANAGE_THREADS';
+    case 'managewebhooks': return 'MANAGE_WEBHOOKS';
+    case 'mentioneveryone': return 'MENTION_EVERYONE';
+    case 'moderatemembers': return 'MODERATE_MEMBERS';
+    case 'movemembers': return 'MOVE_MEMBERS';
+    case 'mutemembers': return 'MUTE_MEMBERS';
+    case 'priorityspeaker': return 'PRIORITY_SPEAKER';
+    case 'readmessagehistory': return 'READ_MESSAGE_HISTORY';
+    case 'requesttospeak': return 'REQUEST_TO_SPEAK';
+    case 'sendmessages': return 'SEND_MESSAGES';
+    case 'sendmessagesinthreads': return 'SEND_MESSAGES_IN_THREADS';
+    case 'sendttsmessages': return 'SEND_TTS_MESSAGES';
+    case 'sendvoicemessages': return 'SEND_VOICE_MESSAGES';
+    case 'speak': return 'SPEAK';
+    case 'stream': return 'STREAM';
+    case 'useapplicationcommands': return 'USE_APPLICATION_COMMANDS';
+    case 'useexternalemojis': return 'USE_EXTERNAL_EMOJIS';
+    case 'useexternalstickers': return 'USE_EXTERNAL_STICKERS';
+    case 'usesoundboard': return 'USE_SOUNDBOARD';
+    case 'usevoiceactivity': return 'USE_VAD';
+    case 'viewauditlog': return 'VIEW_AUDIT_LOG';
+    case 'viewchannel': return 'VIEW_CHANNEL';
+    case 'viewguildinsights': return 'VIEW_GUILD_INSIGHTS';
+    default: return lowercasePerm.toUpperCase();
   }
 }
