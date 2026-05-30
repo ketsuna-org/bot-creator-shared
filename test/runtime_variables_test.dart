@@ -118,6 +118,110 @@ void main() {
         expect(runtimeVariables['guild.bc_prefix'], '!');
       },
     );
+
+    test(
+      'persists default value to store when replacing empty string',
+      () async {
+        final store = _FakeBotDataStore(
+          globalVariables: const <String, dynamic>{},
+          scopedVariables: <String, Map<String, Map<String, dynamic>>>{
+            'user': <String, Map<String, dynamic>>{
+              'user-1': <String, dynamic>{'cash': ''},
+            },
+          },
+          scopedDefinitions: const <Map<String, dynamic>>[
+            <String, dynamic>{
+              'scope': 'user',
+              'key': 'cash',
+              'defaultValue': 0,
+            },
+          ],
+        );
+
+        final runtimeVariables = <String, String>{};
+        await hydrateRuntimeVariables(
+          store: store,
+          botId: 'bot-1',
+          runtimeVariables: runtimeVariables,
+          userContextId: 'user-1',
+        );
+
+        // Runtime variables should reflect the default value
+        expect(runtimeVariables['user.cash'], '0');
+        expect(runtimeVariables['user.bc_cash'], '0');
+
+        // The default should also have been persisted back to the store
+        // so that subsequent reads (including the admin UI) see '0'
+        // instead of an empty string.
+        expect(store.scopedVariables['user']?['user-1']?['cash'], 0);
+      },
+    );
+
+    test(
+      'persists default value to store when value is missing entirely',
+      () async {
+        final store = _FakeBotDataStore(
+          globalVariables: const <String, dynamic>{},
+          // Use mutable maps so setScopedVariable can create entries
+          scopedVariables: <String, Map<String, Map<String, dynamic>>>{},
+          scopedDefinitions: const <Map<String, dynamic>>[
+            <String, dynamic>{
+              'scope': 'user',
+              'key': 'daily_streak',
+              'defaultValue': 0,
+            },
+          ],
+        );
+
+        final runtimeVariables = <String, String>{};
+        await hydrateRuntimeVariables(
+          store: store,
+          botId: 'bot-1',
+          runtimeVariables: runtimeVariables,
+          userContextId: 'user-1',
+        );
+
+        expect(runtimeVariables['user.daily_streak'], '0');
+        expect(runtimeVariables['user.bc_daily_streak'], '0');
+
+        // The default should be persisted to the store
+        expect(store.scopedVariables['user']?['user-1']?['daily_streak'], 0);
+      },
+    );
+
+    test(
+      'does NOT persist empty-string default to store',
+      () async {
+        final store = _FakeBotDataStore(
+          globalVariables: const <String, dynamic>{},
+          // No stored value for 'nickname'
+          scopedVariables: <String, Map<String, Map<String, dynamic>>>{},
+          scopedDefinitions: const <Map<String, dynamic>>[
+            <String, dynamic>{
+              'scope': 'guild',
+              'key': 'nickname',
+              'defaultValue': '',
+            },
+          ],
+        );
+
+        final runtimeVariables = <String, String>{};
+        await hydrateRuntimeVariables(
+          store: store,
+          botId: 'bot-1',
+          runtimeVariables: runtimeVariables,
+          guildContextId: 'guild-1',
+        );
+
+        // Runtime should still get the empty string default
+        expect(runtimeVariables['guild.nickname'], '');
+
+        // But it should NOT be persisted to the store (no unnecessary write)
+        final guildContext =
+            store.scopedVariables['guild']?['guild-1'];
+        expect(guildContext == null || guildContext.containsKey('nickname') == false, isTrue);
+      },
+    );
   });
 
   group('hydrateActionPlaceholders', () {

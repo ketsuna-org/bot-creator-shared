@@ -124,6 +124,12 @@ Future<void> injectScopedRuntimeVariables({
     }
   }
 
+  // Collect defaults that replaced empty/missing values so they can be
+  // persisted back to the store.  Without this, `$getUserVar[cash]`
+  // would return "" forever even though the definition says the default
+  // is 0, because the empty string is never corrected in the DB.
+  final defaultsToPersist = <(String key, dynamic value)>[];
+
   if (scopedDefinitions.isNotEmpty) {
     for (final definition in scopedDefinitions) {
       final definitionScope = (definition['scope'] ?? '').toString().trim();
@@ -150,7 +156,33 @@ Future<void> injectScopedRuntimeVariables({
         continue;
       }
 
-      values[normalizedKey] = definition['defaultValue'];
+      final defaultValue = definition['defaultValue'];
+
+      // Only persist non-trivial defaults (not null / empty-string).
+      // This prevents overwriting a legitimate empty-string value or
+      // writing stale defaults for definitions that intentionally
+      // default to "".
+      if (defaultValue != null &&
+          !(defaultValue is String && defaultValue.trim().isEmpty)) {
+        defaultsToPersist.add((normalizedKey, defaultValue));
+      }
+
+      values[normalizedKey] = defaultValue;
+    }
+  }
+
+  // Persist the defaults that replaced empty/missing values so that
+  // subsequent reads (including the admin UI table) see the correct
+  // value instead of "".
+  if (normalizedContextId != null && defaultsToPersist.isNotEmpty) {
+    for (final (key, value) in defaultsToPersist) {
+      await store.setScopedVariable(
+        botId,
+        scope,
+        normalizedContextId,
+        key,
+        value,
+      );
     }
   }
 
