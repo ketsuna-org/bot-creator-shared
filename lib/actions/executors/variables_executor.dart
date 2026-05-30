@@ -16,6 +16,19 @@ const _supportedVariableScopes = <String>{
   'message',
 };
 
+/// Returns true when a value stored in the DB should be treated as "not set".
+/// The DB encodes empty strings as the JSON literal `""` (two chars), so both
+/// a true Dart empty string and the two-character string `""` are considered
+/// effectively empty.
+bool _isEffectivelyEmpty(dynamic value) {
+  if (value == null) return true;
+  if (value is String) {
+    final trimmed = value.trim();
+    return trimmed.isEmpty || trimmed == '""';
+  }
+  return false;
+}
+
 String _scopedStorageKey(String rawKey) {
   final key = rawKey.trim();
   if (key.isEmpty) {
@@ -668,32 +681,12 @@ Future<dynamic> _readPersistedVariable({
     return null;
   }
 
-  if (value == null) {
-    // Variable row doesn't exist yet — initialise with the configured
-    // default, falling back to '' only when there is no definition.
+  if (value == null || _isEffectivelyEmpty(value)) {
+    // Row is missing OR contains the empty-string sentinel (either a true ''
+    // or the JSON-encoded form '""' that the DB returns for stored empty
+    // strings). In both cases apply the configured default.
     final configuredDefault = await lookupConfiguredDefault();
-    value = configuredDefault ?? '';
-    await store.setScopedVariable(
-      botId,
-      binding.scope,
-      binding.contextId,
-      binding.storageKey,
-      value,
-    );
-    await _ensureScopedDefinitionExists(
-      store: store,
-      botId: botId,
-      scope: binding.scope,
-      storageKey: binding.storageKey,
-      defaultValue: value,
-    );
-  } else if (value is String && value.isEmpty) {
-    // Row exists but is empty — could be a row that was corrupted by the
-    // old bug (which always wrote '' on first access). Heal it: if the
-    // definition has a non-empty default, promote it.
-    // Per product rule: an intentionally empty value means deletion, so ''
-    // in the DB always means "not set" and the default should be applied.
-    final configuredDefault = await lookupConfiguredDefault();
+    // Only heal if the definition actually has a non-empty default.
     if (configuredDefault != null &&
         configuredDefault.toString().isNotEmpty) {
       value = configuredDefault;
@@ -703,6 +696,25 @@ Future<dynamic> _readPersistedVariable({
         binding.contextId,
         binding.storageKey,
         value,
+      );
+    } else if (value == null) {
+      // Truly missing row with no definition default — initialise to ''.
+      value = '';
+      await store.setScopedVariable(
+        botId,
+        binding.scope,
+        binding.contextId,
+        binding.storageKey,
+        value,
+      );
+    }
+    if (value == null || _isEffectivelyEmpty(value)) {
+      await _ensureScopedDefinitionExists(
+        store: store,
+        botId: botId,
+        scope: binding.scope,
+        storageKey: binding.storageKey,
+        defaultValue: value ?? '',
       );
     }
   }
