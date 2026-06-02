@@ -1,6 +1,7 @@
 import 'package:nyxx/nyxx.dart';
 import 'package:bot_creator_shared/actions/permission_checks.dart';
 import 'package:bot_creator_shared/utils/global.dart';
+import 'package:bot_creator_shared/actions/handler_utils.dart';
 
 Snowflake? _toSnowflake(dynamic value) {
   final parsed = int.tryParse(value?.toString() ?? '');
@@ -59,14 +60,20 @@ Future<Map<String, String>> muteUserAction(
   NyxxGateway client, {
   required Snowflake? guildId,
   required Map<String, dynamic> payload,
+  String Function(String)? resolve,
 }) async {
+  // Résoudre les variables dans le payload si une fonction resolve est fournie
+  final resolvedPayload = resolve != null
+      ? resolvePayloadValues(payload, resolve)
+      : payload;
+
   try {
     if (guildId == null) {
       return {'error': 'Missing guildId', 'userId': ''};
     }
 
     final userId =
-        _toSnowflake(payload['userId']) ?? _toSnowflake(payload['memberId']);
+        _toSnowflake(resolvedPayload['userId']) ?? _toSnowflake(resolvedPayload['memberId']);
     if (userId == null) {
       return {'error': 'Missing or invalid userId/memberId', 'userId': ''};
     }
@@ -85,7 +92,7 @@ Future<Map<String, String>> muteUserAction(
     final now = DateTime.now().toUtc();
     DateTime? until;
 
-    final explicitUntilRaw = payload['until']?.toString().trim();
+    final explicitUntilRaw = resolvedPayload['until']?.toString().trim();
     if (explicitUntilRaw != null && explicitUntilRaw.isNotEmpty) {
       until = DateTime.tryParse(explicitUntilRaw)?.toUtc();
       if (until == null) {
@@ -93,7 +100,7 @@ Future<Map<String, String>> muteUserAction(
       }
     }
 
-    until ??= now.add(_resolveMuteDuration(payload));
+    until ??= now.add(_resolveMuteDuration(resolvedPayload));
 
     final maxUntil = now.add(const Duration(days: 28));
     if (until.isAfter(maxUntil)) {
@@ -103,7 +110,7 @@ Future<Map<String, String>> muteUserAction(
       until = now.add(const Duration(seconds: 1));
     }
 
-    final reason = payload['reason']?.toString().trim();
+    final reason = resolvedPayload['reason']?.toString().trim();
     final guild = await fetchGuildCached(client, guildId);
     if (guild == null) return {'error': 'Guild not found', 'userId': ''};
     final member = await guild.members[userId].update(

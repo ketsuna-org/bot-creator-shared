@@ -50,7 +50,35 @@ Future<Map<String, String>> executeActionWithChannel(
   return action();
 }
 
-/// Extension pour simplifier l'accÃ¨s aux rÃ©sultats
+/// Helper pour résoudre les valeurs de chaîne dans un payload
+Map<String, dynamic> resolvePayloadValues(
+  Map<String, dynamic> payload,
+  String Function(String) resolve,
+) {
+  final resolved = <String, dynamic>{};
+  for (final entry in payload.entries) {
+    final value = entry.value;
+    if (value is String) {
+      resolved[entry.key] = resolve(value);
+    } else if (value is Map<String, dynamic>) {
+      resolved[entry.key] = resolvePayloadValues(value, resolve);
+    } else if (value is List) {
+      resolved[entry.key] = value.map((item) {
+        if (item is String) {
+          return resolve(item);
+        } else if (item is Map<String, dynamic>) {
+          return resolvePayloadValues(item, resolve);
+        }
+        return item;
+      }).toList();
+    } else {
+      resolved[entry.key] = value;
+    }
+  }
+  return resolved;
+}
+
+/// Extension pour simplifier l'accès aux résultats
 extension ActionResultExtension on Map<String, String> {
   bool get hasError => containsKey('error');
   String? get error => this['error'];

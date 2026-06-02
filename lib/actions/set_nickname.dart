@@ -1,13 +1,19 @@
 import 'package:nyxx/nyxx.dart';
-import 'handler_utils.dart';
+import 'package:bot_creator_shared/actions/handler_utils.dart';
 import 'permission_checks.dart';
 
 Future<Map<String, String>> setNicknameAction(
   NyxxGateway client, {
   required Snowflake guildId,
   required Map<String, dynamic> payload,
+  String Function(String)? resolve,
 }) async {
-  final userId = parseSnowflake(payload['userId']);
+  // Résoudre les variables dans le payload si une fonction resolve est fournie
+  final resolvedPayload = resolve != null
+      ? resolvePayloadValues(payload, resolve)
+      : payload;
+
+  final userId = parseSnowflake(resolvedPayload['userId']);
   if (userId == null) {
     return {'error': 'Invalid userId'};
   }
@@ -22,8 +28,8 @@ Future<Map<String, String>> setNicknameAction(
     return {'error': permError};
   }
 
-  final nickname = payload['nickname']?.toString() ?? '';
-  final reason = payload['reason']?.toString();
+  final nickname = resolvedPayload['nickname']?.toString() ?? '';
+  final reason = resolvedPayload['reason']?.toString();
 
   try {
     final member = await client.guilds[guildId].members.fetch(userId);

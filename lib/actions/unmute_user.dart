@@ -1,5 +1,6 @@
 ﻿import 'package:nyxx/nyxx.dart';
 import 'package:bot_creator_shared/utils/global.dart';
+import 'package:bot_creator_shared/actions/handler_utils.dart';
 import 'permission_checks.dart';
 
 Snowflake? _toSnowflake(dynamic value) {
@@ -14,7 +15,13 @@ Future<Map<String, String>> unmuteUserAction(
   NyxxGateway client, {
   required Snowflake? guildId,
   required Map<String, dynamic> payload,
+  String Function(String)? resolve,
 }) async {
+  // Résoudre les variables dans le payload si une fonction resolve est fournie
+  final resolvedPayload = resolve != null
+      ? resolvePayloadValues(payload, resolve)
+      : payload;
+
   try {
     if (guildId == null) {
       return {'error': 'Missing guildId', 'userId': ''};
@@ -31,12 +38,12 @@ Future<Map<String, String>> unmuteUserAction(
     }
 
     final userId =
-        _toSnowflake(payload['userId']) ?? _toSnowflake(payload['memberId']);
+        _toSnowflake(resolvedPayload['userId']) ?? _toSnowflake(resolvedPayload['memberId']);
     if (userId == null) {
       return {'error': 'Missing or invalid userId/memberId', 'userId': ''};
     }
 
-    final reason = payload['reason']?.toString().trim();
+    final reason = resolvedPayload['reason']?.toString().trim();
     final guild = await fetchGuildCached(client, guildId);
     if (guild == null) return {'error': 'Guild not found', 'userId': ''};
     final member = await guild.members[userId].update(
