@@ -174,6 +174,10 @@ Map<String, String> extractMemberRuntimeDetails({
   }
 
   final roleIds = <String>{};
+  // Track the highest role position and ID (declared here to survive the try-catch)
+  int highestRolePosition = -1;
+  String? highestRoleId;
+
   try {
     final dynamic roleIdsRaw = member.roleIds;
     if (roleIdsRaw is Iterable) {
@@ -220,6 +224,21 @@ Map<String, String> extractMemberRuntimeDetails({
           continue;
         }
 
+        // Track highest role by position (only if role has a position field)
+        try {
+          final dynamic rolePosition = role.position;
+          if (rolePosition != null) {
+            final position = int.tryParse(rolePosition.toString()) ?? -1;
+            // Skip @everyone role (typically has position <= 0)
+            if (position > 0 && position > highestRolePosition) {
+              highestRolePosition = position;
+              highestRoleId = roleIdValue;
+            }
+          }
+        } catch (_) {
+          // Role doesn't have a position field, skip highest role tracking for this role
+        }
+
         final dynamic permsRaw = role.permissions;
         final int permValue;
         if (permsRaw is Permissions) {
@@ -261,6 +280,11 @@ Map<String, String> extractMemberRuntimeDetails({
     'interaction.member.permissions': tokens.join(','),
     'member.roles': roleIds.join(','),
   };
+
+  // Add member.highestRole if found
+  if (highestRoleId != null) {
+    details['member.highestRole'] = highestRoleId;
+  }
 
   // Extra member fields that may not be available on every PartialMember.
   try {
