@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:nyxx/nyxx.dart';
 import 'package:bot_creator_shared/utils/global.dart';
+import 'handler_utils.dart';
 
 Snowflake? _toSnowflake(dynamic value) {
   final parsed = int.tryParse(value?.toString() ?? '');
@@ -133,14 +134,20 @@ Future<Map<String, String>> endPollAction(
   NyxxGateway client, {
   required Map<String, dynamic> payload,
   Snowflake? fallbackChannelId,
+  String Function(String)? resolve,
 }) async {
+  // Résoudre les variables dans le payload si une fonction resolve est fournie
+  final resolvedPayload = resolve != null
+      ? resolvePayloadValues(payload, resolve)
+      : payload;
+
   try {
-    final channelId = _toSnowflake(payload['channelId']) ?? fallbackChannelId;
+    final channelId = _toSnowflake(resolvedPayload['channelId']) ?? fallbackChannelId;
     if (channelId == null) {
       return {'error': 'channelId is required for endPoll'};
     }
 
-    final messageId = _toSnowflake(payload['messageId']);
+    final messageId = _toSnowflake(resolvedPayload['messageId']);
     if (messageId == null) {
       return {'error': 'messageId is required for endPoll'};
     }

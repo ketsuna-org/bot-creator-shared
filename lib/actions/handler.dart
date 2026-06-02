@@ -669,10 +669,22 @@ Future<Map<String, String>> handleActions(
             );
             if (permError != null) throw Exception(permError);
           }
+          final resolvedEndPollPayload = Map<String, dynamic>.from(action.payload);
+          if (action.payload.containsKey('channelId')) {
+            resolvedEndPollPayload['channelId'] = resolveValue(
+              action.payload['channelId'].toString(),
+            );
+          }
+          if (action.payload.containsKey('messageId')) {
+            resolvedEndPollPayload['messageId'] = resolveValue(
+              action.payload['messageId'].toString(),
+            );
+          }
           final endPollResult = await endPollAction(
             client,
-            payload: action.payload,
+            payload: resolvedEndPollPayload,
             fallbackChannelId: resolvedFallbackChannelId,
+            resolve: resolveValue,
           );
           if (endPollResult['error'] != null) {
             throw Exception(endPollResult['error']);
