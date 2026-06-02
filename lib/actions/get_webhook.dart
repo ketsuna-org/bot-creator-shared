@@ -1,6 +1,8 @@
 ﻿import 'package:nyxx/nyxx.dart';
 import 'dart:convert';
 
+import 'handler_utils.dart';
+
 Snowflake? _toSnowflake(dynamic value) {
   final parsed = int.tryParse(value?.toString() ?? '');
   if (parsed == null) {
@@ -11,12 +13,16 @@ Snowflake? _toSnowflake(dynamic value) {
 
 ({Snowflake? id, String? token}) _extractWebhookRef(
   Map<String, dynamic> payload,
+  String Function(String)? resolve,
 ) {
-  final directId = _toSnowflake(payload['webhookId']);
+  final rawWebhookId = payload['webhookId']?.toString() ?? '';
+  final webhookId = resolve != null ? resolve(rawWebhookId) : rawWebhookId;
+  final directId = _toSnowflake(webhookId);
   final directToken = payload['token']?.toString().trim();
 
   final rawUrl = payload['webhookUrl']?.toString().trim() ?? '';
-  final uri = Uri.tryParse(rawUrl);
+  final url = resolve != null ? resolve(rawUrl) : rawUrl;
+  final uri = Uri.tryParse(url);
   if (uri == null) {
     return (id: directId, token: directToken);
   }
@@ -39,9 +45,15 @@ Snowflake? _toSnowflake(dynamic value) {
 Future<Map<String, String>> getWebhookAction(
   NyxxGateway client, {
   required Map<String, dynamic> payload,
+  String Function(String)? resolve,
 }) async {
+  // Résoudre les variables dans le payload si une fonction resolve est fournie
+  final resolvedPayload = resolve != null
+      ? resolvePayloadValues(payload, resolve)
+      : payload;
+
   try {
-    final ref = _extractWebhookRef(payload);
+    final ref = _extractWebhookRef(resolvedPayload, resolve);
     if (ref.id == null) {
       return {'error': 'Missing webhookId (or webhookUrl)', 'webhook': ''};
     }

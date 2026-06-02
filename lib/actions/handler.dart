@@ -488,9 +488,20 @@ Future<Map<String, String>> handleActions(
             );
             if (permError != null) throw Exception(permError);
           }
+          final resolvedPinPayload = Map<String, dynamic>.from(action.payload);
+          if (action.payload.containsKey('messageId')) {
+            resolvedPinPayload['messageId'] = resolveValue(
+              action.payload['messageId'].toString(),
+            );
+          }
+          if (action.payload.containsKey('channelId')) {
+            resolvedPinPayload['channelId'] = resolveValue(
+              action.payload['channelId'].toString(),
+            );
+          }
           final result = await pinMessageAction(
             client,
-            payload: action.payload,
+            payload: resolvedPinPayload,
             fallbackChannelId: fallbackChannelId,
           );
           if (result['error'] != null) {
@@ -599,9 +610,20 @@ Future<Map<String, String>> handleActions(
             );
             if (permError != null) throw Exception(permError);
           }
+          final resolvedUnpinPayload = Map<String, dynamic>.from(action.payload);
+          if (action.payload.containsKey('messageId')) {
+            resolvedUnpinPayload['messageId'] = resolveValue(
+              action.payload['messageId'].toString(),
+            );
+          }
+          if (action.payload.containsKey('channelId')) {
+            resolvedUnpinPayload['channelId'] = resolveValue(
+              action.payload['channelId'].toString(),
+            );
+          }
           final unpinResult = await unpinMessageAction(
             client,
-            payload: action.payload,
+            payload: resolvedUnpinPayload,
             fallbackChannelId: resolvedFallbackChannelId,
           );
           if (unpinResult['error'] != null) {

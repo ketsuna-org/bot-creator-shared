@@ -1,6 +1,7 @@
 ﻿import 'dart:convert';
 
 import 'package:nyxx/nyxx.dart';
+import 'handler_utils.dart';
 
 Snowflake? _toSnowflake(dynamic value) {
   final parsed = int.tryParse(value?.toString() ?? '');
@@ -27,10 +28,16 @@ Future<Map<String, String>> listWebhooksAction(
   required Map<String, dynamic> payload,
   required Snowflake? fallbackChannelId,
   required Snowflake? fallbackGuildId,
+  String Function(String)? resolve,
 }) async {
+  // Résoudre les variables dans le payload si une fonction resolve est fournie
+  final resolvedPayload = resolve != null
+      ? resolvePayloadValues(payload, resolve)
+      : payload;
+
   try {
-    final channelId = _toSnowflake(payload['channelId']) ?? fallbackChannelId;
-    final guildId = _toSnowflake(payload['guildId']) ?? fallbackGuildId;
+    final channelId = _toSnowflake(resolvedPayload['channelId']) ?? fallbackChannelId;
+    final guildId = _toSnowflake(resolvedPayload['guildId']) ?? fallbackGuildId;
 
     List<Webhook> webhooks;
     if (channelId != null) {

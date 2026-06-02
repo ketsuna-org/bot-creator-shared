@@ -32,10 +32,12 @@ Future<bool> executeWebhooksAction({
         BotCreatorActionType.editWebhook => editWebhookAction(
           client,
           payload: payload,
+          resolve: resolveValue,
         ),
         BotCreatorActionType.deleteWebhook => deleteWebhookAction(
           client,
           payload: payload,
+          resolve: resolveValue,
         ),
         _ => throw Exception('Unexpected action type'),
       };
@@ -63,6 +65,7 @@ Future<bool> executeWebhooksAction({
         payload: payload,
         fallbackChannelId: fallbackChannelId,
         fallbackGuildId: fallbackGuildId,
+        resolve: resolveValue,
       );
       if (result['error'] != null) {
         throw Exception(result['error']);
@@ -71,7 +74,11 @@ Future<bool> executeWebhooksAction({
       return true;
 
     case BotCreatorActionType.getWebhook:
-      final result = await getWebhookAction(client, payload: payload);
+      final result = await getWebhookAction(
+        client,
+        payload: payload,
+        resolve: resolveValue,
+      );
       if (result['error'] != null) {
         throw Exception(result['error']);
       }
