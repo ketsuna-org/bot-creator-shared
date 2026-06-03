@@ -13,3 +13,4 @@ part 'bdfd_ast_transpiler/runtime_builders.dart';
 part 'bdfd_ast_transpiler/action_builders.dart';
 part 'bdfd_ast_transpiler/inline_helpers.dart';
 part 'bdfd_ast_transpiler/models.dart';
+part 'bdfd_ast_transpiler/image_canvas.dart';

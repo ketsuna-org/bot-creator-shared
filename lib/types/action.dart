@@ -102,6 +102,8 @@ enum BotCreatorActionType {
   log,
   // Runtime JSON
   runtimeJsonBlock,
+  // Runtime Image Manipulation
+  runtimeImageBlock,
   // Guild Commands
   registerGuildCommands,
   unregisterGuildCommands,

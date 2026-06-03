@@ -870,6 +870,24 @@ extension _BdfdAstTranspilationScopeDispatch on _BdfdAstTranspilationScope {
       // Debug profiling
       case 'debug':
         return _buildDebugAction(node);
+
+      // ── Image Canvas Functions ─────────────────────────────────────────────
+      case 'canvascreate':
+        _canvasCreate(node);
+        return null;
+      case 'canvasloadimage':
+        _canvasLoadImage(node);
+        return null;
+      case 'canvasdrawtext':
+        _canvasDrawText(node);
+        return null;
+      case 'canvasdrawcircle':
+        _canvasDrawCircle(node);
+        return null;
+      case 'canvasdrawrect':
+        _canvasDrawRect(node);
+        return null;
+
       default:
         if (pendingResponse != null && node.arguments.isEmpty) {
           // Unknown no-arg tokens (for example `$test`) are treated as

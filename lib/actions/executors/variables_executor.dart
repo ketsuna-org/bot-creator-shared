@@ -7,6 +7,7 @@ import 'package:nyxx/nyxx.dart';
 
 import '../../types/action.dart';
 import 'control_flow_executor.dart';
+import 'image_executor.dart';
 
 const _supportedVariableScopes = <String>{
   'guild',
@@ -1958,6 +1959,16 @@ Future<bool> executeVariablesAction({
 
     case BotCreatorActionType.runtimeJsonBlock:
       _executeRuntimeJsonBlock(
+        payload: payload,
+        resultKey: resultKey,
+        results: results,
+        variables: variables,
+        resolveValue: resolveValue,
+      );
+      return true;
+
+    case BotCreatorActionType.runtimeImageBlock:
+      executeRuntimeImageBlock(
         payload: payload,
         resultKey: resultKey,
         results: results,

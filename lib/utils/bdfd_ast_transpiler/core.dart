@@ -72,6 +72,16 @@ class _BdfdAstTranspilationScope {
   String? _deferredJsonResultKeyPrefix;
   String? _lastDeferredJsonResultKeyPrefix;
 
+  // ── Deferred (runtime) Image state ─────────────────────────────────────────
+  /// When true, image canvas operations are being collected into a deferred
+  /// [runtimeImageBlock] action. Started by `$canvasCreate` and flushed when
+  /// any non-canvas function is encountered.
+  bool _deferredImageMode = false;
+  final List<Map<String, dynamic>> _deferredImageOps =
+      <Map<String, dynamic>>[];
+  int _deferredImageBlockCounter = 0;
+  String? _deferredImageResultKeyPrefix;
+
   List<String> _textSplitParts = <String>[];
   String? _useChannelId;
   bool _suppressErrors = false;
@@ -392,6 +402,12 @@ class _BdfdAstTranspilationScope {
           if (deferredJson != null) actions.add(deferredJson);
         }
 
+        // Flush deferred image block when a non-canvas function is encountered.
+        if (!_isImageCanvasFunction(node.normalizedName)) {
+          final deferredImage = _flushDeferredImage();
+          if (deferredImage != null) actions.add(deferredImage);
+        }
+
         if (emitted != null) {
           actions.add(emitted);
         }
@@ -408,6 +424,12 @@ class _BdfdAstTranspilationScope {
       final trailingDeferredJson = _flushDeferredJson();
       if (trailingDeferredJson != null) {
         actions.add(trailingDeferredJson);
+      }
+
+      // Flush any remaining deferred image block.
+      final trailingDeferredImage = _flushDeferredImage();
+      if (trailingDeferredImage != null) {
+        actions.add(trailingDeferredImage);
       }
 
       final trailingResponse = pendingResponse.buildAction(

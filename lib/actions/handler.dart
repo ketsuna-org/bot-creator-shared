@@ -464,6 +464,7 @@ Future<Map<String, String>> handleActions(
         case BotCreatorActionType.debugProfile:
         case BotCreatorActionType.log:
         case BotCreatorActionType.runtimeJsonBlock:
+        case BotCreatorActionType.runtimeImageBlock:
         case BotCreatorActionType.setTemporaryVariable:
         case BotCreatorActionType.jsonForEachLoop:
         case BotCreatorActionType.wait:
