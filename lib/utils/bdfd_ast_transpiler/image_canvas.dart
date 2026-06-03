@@ -16,6 +16,7 @@ extension _BdfdAstTranspilationScopeImageCanvas on _BdfdAstTranspilationScope {
       case 'canvasdrawtext':
       case 'canvasdrawcircle':
       case 'canvasdrawrect':
+      case 'canvascompositeimage':
       case 'attachimage':
         return true;
       default:
@@ -101,6 +102,21 @@ extension _BdfdAstTranspilationScopeImageCanvas on _BdfdAstTranspilationScope {
     _deferredImageOps.add(<String, dynamic>{
       'op': 'loadImage',
       'url': url,
+    });
+  }
+
+  /// Adds a compositeImage operation (overlay image at position).
+  /// Signature: $canvasCompositeImage[url;x;y;width;height]
+  void _canvasCompositeImage(BdfdFunctionCallAst node) {
+    if (!_deferredImageMode) return;
+
+    _deferredImageOps.add(<String, dynamic>{
+      'op': 'compositeImage',
+      'url': _stringifyArgument(node, 0),
+      'x': _stringifyArgument(node, 1),
+      'y': _stringifyArgument(node, 2),
+      'width': _stringifyArgument(node, 3),
+      'height': _stringifyArgument(node, 4),
     });
   }
 

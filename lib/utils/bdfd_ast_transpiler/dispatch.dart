@@ -887,6 +887,9 @@ extension _BdfdAstTranspilationScopeDispatch on _BdfdAstTranspilationScope {
       case 'canvasdrawrect':
         _canvasDrawRect(node);
         return null;
+      case 'canvascompositeimage':
+        _canvasCompositeImage(node);
+        return null;
       case 'attachimage':
         _canvasAttachImage(node);
         return null;
