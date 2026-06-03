@@ -313,6 +313,53 @@ Future<void> hydrateSpecificScopedVariables({
   }
 }
 
+/// Walks [input] and collects all `scope[contextId].property` patterns using
+/// bracket-depth-aware matching. Unlike a naive regex `[^\]]+`, this correctly
+/// handles nested `[...]` inside `((...))` placeholders such as
+/// `member[((message.mentions[0]))].displayName`.
+void _collectScopedPlaceholders(
+  String input,
+  List<(String, String, String)> out,
+) {
+  // Look for a known scope name followed by '['
+  final scopeStartPattern = RegExp(r'\b(member|user|guild|channel|role|emoji|message|webhook|temp|bot)\[');
+  for (final match in scopeStartPattern.allMatches(input)) {
+    final scope = match.group(1)!;
+    final bracketStart = match.end - 1; // position of '['
+    var depth = 0;
+    var pos = bracketStart;
+    // Walk until we find the matching ']'
+    while (pos < input.length) {
+      final ch = input[pos];
+      if (ch == '[') {
+        depth++;
+      } else if (ch == ']') {
+        depth--;
+        if (depth == 0) {
+          // Found the closing bracket. Check if followed by '.property'
+          final afterBracket = pos + 1;
+          if (afterBracket < input.length && input[afterBracket] == '.') {
+            // Read the property name
+            final propStart = afterBracket + 1;
+            var propEnd = propStart;
+            while (propEnd < input.length &&
+                RegExp(r'[a-zA-Z_]').hasMatch(input[propEnd])) {
+              propEnd++;
+            }
+            if (propEnd > propStart) {
+              final contextId = input.substring(bracketStart + 1, pos);
+              final property = input.substring(propStart, propEnd);
+              out.add((scope, contextId, property));
+            }
+          }
+          break;
+        }
+      }
+      pos++;
+    }
+  }
+}
+
 Future<void> hydrateActionPlaceholders({
   required BotDataStore store,
   required String botId,
@@ -326,6 +373,10 @@ Future<void> hydrateActionPlaceholders({
   discordFetcher,
   Set<dynamic>? hydratedActions,
 }) async {
+  // Legacy regex pattern kept for reference; bracket-depth-aware walker
+  // (_collectScopedPlaceholders) is used instead for correctness with
+  // nested placeholders like member[((message.mentions[0]))].displayName.
+  // ignore: unused_local_variable
   final placeholderPattern = RegExp(r'\b([a-z]+)\[([^\]]+)\]\.([a-zA-Z_]+)');
   final bdfdFunctionPattern = RegExp(
     r'\$(?:get(?:User|Guild|Channel|Message)Var)\[[^;]+;([^\]\s]+)\]',
@@ -349,15 +400,25 @@ Future<void> hydrateActionPlaceholders({
       }
       
       // 1. Scan for internal placeholders ((user[ID].username)) or ((user[ID].bc_var))
-      final matches = placeholderPattern.allMatches(obj).toList();
+      //
+      // Use a bracket-depth-aware walker instead of a naive regex so that
+      // nested [...] inside ((...)) placeholders (e.g.
+      // member[((message.mentions[0]))].displayName) are handled correctly.
+      // The regex [^\]]+ would stop at the first ']' inside mentions[0],
+      // producing a malformed contextId like "((message.mentions[0".
+      final matches = <(String, String, String)>[];
+      _collectScopedPlaceholders(obj, matches);
       
       for (final match in matches) {
-        final scope = match.group(1)!;
-        var contextId = match.group(2)!;
-        final property = match.group(3)!;
+        final scope = match.$1;
+        var contextId = match.$2;
+        final property = match.$3;
         
+        // Resolve any remaining ((...)) in the contextId (e.g. when
+        // the ID was a bare placeholder like user[(("author.id"))].username).
         if (contextId.contains('((')) {
-          contextId = resolveTemplatePlaceholders(contextId, variables);
+          contextId = resolveTemplatePlaceholders(contextId, variables).trim();
+          if (contextId.isEmpty) continue;
         }
         if (contextId.isNotEmpty &&
             contextId != 'unknown user' &&

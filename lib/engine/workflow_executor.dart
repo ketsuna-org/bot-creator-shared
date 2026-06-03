@@ -156,7 +156,15 @@ class WorkflowExecutor {
     );
     
     // Defer if needed
-    final isEphemeral = workflow['visibility']?.toString().toLowerCase() == 'ephemeral';
+    var isEphemeral = workflow['visibility']?.toString().toLowerCase() == 'ephemeral';
+    // If any respondWithMessage action has ephemeral:true, the initial
+    // defer must also be ephemeral — Discord does not allow changing
+    // ephemerality on updateOriginalResponse after a non-ephemeral defer.
+    if (!isEphemeral) {
+      isEphemeral = actions.any((a) =>
+          a.type == BotCreatorActionType.respondWithMessage &&
+          a.payload['ephemeral'] == true);
+    }
     // If a deferInteraction action was injected by CommandMigration, skip the
     // legacy auto-defer so we don't double-acknowledge the interaction.
     final hasDeferAction = actions.any(

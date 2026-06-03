@@ -112,7 +112,7 @@ Future<Map<String, dynamic>> respondWithMessageAction(
       if (description.isNotEmpty) embed.description = description;
       if (url.isNotEmpty) embed.url = Uri.tryParse(url);
 
-      final timestampRaw = (embedJson['timestamp'] ?? '').toString();
+      final timestampRaw = resolve((embedJson['timestamp'] ?? '').toString());
       DateTime? timestamp;
       if (timestampRaw == 'now') {
         timestamp = DateTime.now().toUtc();
@@ -242,6 +242,32 @@ Future<Map<String, dynamic>> respondWithMessageAction(
     final allowedMentions = parseAllowedMentions(payload, resolve);
 
     if (isAcknowledged) {
+      // When the interaction is already acknowledged (deferred) but this
+      // response wants to be ephemeral, we send a followup ephemeral message
+      // because Discord does not allow changing ephemerality on the
+      // original deferred response.
+      if (isEphemeral) {
+        final followupMsg = await dynInteraction.sendFollowupMessage(
+          MessageBuilder(
+            content: content.trim().isEmpty ? null : content,
+            embeds: embeds.isEmpty ? null : embeds,
+            components: componentNodes.isEmpty ? null : componentNodes,
+            flags: MessageFlags(MessageFlags.ephemeral.value),
+            allowedMentions: allowedMentions,
+          ),
+        );
+        markInteractionAcknowledged(interaction);
+        registerComponentWorkflowBindings(
+          definition: definition,
+          resolve: resolve,
+          botId: botId,
+          guildId: interaction.guildId?.toString(),
+          channelId: interaction.channelId?.toString(),
+          messageId: followupMsg.id.toString(),
+        );
+        return {'messageId': followupMsg.id.toString()};
+      }
+
       final message = await dynInteraction.updateOriginalResponse(
         MessageUpdateBuilder(
           content: content.trim().isEmpty ? null : content,
