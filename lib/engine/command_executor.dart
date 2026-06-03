@@ -207,14 +207,6 @@ class CommandExecutor {
 
     final actions = compileResult.actions;
     
-    // Defer the interaction to give the bot time to process canvas operations
-    // and other potentially slow actions (Discord requires a response within 3s).
-    try {
-      await interaction.acknowledge();
-    } catch (_) {
-      // Defer may fail if already acknowledged — that's fine.
-    }
-    
     await _workflowExecutor.executeActions(
       actions: actions,
       context: interaction,

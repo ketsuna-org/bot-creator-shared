@@ -250,6 +250,13 @@ Future<Map<String, dynamic>> respondWithMessageAction(
 
     final allowedMentions = parseAllowedMentions(payload, resolve);
 
+    // When there are canvas attachments but no content/embed/component,
+    // Discord API requires at least one non-null field.
+    // Use a space so MessageBuilder doesn't reject it.
+    final effectiveContent = content.trim().isEmpty
+        ? (canvasAttachments != null ? ' ' : null)
+        : content;
+
     if (isAcknowledged) {
       // When the interaction is already acknowledged (deferred):
       // - Ephemeral responses must use followup (Discord doesn't allow
@@ -257,11 +264,10 @@ Future<Map<String, dynamic>> respondWithMessageAction(
       // - Responses with canvas attachments must also use followup because
       //   updateOriginalResponse (MessageUpdateBuilder) doesn't support
       //   file attachments — Discord doesn't allow editing message attachments.
-      print('[DEBUG] isAcknowledged=true, isEphemeral=$isEphemeral, hasAttachments=${canvasAttachments != null}');
       if (isEphemeral || canvasAttachments != null) {
         final followupMsg = await dynInteraction.sendFollowupMessage(
           MessageBuilder(
-            content: content.trim().isEmpty ? null : content,
+            content: effectiveContent,
             embeds: embeds.isEmpty ? null : embeds,
             components: componentNodes.isEmpty ? null : componentNodes,
             flags: isEphemeral
@@ -307,7 +313,7 @@ Future<Map<String, dynamic>> respondWithMessageAction(
 
     await dynInteraction.respond(
       MessageBuilder(
-        content: content.trim().isEmpty ? null : content,
+        content: effectiveContent,
         embeds: embeds.isEmpty ? null : embeds,
         components: componentNodes.isEmpty ? null : componentNodes,
         flags: flags > 0 ? MessageFlags(flags) : null,
