@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:nyxx/nyxx.dart';
 import 'package:bot_creator_shared/types/component.dart';
 import 'package:bot_creator_shared/actions/send_component_v2.dart';
@@ -19,6 +21,9 @@ Future<Map<String, dynamic>> respondWithMessageAction(
   Map<String, String>? variables,
 }) async {
   try {
+    // Collect canvas attachments from variables (set by $attachImage)
+    final canvasAttachments = _collectCanvasAttachments(variables);
+
     if (interaction == null) {
       if (client == null) {
         return {
@@ -255,6 +260,7 @@ Future<Map<String, dynamic>> respondWithMessageAction(
             components: componentNodes.isEmpty ? null : componentNodes,
             flags: MessageFlags(MessageFlags.ephemeral.value),
             allowedMentions: allowedMentions,
+            attachments: canvasAttachments,
           ),
         );
         markInteractionAcknowledged(interaction);
@@ -298,6 +304,7 @@ Future<Map<String, dynamic>> respondWithMessageAction(
         components: componentNodes.isEmpty ? null : componentNodes,
         flags: flags > 0 ? MessageFlags(flags) : null,
         allowedMentions: allowedMentions,
+        attachments: canvasAttachments,
       ),
     );
     markInteractionAcknowledged(interaction);
@@ -321,6 +328,39 @@ Future<Map<String, dynamic>> respondWithMessageAction(
   } catch (e) {
     return {'error': e.toString()};
   }
+}
+
+/// Scans [variables] for keys matching `temp._canvasAttachment_*` and returns
+/// a list of [AttachmentBuilder] objects ready to be included in a message.
+/// Keys with empty values are skipped.
+List<AttachmentBuilder>? _collectCanvasAttachments(
+  Map<String, String>? variables,
+) {
+  if (variables == null || variables.isEmpty) return null;
+
+  final attachments = <AttachmentBuilder>[];
+  for (final entry in variables.entries) {
+    // setTemporaryVariable stores under 'temp.<key>'
+    if (!entry.key.startsWith('temp._canvasAttachment_')) continue;
+    if (entry.value.isEmpty) continue;
+
+    // Extract the name from the key: temp._canvasAttachment_card → card
+    final name =
+        entry.key.substring('temp._canvasAttachment_'.length);
+    if (name.isEmpty) continue;
+
+    try {
+      final bytes = base64Decode(entry.value);
+      attachments.add(AttachmentBuilder(
+        data: bytes,
+        fileName: '$name.png',
+      ));
+    } catch (_) {
+      // Not valid base64 — skip
+    }
+  }
+
+  return attachments.isNotEmpty ? attachments : null;
 }
 
 

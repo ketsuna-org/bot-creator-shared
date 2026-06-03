@@ -123,6 +123,7 @@ Future<bool> executeComponentsInteractionsAction({
         client: client,
         fallbackChannelId: fallbackChannelId,
         fallbackMessageId: fallbackMessageId,
+        variables: variables,
       );
       if (messageResult['error'] != null) {
         throw Exception(messageResult['error']);
