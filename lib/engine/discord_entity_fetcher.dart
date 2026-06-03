@@ -77,7 +77,9 @@ class DiscordEntityFetcher {
 
           final member = await gateway.guilds[guildId].members.fetch(id);
           fetchedEntity = member;
-          _populateMemberVariables(variables, contextId, member);
+          final guild = await gateway.guilds[guildId].get();
+          _populateMemberVariables(variables, contextId, member,
+              guild: guild);
           if (member.user != null) {
             _populateUserVariables(variables, contextId, member.user!);
           }
@@ -198,8 +200,9 @@ class DiscordEntityFetcher {
   static void _populateMemberVariables(
     Map<String, String> variables,
     String contextId,
-    dynamic member,
-  ) {
+    dynamic member, {
+    dynamic guild,
+  }) {
     final keys = <String>[];
     void set(String field, String value) {
       final key = _key('member', contextId, field);
@@ -222,6 +225,56 @@ class DiscordEntityFetcher {
     );
     set('joinedAt', member.joinedAt?.toIso8601String() ?? '');
     set('roles', (member.roleIds ?? []).map((rid) => rid.toString()).join(','));
+
+    // Compute highest/lowest role by position from guild role list
+    if (guild != null) {
+      try {
+        final memberRoleIds = <String>{};
+        final roleIdsRaw = member.roleIds;
+        if (roleIdsRaw is Iterable) {
+          for (final rid in roleIdsRaw) {
+            memberRoleIds.add(rid.toString().trim());
+          }
+        }
+
+        final roleListRaw = guild.roleList;
+        if (roleListRaw is Iterable) {
+          String? highestRoleId;
+          int highestPos = -1;
+          String? lowestRoleId;
+          int lowestPos = 999999;
+
+          for (final role in roleListRaw) {
+            final roleId = role.id.toString().trim();
+            if (!memberRoleIds.contains(roleId)) continue;
+            final pos = (role.position as int?) ?? 0;
+
+            // Skip @everyone role (position <= 0)
+            if (pos <= 0) continue;
+
+            if (pos > highestPos) {
+              highestPos = pos;
+              highestRoleId = roleId;
+            }
+            if (pos < lowestPos) {
+              lowestPos = pos;
+              lowestRoleId = roleId;
+            }
+          }
+
+          if (highestRoleId != null) {
+            set('highestRole', highestRoleId);
+            set('highestRoleWithPerms', highestRoleId);
+          }
+          if (lowestRoleId != null) {
+            set('lowestRole', lowestRoleId);
+            set('lowestRoleWithPerms', lowestRoleId);
+          }
+        }
+      } catch (_) {
+        // Role position not available — skip silently
+      }
+    }
   }
 
   static void _populateRoleVariables(

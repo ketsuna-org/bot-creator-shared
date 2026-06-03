@@ -145,6 +145,38 @@ extension _BdfdAstTranspilationScopeInlineRuntime
           }
         }
         return _inlineRuntimeVariables['isbooster'];
+      case 'highestrole':
+        if (node.arguments.isNotEmpty) {
+          final userId = _stringifyArgument(node, 0).trim();
+          if (userId.isNotEmpty) {
+            return '((member[$userId].highestRole))';
+          }
+        }
+        return _inlineRuntimeVariables['highestrole'];
+      case 'lowestrole':
+        if (node.arguments.isNotEmpty) {
+          final userId = _stringifyArgument(node, 0).trim();
+          if (userId.isNotEmpty) {
+            return '((member[$userId].lowestRole))';
+          }
+        }
+        return _inlineRuntimeVariables['lowestrole'];
+      case 'highestrolewithperms':
+        if (node.arguments.isNotEmpty) {
+          final userId = _stringifyArgument(node, 0).trim();
+          if (userId.isNotEmpty) {
+            return '((member[$userId].highestRoleWithPerms))';
+          }
+        }
+        return _inlineRuntimeVariables['highestrolewithperms'];
+      case 'lowestrolewithperms':
+        if (node.arguments.isNotEmpty) {
+          final userId = _stringifyArgument(node, 0).trim();
+          if (userId.isNotEmpty) {
+            return '((member[$userId].lowestRoleWithPerms))';
+          }
+        }
+        return _inlineRuntimeVariables['lowestrolewithperms'];
       case 'userexists':
         if (node.arguments.isNotEmpty) {
           final userId = _stringifyArgument(node, 0).trim();
