@@ -104,6 +104,12 @@ enum BotCreatorActionType {
   runtimeJsonBlock,
   // Runtime Image Manipulation
   runtimeImageBlock,
+  // Image Canvas Sub-Actions (visual-only, collapsed into runtimeImageBlock)
+  canvasCreateBlock,
+  canvasLoadImageBlock,
+  canvasDrawTextBlock,
+  canvasDrawCircleBlock,
+  canvasDrawRectBlock,
   // Guild Commands
   registerGuildCommands,
   unregisterGuildCommands,

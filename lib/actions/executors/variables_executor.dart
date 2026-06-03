@@ -1977,6 +1977,19 @@ Future<bool> executeVariablesAction({
       );
       return true;
 
+    case BotCreatorActionType.canvasCreateBlock:
+    case BotCreatorActionType.canvasLoadImageBlock:
+    case BotCreatorActionType.canvasDrawTextBlock:
+    case BotCreatorActionType.canvasDrawCircleBlock:
+    case BotCreatorActionType.canvasDrawRectBlock:
+      // Visual-only types — should be collapsed into runtimeImageBlock
+      // before reaching the executor.
+      throw StateError(
+        'Canvas block type ${type.name} must be nested inside an '
+        'Image Manipulation Block (runtimeImageBlock) and cannot be '
+        'executed standalone.',
+      );
+
     case BotCreatorActionType.log:
       final message = resolveValue((payload['message'] ?? '').toString());
       if (message.isNotEmpty) {
