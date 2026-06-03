@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:nyxx/nyxx.dart';
 import 'package:bot_creator_shared/types/component.dart';
 import 'package:bot_creator_shared/utils/component_workflow_bindings.dart';
@@ -460,8 +462,12 @@ Future<Map<String, dynamic>> respondWithComponentV2Action(
   String Function(String)? resolve,
   String? botId,
   String? guildId,
+  Map<String, String>? variables,
 }) async {
   resolve ??= (s) => s;
+
+  // Collect canvas attachments (same logic as respondWithMessageAction)
+  final canvasAttachments = _collectComponentAttachments(variables);
   if (interaction == null) {
     if (client == null) {
       return {
@@ -516,6 +522,7 @@ Future<Map<String, dynamic>> respondWithComponentV2Action(
             content: null,
             components: nodes,
             flags: MessageFlags(flagsOpt),
+            attachments: canvasAttachments,
           );
           await dynInt.respond(builder);
           markInteractionAcknowledged(interaction);
@@ -546,6 +553,34 @@ Future<Map<String, dynamic>> respondWithComponentV2Action(
 
     return {'error': 'Interaction does not support message responses'};
   } catch (e) {
-    return {'error': e.toString()};
+    return {'error': 'Failed to send interaction response: $e'};
   }
+}
+
+/// Scans [variables] for keys matching `temp._canvasAttachment_*` and returns
+/// a list of [AttachmentBuilder] objects ready to be included in a message.
+List<AttachmentBuilder>? _collectComponentAttachments(
+  Map<String, String>? variables,
+) {
+  if (variables == null || variables.isEmpty) return null;
+
+  final attachments = <AttachmentBuilder>[];
+  for (final entry in variables.entries) {
+    if (!entry.key.startsWith('temp._canvasAttachment_')) continue;
+    if (entry.value.isEmpty) continue;
+
+    final name =
+        entry.key.substring('temp._canvasAttachment_'.length);
+    if (name.isEmpty) continue;
+
+    try {
+      final bytes = base64Decode(entry.value);
+      attachments.add(AttachmentBuilder(
+        data: bytes,
+        fileName: '$name.png',
+      ));
+    } catch (_) {}
+  }
+
+  return attachments.isNotEmpty ? attachments : null;
 }

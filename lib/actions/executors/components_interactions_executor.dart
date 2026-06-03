@@ -76,6 +76,7 @@ Future<bool> executeComponentsInteractionsAction({
         resolve: resolveValue,
         botId: botId,
         guildId: guildId?.toString(),
+        variables: variables,
       );
       if (result['error'] != null) {
         throw Exception(result['error']);
@@ -107,6 +108,7 @@ Future<bool> executeComponentsInteractionsAction({
         resolve: resolveValue,
         botId: botId,
         guildId: guildId?.toString(),
+        variables: variables,
       );
       if (respResult['error'] != null) {
         throw Exception(respResult['error']);
