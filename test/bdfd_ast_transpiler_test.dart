@@ -3506,6 +3506,7 @@ void main() {
             BdfdFunctionCallAst(
               name: r'$canvasCreate',
               arguments: [
+                <BdfdAstNode>[BdfdTextAst('test')],
                 <BdfdAstNode>[BdfdTextAst('200')],
                 <BdfdAstNode>[BdfdTextAst('100')],
                 <BdfdAstNode>[BdfdTextAst('#ff0000')],
@@ -3535,6 +3536,7 @@ void main() {
             BdfdFunctionCallAst(
               name: r'$canvasCreate',
               arguments: [
+                <BdfdAstNode>[BdfdTextAst('img')],
                 <BdfdAstNode>[BdfdTextAst('300')],
                 <BdfdAstNode>[BdfdTextAst('200')],
                 <BdfdAstNode>[BdfdTextAst('black')],
@@ -3585,6 +3587,7 @@ void main() {
             BdfdFunctionCallAst(
               name: r'$canvasCreate',
               arguments: [
+                <BdfdAstNode>[BdfdTextAst('img')],
                 <BdfdAstNode>[BdfdTextAst('100')],
                 <BdfdAstNode>[BdfdTextAst('100')],
                 <BdfdAstNode>[BdfdTextAst('white')],
@@ -3633,6 +3636,7 @@ void main() {
             BdfdFunctionCallAst(
               name: r'$canvasCreate',
               arguments: [
+                <BdfdAstNode>[BdfdTextAst('red')],
                 <BdfdAstNode>[BdfdTextAst('50')],
                 <BdfdAstNode>[BdfdTextAst('50')],
                 <BdfdAstNode>[BdfdTextAst('red')],
@@ -3641,6 +3645,7 @@ void main() {
             BdfdFunctionCallAst(
               name: r'$canvasCreate',
               arguments: [
+                <BdfdAstNode>[BdfdTextAst('green')],
                 <BdfdAstNode>[BdfdTextAst('100')],
                 <BdfdAstNode>[BdfdTextAst('100')],
                 <BdfdAstNode>[BdfdTextAst('green')],

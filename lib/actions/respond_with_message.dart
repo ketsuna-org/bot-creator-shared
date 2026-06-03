@@ -16,6 +16,7 @@ Future<Map<String, dynamic>> respondWithMessageAction(
   NyxxGateway? client,
   Snowflake? fallbackChannelId,
   Snowflake? fallbackMessageId,
+  Map<String, String>? variables,
 }) async {
   try {
     if (interaction == null) {

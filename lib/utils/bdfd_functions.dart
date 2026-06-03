@@ -34,6 +34,7 @@ const Set<String> allBdfdFunctions = <String>{
   'argcount',
   'args',
   'argscheck',
+  'attachimage',
   'author',
   'authoravatar',
   'authorbanner',
