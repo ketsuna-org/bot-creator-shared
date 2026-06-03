@@ -24,6 +24,7 @@ Future<Map<String, String>> sendMessageToChannel(
   String Function(String)? resolve,
   String? botId,
   String? guildId,
+  List<AttachmentBuilder>? attachments,
 }) async {
   try {
     // Determine actual channel to send to
@@ -240,6 +241,7 @@ Future<Map<String, String>> sendMessageToChannel(
         referencedMessage: replyId != null ? MessageReferenceBuilder.reply(messageId: replyId) : null,
         flags: isRichV2 ? MessageFlags(32768) : null,
         allowedMentions: allowedMentions,
+        attachments: attachments,
       ),
     );
     if (definition != null && botId != null && botId.trim().isNotEmpty) {

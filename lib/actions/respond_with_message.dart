@@ -59,12 +59,15 @@ Future<Map<String, dynamic>> respondWithMessageAction(
         payload: effectivePayload,
         resolve: resolve,
         botId: botId,
+        attachments: canvasAttachments,
       );
       if (result['error'] != null) {
         // When content/embeds/components are all empty (e.g. template resolved
-        // to blank inside a loop iteration), skip silently instead of crashing.
+        // to blank inside a loop iteration), skip silently instead of crashing —
+        // unless there are canvas attachments to send.
         final content = resolve((payload['content'] ?? '').toString());
         if (content.trim().isEmpty &&
+            canvasAttachments == null &&
             result['error']!.contains('needs at least')) {
           return {'messageId': '', 'status': 'skipped_empty'};
         }
@@ -248,17 +251,21 @@ Future<Map<String, dynamic>> respondWithMessageAction(
     final allowedMentions = parseAllowedMentions(payload, resolve);
 
     if (isAcknowledged) {
-      // When the interaction is already acknowledged (deferred) but this
-      // response wants to be ephemeral, we send a followup ephemeral message
-      // because Discord does not allow changing ephemerality on the
-      // original deferred response.
-      if (isEphemeral) {
+      // When the interaction is already acknowledged (deferred):
+      // - Ephemeral responses must use followup (Discord doesn't allow
+      //   changing ephemerality on updateOriginalResponse).
+      // - Responses with canvas attachments must also use followup because
+      //   updateOriginalResponse (MessageUpdateBuilder) doesn't support
+      //   file attachments — Discord doesn't allow editing message attachments.
+      if (isEphemeral || canvasAttachments != null) {
         final followupMsg = await dynInteraction.sendFollowupMessage(
           MessageBuilder(
             content: content.trim().isEmpty ? null : content,
             embeds: embeds.isEmpty ? null : embeds,
             components: componentNodes.isEmpty ? null : componentNodes,
-            flags: MessageFlags(MessageFlags.ephemeral.value),
+            flags: isEphemeral
+                ? MessageFlags(MessageFlags.ephemeral.value)
+                : null,
             allowedMentions: allowedMentions,
             attachments: canvasAttachments,
           ),
