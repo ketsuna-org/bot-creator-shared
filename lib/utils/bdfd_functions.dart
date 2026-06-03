@@ -75,6 +75,7 @@ const Set<String> allBdfdFunctions = <String>{
   'canvasdrawtext',
   'canvasdrawcircle',
   'canvasdrawrect',
+  'canvascompositeimage',
   'categorychannels',
   'categorycount',
   'categoryid',
