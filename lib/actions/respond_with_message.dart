@@ -250,6 +250,7 @@ Future<Map<String, dynamic>> respondWithMessageAction(
 
     final allowedMentions = parseAllowedMentions(payload, resolve);
 
+    print('[DEBUG] respondWithMessage: isAcknowledged=$isAcknowledged, content="$content"');
     if (isAcknowledged) {
       // When the interaction is already acknowledged (deferred):
       // - Ephemeral responses must use followup (Discord doesn't allow
@@ -257,6 +258,7 @@ Future<Map<String, dynamic>> respondWithMessageAction(
       // - Responses with canvas attachments must also use followup because
       //   updateOriginalResponse (MessageUpdateBuilder) doesn't support
       //   file attachments — Discord doesn't allow editing message attachments.
+      print('[DEBUG] isAcknowledged=true, isEphemeral=$isEphemeral, hasAttachments=${canvasAttachments != null}');
       if (isEphemeral || canvasAttachments != null) {
         final followupMsg = await dynInteraction.sendFollowupMessage(
           MessageBuilder(
@@ -343,12 +345,14 @@ Future<Map<String, dynamic>> respondWithMessageAction(
 List<AttachmentBuilder>? _collectCanvasAttachments(
   Map<String, String>? variables,
 ) {
+  print('[DEBUG] _collectCanvasAttachments: variables=${variables?.length ?? 0} entries');
   if (variables == null || variables.isEmpty) return null;
 
   final attachments = <AttachmentBuilder>[];
   for (final entry in variables.entries) {
     // setTemporaryVariable stores under 'temp.<key>'
     if (!entry.key.startsWith('temp._canvasAttachment_')) continue;
+    print('[DEBUG] Found canvas attachment: key=${entry.key}, valueLen=${entry.value.length}');
     if (entry.value.isEmpty) continue;
 
     // Extract the name from the key: temp._canvasAttachment_card → card
