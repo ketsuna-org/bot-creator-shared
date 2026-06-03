@@ -207,6 +207,14 @@ class CommandExecutor {
 
     final actions = compileResult.actions;
     
+    // Defer the interaction. Canvas image processing (especially HTTP fetches
+    // for avatars, etc.) can exceed Discord's 3-second response window.
+    try {
+      await interaction.acknowledge();
+    } catch (_) {
+      // Already deferred — fine.
+    }
+    
     await _workflowExecutor.executeActions(
       actions: actions,
       context: interaction,
