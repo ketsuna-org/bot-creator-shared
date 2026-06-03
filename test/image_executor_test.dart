@@ -16,8 +16,8 @@ void main() {
 
     String resolve(String input) => input;
 
-    test('creates a blank canvas and encodes to base64 PNG', () {
-      executeRuntimeImageBlock(
+    test('creates a blank canvas and encodes to base64 PNG', () async {
+      await executeRuntimeImageBlock(
         payload: {
           'operations': [
             {
@@ -35,21 +35,18 @@ void main() {
       );
 
       expect(results['img0'], isNotEmpty);
-      // Verify it's valid base64
       final bytes = base64Decode(results['img0']!);
       expect(bytes.length, greaterThan(50));
       // Verify PNG magic bytes
       expect(bytes[0], 0x89);
-      expect(bytes[1], 0x50); // 'P'
-      expect(bytes[2], 0x4E); // 'N'
-      expect(bytes[3], 0x47); // 'G'
-
-      // Check dataUrl was generated
+      expect(bytes[1], 0x50);
+      expect(bytes[2], 0x4E);
+      expect(bytes[3], 0x47);
       expect(variables['img0.dataUrl'], startsWith('data:image/png;base64,'));
     });
 
-    test('drawText renders text on canvas', () {
-      executeRuntimeImageBlock(
+    test('drawText renders text on canvas', () async {
+      await executeRuntimeImageBlock(
         payload: {
           'operations': [
             {'op': 'create', 'width': '200', 'height': '60', 'color': 'black'},
@@ -74,8 +71,8 @@ void main() {
       expect(bytes.length, greaterThan(100));
     });
 
-    test('drawCircle fills a circle', () {
-      executeRuntimeImageBlock(
+    test('drawCircle fills a circle', () async {
+      await executeRuntimeImageBlock(
         payload: {
           'operations': [
             {'op': 'create', 'width': '100', 'height': '100', 'color': 'white'},
@@ -100,8 +97,8 @@ void main() {
       expect(bytes.length, greaterThan(80));
     });
 
-    test('drawRect draws a filled rectangle', () {
-      executeRuntimeImageBlock(
+    test('drawRect draws a filled rectangle', () async {
+      await executeRuntimeImageBlock(
         payload: {
           'operations': [
             {'op': 'create', 'width': '100', 'height': '100', 'color': 'black'},
@@ -127,18 +124,16 @@ void main() {
       expect(bytes.length, greaterThan(80));
     });
 
-    test('compositeImage overlays an image', () {
-      // Create a small 10x10 red PNG as overlay
-      final overlayPayload = {
-        'operations': [
-          {'op': 'create', 'width': '10', 'height': '10', 'color': 'red'},
-        ],
-      };
+    test('compositeImage overlays an image', () async {
       final overlayResults = <String, String>{};
       final overlayVars = <String, String>{};
 
-      executeRuntimeImageBlock(
-        payload: overlayPayload,
+      await executeRuntimeImageBlock(
+        payload: {
+          'operations': [
+            {'op': 'create', 'width': '10', 'height': '10', 'color': 'red'},
+          ],
+        },
         resultKey: 'overlay',
         results: overlayResults,
         variables: overlayVars,
@@ -147,7 +142,7 @@ void main() {
 
       final overlayBase64 = overlayResults['overlay']!;
 
-      executeRuntimeImageBlock(
+      await executeRuntimeImageBlock(
         payload: {
           'operations': [
             {
@@ -158,7 +153,7 @@ void main() {
             },
             {
               'op': 'compositeImage',
-              'dataUrl': 'data:image/png;base64,$overlayBase64',
+              'url': 'data:image/png;base64,$overlayBase64',
               'x': '20',
               'y': '20',
             },
@@ -175,18 +170,16 @@ void main() {
       expect(bytes.length, greaterThan(100));
     });
 
-    test('loadImage from data URL', () {
-      // First create an image to use as source
-      final sourcePayload = {
-        'operations': [
-          {'op': 'create', 'width': '30', 'height': '30', 'color': 'green'},
-        ],
-      };
+    test('loadImage from data URL using url key', () async {
       final sourceResults = <String, String>{};
       final sourceVars = <String, String>{};
 
-      executeRuntimeImageBlock(
-        payload: sourcePayload,
+      await executeRuntimeImageBlock(
+        payload: {
+          'operations': [
+            {'op': 'create', 'width': '30', 'height': '30', 'color': 'green'},
+          ],
+        },
         resultKey: 'src',
         results: sourceResults,
         variables: sourceVars,
@@ -195,12 +188,12 @@ void main() {
 
       final srcBase64 = sourceResults['src']!;
 
-      executeRuntimeImageBlock(
+      await executeRuntimeImageBlock(
         payload: {
           'operations': [
             {
               'op': 'loadImage',
-              'dataUrl': 'data:image/png;base64,$srcBase64',
+              'url': 'data:image/png;base64,$srcBase64',
             },
           ],
         },
@@ -213,8 +206,104 @@ void main() {
       expect(results['img5'], isNotEmpty);
     });
 
-    test('empty operations returns empty', () {
-      executeRuntimeImageBlock(
+    test('loadImage from raw base64 using url key', () async {
+      final sourceResults = <String, String>{};
+      final sourceVars = <String, String>{};
+
+      await executeRuntimeImageBlock(
+        payload: {
+          'operations': [
+            {'op': 'create', 'width': '20', 'height': '20', 'color': 'blue'},
+          ],
+        },
+        resultKey: 'rawSrc',
+        results: sourceResults,
+        variables: sourceVars,
+        resolveValue: resolve,
+      );
+
+      final rawBase64 = sourceResults['rawSrc']!;
+
+      await executeRuntimeImageBlock(
+        payload: {
+          'operations': [
+            {
+              'op': 'loadImage',
+              'url': rawBase64, // raw base64, not a data URL
+            },
+          ],
+        },
+        resultKey: 'img5b',
+        results: results,
+        variables: variables,
+        resolveValue: resolve,
+      );
+
+      expect(results['img5b'], isNotEmpty);
+    });
+
+    test('loadImage with legacy dataUrl key still works', () async {
+      final sourceResults = <String, String>{};
+      final sourceVars = <String, String>{};
+
+      await executeRuntimeImageBlock(
+        payload: {
+          'operations': [
+            {'op': 'create', 'width': '20', 'height': '20', 'color': 'red'},
+          ],
+        },
+        resultKey: 'legacySrc',
+        results: sourceResults,
+        variables: sourceVars,
+        resolveValue: resolve,
+      );
+
+      final base64 = sourceResults['legacySrc']!;
+
+      await executeRuntimeImageBlock(
+        payload: {
+          'operations': [
+            {
+              'op': 'loadImage',
+              'dataUrl': 'data:image/png;base64,$base64',
+            },
+          ],
+        },
+        resultKey: 'img5c',
+        results: results,
+        variables: variables,
+        resolveValue: resolve,
+      );
+
+      expect(results['img5c'], isNotEmpty);
+    });
+
+    test('loadImage with invalid URL returns current canvas unchanged',
+        () async {
+      await executeRuntimeImageBlock(
+        payload: {
+          'operations': [
+            {'op': 'create', 'width': '50', 'height': '50', 'color': 'black'},
+            {
+              'op': 'loadImage',
+              'url': 'not-a-valid-url-or-base64!!!',
+            },
+          ],
+        },
+        resultKey: 'img5d',
+        results: results,
+        variables: variables,
+        resolveValue: resolve,
+      );
+
+      // Should still produce an image (the black canvas, unchanged)
+      expect(results['img5d'], isNotEmpty);
+      final bytes = base64Decode(results['img5d']!);
+      expect(bytes.length, greaterThan(50));
+    });
+
+    test('empty operations returns empty', () async {
+      await executeRuntimeImageBlock(
         payload: {'operations': <Map<String, dynamic>>[]},
         resultKey: 'img6',
         results: results,
@@ -226,8 +315,8 @@ void main() {
       expect(variables['img6'], '');
     });
 
-    test('no operations returns empty', () {
-      executeRuntimeImageBlock(
+    test('no operations returns empty', () async {
+      await executeRuntimeImageBlock(
         payload: <String, dynamic>{},
         resultKey: 'img7',
         results: results,
@@ -239,11 +328,11 @@ void main() {
       expect(variables['img7'], '');
     });
 
-    test('supports template placeholders in parameters', () {
+    test('supports template placeholders in parameters', () async {
       variables['myText'] = 'Dynamic Text';
       variables['myColor'] = '#FF00FF';
 
-      executeRuntimeImageBlock(
+      await executeRuntimeImageBlock(
         payload: {
           'operations': [
             {

@@ -1968,7 +1968,7 @@ Future<bool> executeVariablesAction({
       return true;
 
     case BotCreatorActionType.runtimeImageBlock:
-      executeRuntimeImageBlock(
+      await executeRuntimeImageBlock(
         payload: payload,
         resultKey: resultKey,
         results: results,

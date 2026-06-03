@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:http/http.dart' as http;
 import 'package:image/image.dart' as img;
 
 /// Executes an Image Manipulation Block at runtime.
@@ -11,20 +12,24 @@ import 'package:image/image.dart' as img;
 ///
 /// Supported operations:
 /// - `create` — creates a blank canvas
-/// - `loadImage` — loads an image from a base64 data URL
+/// - `loadImage` — loads an image from a URL (http/https), data URL, or raw
+///   base64 string. Uses an in-memory cache per block to avoid redundant
+///   downloads.
 /// - `compositeImage` — composites an external image at (x, y)
 /// - `drawText` — draws text
 /// - `drawCircle` — draws a circle (filled or outlined)
 /// - `drawRect` — draws a rectangle (filled or outlined)
-void executeRuntimeImageBlock({
+Future<void> executeRuntimeImageBlock({
   required Map<String, dynamic> payload,
   required String resultKey,
   required Map<String, String> results,
   required Map<String, String> variables,
   required String Function(String input) resolveValue,
-}) {
+}) async {
   img.Image? canvas;
   final operations = payload['operations'];
+  // Per-block cache for URL fetches (avoids redundant HTTP calls).
+  final urlCache = <String, Uint8List>{};
 
   if (operations is! List || operations.isEmpty) {
     results[resultKey] = '';
@@ -41,10 +46,12 @@ void executeRuntimeImageBlock({
         canvas = _opCreate(rawOp, resolveValue);
         break;
       case 'loadImage':
-        canvas = _opLoadImage(rawOp, resolveValue, canvas);
+        canvas = await _opLoadImage(rawOp, resolveValue, canvas,
+            urlCache: urlCache);
         break;
       case 'compositeImage':
-        canvas = _opCompositeImage(rawOp, resolveValue, canvas);
+        canvas = await _opCompositeImage(rawOp, resolveValue, canvas,
+            urlCache: urlCache);
         break;
       case 'drawText':
         canvas = _opDrawText(rawOp, resolveValue, canvas);
@@ -162,6 +169,58 @@ img.BitmapFont _selectFont(int fontSize) {
   return img.arial14;
 }
 
+/// Resolves a URL/dataUrl/raw-base64 string to image bytes.
+///
+/// Resolution order:
+/// 1. `http://` or `https://` → HTTP GET (cached per block)
+/// 2. `data:image/...;base64,...` → base64 decode
+/// 3. Raw base64 string fallback
+///
+/// Returns `null` if the source cannot be resolved or the download fails.
+Future<Uint8List?> _resolveImageSource(
+  String source, {
+  Map<String, Uint8List>? urlCache,
+}) async {
+  if (source.isEmpty) return null;
+
+  // HTTP/HTTPS URL
+  if (source.startsWith('http://') || source.startsWith('https://')) {
+    if (urlCache != null && urlCache.containsKey(source)) {
+      return urlCache[source];
+    }
+    try {
+      final response =
+          await http.get(Uri.parse(source)).timeout(const Duration(seconds: 15));
+      if (response.statusCode == 200 && response.bodyBytes.isNotEmpty) {
+        urlCache?[source] = response.bodyBytes;
+        return response.bodyBytes;
+      }
+    } catch (_) {
+      // Network error — skip silently, keep current canvas
+    }
+    return null;
+  }
+
+  // Data URL: data:image/png;base64,...
+  if (source.startsWith('data:')) {
+    final commaIdx = source.indexOf(',');
+    if (commaIdx >= 0) {
+      try {
+        return base64Decode(source.substring(commaIdx + 1));
+      } catch (_) {}
+    }
+    return null;
+  }
+
+  // Raw base64
+  try {
+    final bytes = base64Decode(source);
+    if (bytes.isNotEmpty) return bytes;
+  } catch (_) {}
+
+  return null;
+}
+
 // ─── Operation Handlers ───────────────────────────────────────────────────────
 
 img.Image _opCreate(Map rawOp, String Function(String) resolveValue) {
@@ -174,38 +233,36 @@ img.Image _opCreate(Map rawOp, String Function(String) resolveValue) {
   return canvas;
 }
 
-img.Image? _opLoadImage(
-    Map rawOp, String Function(String) resolveValue, img.Image? current) {
-  final dataUrl = _resolve(rawOp['dataUrl'], resolveValue);
-  if (dataUrl.isEmpty) return current;
+Future<img.Image?> _opLoadImage(
+  Map rawOp,
+  String Function(String) resolveValue,
+  img.Image? current, {
+  Map<String, Uint8List>? urlCache,
+}) async {
+  // Support both 'url' (preferred) and 'dataUrl' (legacy) keys.
+  final source =
+      _resolve(rawOp['url'] ?? rawOp['dataUrl'], resolveValue);
+  if (source.isEmpty) return current;
 
-  Uint8List? bytes;
-  if (dataUrl.startsWith('data:')) {
-    final commaIdx = dataUrl.indexOf(',');
-    if (commaIdx >= 0) {
-      try {
-        bytes = base64Decode(dataUrl.substring(commaIdx + 1));
-      } catch (_) {}
-    }
-  } else {
-    try {
-      bytes = base64Decode(dataUrl);
-    } catch (_) {}
-  }
+  final bytes = await _resolveImageSource(source, urlCache: urlCache);
+  if (bytes == null) return current;
 
-  if (bytes != null && bytes.isNotEmpty) {
-    final decoded = img.decodeImage(bytes);
-    if (decoded != null) return decoded;
-  }
+  final decoded = img.decodeImage(bytes);
+  if (decoded != null) return decoded;
 
   return current;
 }
 
-img.Image? _opCompositeImage(
-    Map rawOp, String Function(String) resolveValue, img.Image? current) {
+Future<img.Image?> _opCompositeImage(
+  Map rawOp,
+  String Function(String) resolveValue,
+  img.Image? current, {
+  Map<String, Uint8List>? urlCache,
+}) async {
   if (current == null) return null;
 
-  final dataUrl = _resolve(rawOp['dataUrl'], resolveValue);
+  final source =
+      _resolve(rawOp['url'] ?? rawOp['dataUrl'], resolveValue);
   final x = _parseInt(rawOp['x'], resolveValue);
   final y = _parseInt(rawOp['y'], resolveValue);
   final targetWidth =
@@ -213,29 +270,16 @@ img.Image? _opCompositeImage(
   final targetHeight =
       _parseInt(rawOp['height'], resolveValue, defaultValue: -1);
 
-  Uint8List? bytes;
-  if (dataUrl.startsWith('data:')) {
-    final commaIdx = dataUrl.indexOf(',');
-    if (commaIdx >= 0) {
-      try {
-        bytes = base64Decode(dataUrl.substring(commaIdx + 1));
-      } catch (_) {}
-    }
-  } else {
-    try {
-      bytes = base64Decode(dataUrl);
-    } catch (_) {}
-  }
+  final bytes = await _resolveImageSource(source, urlCache: urlCache);
+  if (bytes == null) return current;
 
-  if (bytes != null && bytes.isNotEmpty) {
-    var overlay = img.decodeImage(bytes);
-    if (overlay != null) {
-      if (targetWidth > 0 && targetHeight > 0) {
-        overlay = img.copyResize(overlay,
-            width: targetWidth, height: targetHeight);
-      }
-      img.compositeImage(current, overlay, dstX: x, dstY: y);
+  var overlay = img.decodeImage(bytes);
+  if (overlay != null) {
+    if (targetWidth > 0 && targetHeight > 0) {
+      overlay =
+          img.copyResize(overlay, width: targetWidth, height: targetHeight);
     }
+    img.compositeImage(current, overlay, dstX: x, dstY: y);
   }
 
   return current;
@@ -285,10 +329,8 @@ img.Image? _opDrawRect(
 
   final x = _parseInt(rawOp['x'], resolveValue);
   final y = _parseInt(rawOp['y'], resolveValue);
-  final width =
-      _parseInt(rawOp['width'], resolveValue, defaultValue: 50);
-  final height =
-      _parseInt(rawOp['height'], resolveValue, defaultValue: 50);
+  final width = _parseInt(rawOp['width'], resolveValue, defaultValue: 50);
+  final height = _parseInt(rawOp['height'], resolveValue, defaultValue: 50);
   final color = _parseColor(rawOp['color'], resolveValue);
   final fill = _parseBool(rawOp['fill'], resolveValue, defaultValue: true);
 

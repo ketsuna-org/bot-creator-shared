@@ -51,16 +51,16 @@ extension _BdfdAstTranspilationScopeImageCanvas on _BdfdAstTranspilationScope {
   }
 
   /// Adds a loadImage operation to the deferred image block.
-  /// Operates on the image from the current runtimeImageBlock or from a
-  /// data URL.
+  /// The URL is resolved at runtime (supports http/https URLs, data URLs,
+  /// and raw base64).
   void _canvasLoadImage(BdfdFunctionCallAst node) {
     if (!_deferredImageMode) return;
 
-    final dataUrl = _stringifyArgument(node, 0);
+    final url = _stringifyArgument(node, 0);
 
     _deferredImageOps.add(<String, dynamic>{
       'op': 'loadImage',
-      'dataUrl': dataUrl,
+      'url': url,
     });
   }
 
