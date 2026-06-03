@@ -233,7 +233,8 @@ Future<Map<String, dynamic>> respondWithMessageAction(
     final hasResponsePayload =
         content.trim().isNotEmpty ||
         embeds.isNotEmpty ||
-        componentNodes.isNotEmpty;
+        componentNodes.isNotEmpty ||
+        canvasAttachments != null;
     if (!hasResponsePayload) {
       return {'messageId': '', 'status': 'skipped_empty'};
     }

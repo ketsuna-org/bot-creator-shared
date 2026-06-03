@@ -269,6 +269,7 @@ Future<img.Image?> _opCompositeImage(
       _parseInt(rawOp['width'], resolveValue, defaultValue: -1);
   final targetHeight =
       _parseInt(rawOp['height'], resolveValue, defaultValue: -1);
+  final shape = _resolve(rawOp['shape'], resolveValue).toLowerCase().trim();
 
   final bytes = await _resolveImageSource(source, urlCache: urlCache);
   if (bytes == null) return current;
@@ -279,10 +280,128 @@ Future<img.Image?> _opCompositeImage(
       overlay =
           img.copyResize(overlay, width: targetWidth, height: targetHeight);
     }
+    if (shape == 'circle' ||
+        shape == 'round' ||
+        shape == 'oval' ||
+        shape == 'ellipse') {
+      overlay = _makeCircular(overlay);
+    } else if (shape.startsWith('rounded') || shape.startsWith('roundrect')) {
+      var radius = 20.0;
+      final parts = shape.split(':');
+      if (parts.length > 1) {
+        radius = double.tryParse(parts[1]) ?? 20.0;
+      } else {
+        final numStr = shape.replaceAll(RegExp(r'[^0-9.]'), '');
+        if (numStr.isNotEmpty) {
+          radius = double.tryParse(numStr) ?? 20.0;
+        }
+      }
+      overlay = _makeRoundedRect(overlay, radius);
+    } else if (shape == 'triangle') {
+      overlay = _makeTriangle(overlay);
+    }
     img.compositeImage(current, overlay, dstX: x, dstY: y);
   }
 
   return current;
+}
+
+img.Image _makeCircular(img.Image src) {
+  final size = src.width < src.height ? src.width : src.height;
+  final circular = img.Image(width: size, height: size, numChannels: 4);
+  final center = size / 2.0;
+  final radius = size / 2.0;
+
+  for (var y = 0; y < size; y++) {
+    for (var x = 0; x < size; x++) {
+      final dx = x - center + 0.5;
+      final dy = y - center + 0.5;
+      final distance = dx * dx + dy * dy;
+
+      if (distance <= radius * radius) {
+        circular.setPixel(x, y, src.getPixel(x, y));
+      } else {
+        circular.setPixel(x, y, img.ColorRgba8(0, 0, 0, 0));
+      }
+    }
+  }
+  return circular;
+}
+
+img.Image _makeRoundedRect(img.Image src, double r) {
+  final w = src.width;
+  final h = src.height;
+  final maxR = (w < h ? w : h) / 2.0;
+  final radius = r > maxR ? maxR : r;
+  if (radius <= 0) return src;
+
+  final rounded = img.Image(width: w, height: h, numChannels: 4);
+
+  for (var y = 0; y < h; y++) {
+    for (var x = 0; x < w; x++) {
+      var isInside = true;
+
+      // Top-left corner
+      if (x < radius && y < radius) {
+        final dx = radius - x - 0.5;
+        final dy = radius - y - 0.5;
+        if (dx * dx + dy * dy > radius * radius) {
+          isInside = false;
+        }
+      }
+      // Top-right corner
+      else if (x >= w - radius && y < radius) {
+        final dx = x - (w - radius) + 0.5;
+        final dy = radius - y - 0.5;
+        if (dx * dx + dy * dy > radius * radius) {
+          isInside = false;
+        }
+      }
+      // Bottom-left corner
+      else if (x < radius && y >= h - radius) {
+        final dx = radius - x - 0.5;
+        final dy = y - (h - radius) + 0.5;
+        if (dx * dx + dy * dy > radius * radius) {
+          isInside = false;
+        }
+      }
+      // Bottom-right corner
+      else if (x >= w - radius && y >= h - radius) {
+        final dx = x - (w - radius) + 0.5;
+        final dy = y - (h - radius) + 0.5;
+        if (dx * dx + dy * dy > radius * radius) {
+          isInside = false;
+        }
+      }
+
+      if (isInside) {
+        rounded.setPixel(x, y, src.getPixel(x, y));
+      } else {
+        rounded.setPixel(x, y, img.ColorRgba8(0, 0, 0, 0));
+      }
+    }
+  }
+  return rounded;
+}
+
+img.Image _makeTriangle(img.Image src) {
+  final w = src.width;
+  final h = src.height;
+  final triangle = img.Image(width: w, height: h, numChannels: 4);
+
+  for (var y = 0; y < h; y++) {
+    for (var x = 0; x < w; x++) {
+      final leftBound = (w / 2.0) * (1.0 - y / h.toDouble());
+      final rightBound = (w / 2.0) * (1.0 + y / h.toDouble());
+
+      if (x >= leftBound && x <= rightBound) {
+        triangle.setPixel(x, y, src.getPixel(x, y));
+      } else {
+        triangle.setPixel(x, y, img.ColorRgba8(0, 0, 0, 0));
+      }
+    }
+  }
+  return triangle;
 }
 
 img.Image? _opDrawText(

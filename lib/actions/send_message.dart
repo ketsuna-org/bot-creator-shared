@@ -219,10 +219,11 @@ Future<Map<String, String>> sendMessageToChannel(
     final hasPayload =
         resolvedContent.trim().isNotEmpty ||
         (embeds != null && embeds.isNotEmpty) ||
-        (components != null && components.isNotEmpty);
+        (components != null && components.isNotEmpty) ||
+        (attachments != null && attachments.isNotEmpty);
     if (!hasPayload && !isRichV2) {
       return {
-        'error': 'sendMessage needs at least content, embeds, or components',
+        'error': 'sendMessage needs at least content, embeds, components, or attachments',
         'messageId': '',
       };
     }

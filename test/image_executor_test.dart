@@ -170,6 +170,117 @@ void main() {
       expect(bytes.length, greaterThan(100));
     });
 
+    test('compositeImage with shape circle crops overlay to circle', () async {
+      final sourceResults = <String, String>{};
+      final sourceVars = <String, String>{};
+
+      await executeRuntimeImageBlock(
+        payload: {
+          'operations': [
+            {'op': 'create', 'width': '10', 'height': '10', 'color': 'red'},
+          ],
+        },
+        resultKey: 'src',
+        results: sourceResults,
+        variables: sourceVars,
+        resolveValue: resolve,
+      );
+
+      final srcBase64 = sourceResults['src']!;
+
+      await executeRuntimeImageBlock(
+        payload: {
+          'operations': [
+            {'op': 'create', 'width': '20', 'height': '20', 'color': 'black'},
+            {
+              'op': 'compositeImage',
+              'url': 'data:image/png;base64,$srcBase64',
+              'x': '5',
+              'y': '5',
+              'width': '10',
+              'height': '10',
+              'shape': 'circle',
+            },
+          ],
+        },
+        resultKey: 'img_circle',
+        results: results,
+        variables: variables,
+        resolveValue: resolve,
+      );
+
+      expect(results['img_circle'], isNotEmpty);
+      final bytes = base64Decode(results['img_circle']!);
+      expect(bytes.length, greaterThan(50));
+    });
+
+    test('compositeImage with shape rounded/triangle crops overlay correctly', () async {
+      final sourceResults = <String, String>{};
+      final sourceVars = <String, String>{};
+
+      await executeRuntimeImageBlock(
+        payload: {
+          'operations': [
+            {'op': 'create', 'width': '10', 'height': '10', 'color': 'red'},
+          ],
+        },
+        resultKey: 'src',
+        results: sourceResults,
+        variables: sourceVars,
+        resolveValue: resolve,
+      );
+
+      final srcBase64 = sourceResults['src']!;
+
+      // Rounded test
+      await executeRuntimeImageBlock(
+        payload: {
+          'operations': [
+            {'op': 'create', 'width': '20', 'height': '20', 'color': 'black'},
+            {
+              'op': 'compositeImage',
+              'url': 'data:image/png;base64,$srcBase64',
+              'x': '5',
+              'y': '5',
+              'width': '10',
+              'height': '10',
+              'shape': 'rounded:4',
+            },
+          ],
+        },
+        resultKey: 'img_rounded',
+        results: results,
+        variables: variables,
+        resolveValue: resolve,
+      );
+
+      expect(results['img_rounded'], isNotEmpty);
+
+      // Triangle test
+      await executeRuntimeImageBlock(
+        payload: {
+          'operations': [
+            {'op': 'create', 'width': '20', 'height': '20', 'color': 'black'},
+            {
+              'op': 'compositeImage',
+              'url': 'data:image/png;base64,$srcBase64',
+              'x': '5',
+              'y': '5',
+              'width': '10',
+              'height': '10',
+              'shape': 'triangle',
+            },
+          ],
+        },
+        resultKey: 'img_triangle',
+        results: results,
+        variables: variables,
+        resolveValue: resolve,
+      );
+
+      expect(results['img_triangle'], isNotEmpty);
+    });
+
     test('loadImage from data URL using url key', () async {
       final sourceResults = <String, String>{};
       final sourceVars = <String, String>{};

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:nyxx/nyxx.dart';
 
 import '../../types/action.dart';
@@ -257,6 +258,28 @@ Future<bool> executeMessagingAction({
         );
       }
 
+      // Collect canvas attachments from variables (set by $attachImage)
+      final canvasAttachments = <AttachmentBuilder>[];
+      final keysToRemove = <String>[];
+      for (final entry in variables.entries) {
+        if (entry.key.startsWith('temp._canvasAttachment_')) {
+          if (entry.value.isEmpty) continue;
+          final name = entry.key.substring('temp._canvasAttachment_'.length);
+          if (name.isEmpty) continue;
+          try {
+            final bytes = base64Decode(entry.value);
+            canvasAttachments.add(AttachmentBuilder(
+              data: bytes,
+              fileName: '$name.png',
+            ));
+            keysToRemove.add(entry.key);
+          } catch (_) {}
+        }
+      }
+      for (final key in keysToRemove) {
+        variables.remove(key);
+      }
+
       final result = await sendMessageToChannel(
         client,
         channelId,
@@ -265,11 +288,13 @@ Future<bool> executeMessagingAction({
         resolve: resolveValue,
         botId: botId,
         guildId: guildId?.toString(),
+        attachments: canvasAttachments.isEmpty ? null : canvasAttachments,
       );
       if (result['error'] != null) {
         // When content/embeds/components are all empty (e.g. template resolved
         // to blank inside a loop iteration), skip silently instead of crashing.
         if (content.trim().isEmpty &&
+            canvasAttachments.isEmpty &&
             result['error']!.contains('needs at least')) {
           results[resultKey] = '';
           return true;

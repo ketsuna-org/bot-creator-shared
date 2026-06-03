@@ -106,7 +106,7 @@ extension _BdfdAstTranspilationScopeImageCanvas on _BdfdAstTranspilationScope {
   }
 
   /// Adds a compositeImage operation (overlay image at position).
-  /// Signature: $canvasCompositeImage[url;x;y;width;height]
+  /// Signature: $canvasCompositeImage[url;x;y;width;height;shape]
   void _canvasCompositeImage(BdfdFunctionCallAst node) {
     if (!_deferredImageMode) return;
 
@@ -117,6 +117,7 @@ extension _BdfdAstTranspilationScopeImageCanvas on _BdfdAstTranspilationScope {
       'y': _stringifyArgument(node, 2),
       'width': _stringifyArgument(node, 3),
       'height': _stringifyArgument(node, 4),
+      if (node.arguments.length > 5) 'shape': _stringifyArgument(node, 5),
     });
   }
 
