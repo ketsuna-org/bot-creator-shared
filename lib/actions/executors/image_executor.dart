@@ -72,7 +72,7 @@ Future<void> executeRuntimeImageBlock({
     variables[resultKey] = base64Png;
     // Also expose as a data URL for embed compatibility
     final dataUrl = 'data:image/png;base64,$base64Png';
-    variables['${resultKey}.dataUrl'] = dataUrl;
+    variables['$resultKey.dataUrl'] = dataUrl;
   } else {
     results[resultKey] = '';
     variables[resultKey] = '';
