@@ -96,6 +96,7 @@ extension _BdfdAstTranspilationScopeImageCanvas on _BdfdAstTranspilationScope {
   }
 
   /// Adds a loadImage operation to the deferred image block.
+  /// Signature: $canvasLoadImage[url;x?;y?;width?;height?]
   void _canvasLoadImage(BdfdFunctionCallAst node) {
     if (!_deferredImageMode) return;
     final url = _stringifyArgument(node, 0);
@@ -103,11 +104,15 @@ extension _BdfdAstTranspilationScopeImageCanvas on _BdfdAstTranspilationScope {
     _deferredImageOps.add(<String, dynamic>{
       'op': 'loadImage',
       'url': url,
+      if (node.arguments.length > 1) 'x': _stringifyArgument(node, 1),
+      if (node.arguments.length > 2) 'y': _stringifyArgument(node, 2),
+      if (node.arguments.length > 3) 'width': _stringifyArgument(node, 3),
+      if (node.arguments.length > 4) 'height': _stringifyArgument(node, 4),
     });
   }
 
   /// Adds a compositeImage operation (overlay image at position).
-  /// Signature: $canvasCompositeImage[url;x;y;width;height;shape]
+  /// Signature: $canvasCompositeImage[url;x;y;width;height;shape?;blend?]
   void _canvasCompositeImage(BdfdFunctionCallAst node) {
     if (!_deferredImageMode) return;
 
@@ -119,6 +124,7 @@ extension _BdfdAstTranspilationScopeImageCanvas on _BdfdAstTranspilationScope {
       'width': _stringifyArgument(node, 3),
       'height': _stringifyArgument(node, 4),
       if (node.arguments.length > 5) 'shape': _stringifyArgument(node, 5),
+      if (node.arguments.length > 6) 'blend': _stringifyArgument(node, 6),
     });
   }
 
@@ -185,12 +191,23 @@ extension _BdfdAstTranspilationScopeImageCanvas on _BdfdAstTranspilationScope {
   /// [BotCreatorActionType.runtimeImageBlock] action and resets the state.
   Action? _flushDeferredImage() {
     if (!_deferredImageMode) return null;
+    // Extract canvas name from the create operation and propagate to
+    // the action payload so the runtime registers the attachment.
+    String? imageName;
+    if (_deferredImageOps.isNotEmpty &&
+        _deferredImageOps.first['op'] == 'create') {
+      imageName = (_deferredImageOps.first['name'] ?? '').toString().trim();
+    }
+    final payload = <String, dynamic>{
+      'operations': List<Map<String, dynamic>>.from(_deferredImageOps),
+    };
+    if (imageName != null && imageName.isNotEmpty) {
+      payload['imageName'] = imageName;
+    }
     final action = Action(
       type: BotCreatorActionType.runtimeImageBlock,
       key: _deferredImageResultKeyPrefix,
-      payload: <String, dynamic>{
-        'operations': List<Map<String, dynamic>>.from(_deferredImageOps),
-      },
+      payload: payload,
     );
     _deferredImageMode = false;
     _deferredImageOps.clear();

@@ -305,10 +305,29 @@ Future<img.Image?> _opLoadImage(
   final bytes = await resolveImageSource(source, urlCache: urlCache);
   if (bytes == null) return current;
 
-  final decoded = img.decodeImage(bytes);
-  if (decoded != null) return decoded;
+  var decoded = img.decodeImage(bytes);
+  if (decoded == null) return current;
 
-  return current;
+  // ── Position + resize (editor parity) ──────────────────────────────
+  final x = _parseInt(rawOp['x'], resolveValue);
+  final y = _parseInt(rawOp['y'], resolveValue);
+  final targetWidth =
+      _parseInt(rawOp['width'], resolveValue, defaultValue: -1);
+  final targetHeight =
+      _parseInt(rawOp['height'], resolveValue, defaultValue: -1);
+
+  if (targetWidth > 0 && targetHeight > 0) {
+    decoded = img.copyResize(decoded, width: targetWidth, height: targetHeight);
+  }
+
+  // If positioned AND there is a current canvas, composite on top.
+  // Otherwise just return the decoded image (becomes the new canvas).
+  if (current != null && (x != 0 || y != 0 || targetWidth > 0)) {
+    img.compositeImage(current, decoded, dstX: x, dstY: y);
+    return current;
+  }
+
+  return decoded;
 }
 
 Future<img.Image?> _opCompositeImage(
