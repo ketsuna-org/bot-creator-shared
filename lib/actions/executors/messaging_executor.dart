@@ -307,9 +307,13 @@ Future<bool> executeMessagingAction({
 
     case BotCreatorActionType.editMessage:
       final content = resolveValue((payload['content'] ?? '').toString());
+      // Resolve variable references in messageId and channelId (e.g. ((action_message)))
+      final resolvedPayload = Map<String, dynamic>.from(payload);
+      resolvedPayload['messageId'] = resolveValue((payload['messageId'] ?? '').toString());
+      resolvedPayload['channelId'] = resolveValue((payload['channelId'] ?? '').toString());
       final result = await editMessageAction(
         client,
-        payload: payload,
+        payload: resolvedPayload,
         fallbackChannelId: fallbackChannelId,
         content: content,
         resolve: resolveValue,
@@ -323,9 +327,13 @@ Future<bool> executeMessagingAction({
       return true;
 
     case BotCreatorActionType.getMessage:
+      // Resolve variable references in messageId and channelId
+      final resolvedGetPayload = Map<String, dynamic>.from(payload);
+      resolvedGetPayload['messageId'] = resolveValue((payload['messageId'] ?? '').toString());
+      resolvedGetPayload['channelId'] = resolveValue((payload['channelId'] ?? '').toString());
       final result = await getMessageAction(
         client,
-        payload: payload,
+        payload: resolvedGetPayload,
         fallbackChannelId: fallbackChannelId,
       );
       if (result['error'] != null) {

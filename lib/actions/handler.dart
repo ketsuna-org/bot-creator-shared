@@ -101,7 +101,20 @@ Future<Map<String, String>> handleActions(
     hydratedActions: activeHydratedActions,
   );
 
-  String resolveValue(String value) => resolveTemplate(value);
+  String resolveValue(String value) {
+    // Try template resolution first (variables, interaction context, etc.)
+    final resolved = resolveTemplate(value);
+    if (resolved != value) return resolved;
+    // Fall back to local action results (e.g. ((action_message)) from respondWithMessage)
+    final match = RegExp(r'^\(\((.+)\)\)$').firstMatch(value.trim());
+    if (match != null) {
+      final key = match.group(1)!;
+      if (results.containsKey(key)) {
+        return results[key]!;
+      }
+    }
+    return resolved;
+  }
 
 
   // Permission cache – shared across all actions in this execution
