@@ -77,6 +77,12 @@ Future<void> executeRuntimeImageBlock({
     // Also expose as a data URL for embed compatibility
     final dataUrl = 'data:image/png;base64,$base64Png';
     variables['$resultKey.dataUrl'] = dataUrl;
+    // If the block has an imageName, register as an attachment so
+    // respondWithMessage / sendMessage collectors pick it up.
+    final imageName = payload['imageName']?.toString().trim() ?? '';
+    if (imageName.isNotEmpty) {
+      variables['temp._canvasAttachment_$imageName'] = base64Png;
+    }
   } else {
     results[resultKey] = '';
     variables[resultKey] = '';
