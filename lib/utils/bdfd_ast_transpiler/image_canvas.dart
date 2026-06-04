@@ -16,6 +16,7 @@ extension _BdfdAstTranspilationScopeImageCanvas on _BdfdAstTranspilationScope {
       case 'canvasdrawtext':
       case 'canvasdrawcircle':
       case 'canvasdrawrect':
+      case 'canvasdrawline':
       case 'canvascompositeimage':
       case 'attachimage':
         return true;
@@ -161,6 +162,22 @@ extension _BdfdAstTranspilationScopeImageCanvas on _BdfdAstTranspilationScope {
       'height': _stringifyArgument(node, 3),
       'color': _stringifyArgument(node, 4),
       'fill': _stringifyArgument(node, 5),
+    });
+  }
+
+  /// Adds a drawLine operation to the deferred image block.
+  /// Signature: $canvasDrawLine[x1;y1;x2;y2;color;thickness]
+  void _canvasDrawLine(BdfdFunctionCallAst node) {
+    if (!_deferredImageMode) return;
+
+    _deferredImageOps.add(<String, dynamic>{
+      'op': 'drawLine',
+      'x1': _stringifyArgument(node, 0),
+      'y1': _stringifyArgument(node, 1),
+      'x2': _stringifyArgument(node, 2),
+      'y2': _stringifyArgument(node, 3),
+      'color': _stringifyArgument(node, 4),
+      'thickness': _stringifyArgument(node, 5),
     });
   }
 
