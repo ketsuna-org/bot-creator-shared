@@ -22,7 +22,7 @@ void main() {
     String resolve(String input) => input;
 
     /// Generates a small test PNG as a base64 data URL.
-    String _generateTestDataUrl(int width, int height) {
+    String generateTestDataUrl(int width, int height) {
       final canvas = img.Image(width: width, height: height);
       img.fill(canvas, color: img.ColorRgba8(255, 0, 0, 255));
       final bytes = img.encodePng(canvas);
@@ -32,7 +32,7 @@ void main() {
     test(
         'executeAttachImage stores variable in format recognized by canvas attachment collector',
         () async {
-      final dataUrl = _generateTestDataUrl(10, 10);
+      final dataUrl = generateTestDataUrl(10, 10);
 
       // Step 1: Execute attachImage
       await executeAttachImage(
@@ -75,9 +75,9 @@ void main() {
     });
 
     test('multiple attachImage calls create separate variables', () async {
-      final dataUrl1 = _generateTestDataUrl(5, 5);
-      final dataUrl2 = _generateTestDataUrl(8, 8);
-      final dataUrl3 = _generateTestDataUrl(3, 3);
+      final dataUrl1 = generateTestDataUrl(5, 5);
+      final dataUrl2 = generateTestDataUrl(8, 8);
+      final dataUrl3 = generateTestDataUrl(3, 3);
 
       // Execute 3 attachImage calls with different names
       await executeAttachImage(
@@ -166,7 +166,7 @@ void main() {
       // respondWithMessage expects. The respond_with_message_attachments_test.dart
       // already covers this with mock interaction tests.
 
-      final dataUrl = _generateTestDataUrl(10, 10);
+      final dataUrl = generateTestDataUrl(10, 10);
 
       await executeAttachImage(
         payload: {

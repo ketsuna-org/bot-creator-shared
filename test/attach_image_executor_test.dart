@@ -19,7 +19,7 @@ void main() {
     String resolve(String input) => input;
 
     /// Generates a small test PNG as a base64 data URL.
-    String _generateTestDataUrl(int width, int height) {
+    String generateTestDataUrl(int width, int height) {
       final canvas = img.Image(width: width, height: height);
       img.fill(canvas, color: img.ColorRgba8(255, 0, 0, 255));
       final bytes = img.encodePng(canvas);
@@ -28,7 +28,7 @@ void main() {
 
     test('stores image as canvas attachment with correct variable key',
         () async {
-      final dataUrl = _generateTestDataUrl(10, 10);
+      final dataUrl = generateTestDataUrl(10, 10);
 
       await executeAttachImage(
         payload: {
@@ -74,7 +74,7 @@ void main() {
         () => executeAttachImage(
           payload: {
             'imageName': '',
-            'imageSource': _generateTestDataUrl(10, 10),
+            'imageSource': generateTestDataUrl(10, 10),
           },
           resultKey: 'attach2',
           results: results,
@@ -138,7 +138,7 @@ void main() {
     test('resolves template placeholders in imageName and imageSource',
         () async {
       variables['myName'] = 'dynamic_photo';
-      final dataUrl = _generateTestDataUrl(10, 10);
+      final dataUrl = generateTestDataUrl(10, 10);
       variables['mySource'] = dataUrl;
 
       await executeAttachImage(
@@ -164,7 +164,7 @@ void main() {
     });
 
     test('trims whitespace from resolved imageName', () async {
-      final dataUrl = _generateTestDataUrl(10, 10);
+      final dataUrl = generateTestDataUrl(10, 10);
 
       await executeAttachImage(
         payload: {
@@ -184,7 +184,7 @@ void main() {
     });
 
     test('preserves imageName special characters', () async {
-      final dataUrl = _generateTestDataUrl(10, 10);
+      final dataUrl = generateTestDataUrl(10, 10);
 
       await executeAttachImage(
         payload: {
