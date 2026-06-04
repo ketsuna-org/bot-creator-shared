@@ -1013,6 +1013,16 @@ Future<bool> executeVariablesAction({
       results[resultKey] = 'OK';
       return true;
 
+    case BotCreatorActionType.attachImage:
+      await executeAttachImage(
+        payload: payload,
+        resultKey: resultKey,
+        results: results,
+        variables: variables,
+        resolveValue: resolveValue,
+      );
+      return true;
+
     case BotCreatorActionType.setScopedVariable:
       final scope = resolveValue((payload['scope'] ?? '').toString()).trim();
       if (!_supportedVariableScopes.contains(scope)) {
@@ -1982,6 +1992,7 @@ Future<bool> executeVariablesAction({
     case BotCreatorActionType.canvasDrawTextBlock:
     case BotCreatorActionType.canvasDrawCircleBlock:
     case BotCreatorActionType.canvasDrawRectBlock:
+    case BotCreatorActionType.canvasDrawLineBlock:
       // Visual-only types — should be collapsed into runtimeImageBlock
       // before reaching the executor.
       throw StateError(

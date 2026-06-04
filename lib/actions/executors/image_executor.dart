@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
@@ -62,6 +63,9 @@ Future<void> executeRuntimeImageBlock({
       case 'drawRect':
         canvas = _opDrawRect(rawOp, resolveValue, canvas);
         break;
+      case 'drawLine':
+        canvas = _opDrawLine(rawOp, resolveValue, canvas);
+        break;
     }
   }
 
@@ -77,6 +81,52 @@ Future<void> executeRuntimeImageBlock({
     results[resultKey] = '';
     variables[resultKey] = '';
   }
+}
+
+/// Executes an Attach Image action at runtime.
+///
+/// Downloads or resolves the image from [payload['imageSource']] and stores
+/// it as a base64-encoded attachment under `temp._canvasAttachment_<imageName>`
+/// in the variables map. The existing canvas attachment collectors in
+/// `respond_with_message.dart` and `messaging_executor.dart` pick it up and
+/// send it as a Discord file attachment.
+///
+/// Parameters:
+/// - `imageName` (String, required): filename base for the attachment (e.g., "photo" → "photo.png")
+/// - `imageSource` (String, required): HTTP URL, data URL, or raw base64
+/// - `altText` (String, optional): ignored at runtime (Discord attachments don't support alt text)
+///
+/// Supported source formats (via [resolveImageSource]):
+/// 1. `http://` or `https://` → HTTP GET with 15s timeout
+/// 2. `data:image/...;base64,...` → base64 decode after comma
+/// 3. Raw base64 string
+Future<void> executeAttachImage({
+  required Map<String, dynamic> payload,
+  required String resultKey,
+  required Map<String, String> results,
+  required Map<String, String> variables,
+  required String Function(String input) resolveValue,
+}) async {
+  final imageName = resolveValue((payload['imageName'] ?? '').toString()).trim();
+  final imageSource = resolveValue((payload['imageSource'] ?? '').toString()).trim();
+
+  if (imageName.isEmpty) {
+    throw Exception('attachImage: imageName is required');
+  }
+  if (imageSource.isEmpty) {
+    throw Exception('attachImage: imageSource is required');
+  }
+
+  final bytes = await resolveImageSource(imageSource);
+  if (bytes == null || bytes.isEmpty) {
+    throw Exception('attachImage: failed to load image from source');
+  }
+
+  // Store under the same prefix used by $attachImage (canvas attachments)
+  // so that _collectCanvasAttachments and inline collection in
+  // messaging_executor.dart pick it up automatically.
+  variables['temp._canvasAttachment_$imageName'] = base64Encode(bytes);
+  results[resultKey] = 'attached';
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -177,7 +227,9 @@ img.BitmapFont _selectFont(int fontSize) {
 /// 3. Raw base64 string fallback
 ///
 /// Returns `null` if the source cannot be resolved or the download fails.
-Future<Uint8List?> _resolveImageSource(
+///
+/// Shared by [executeRuntimeImageBlock] and [executeAttachImage].
+Future<Uint8List?> resolveImageSource(
   String source, {
   Map<String, Uint8List>? urlCache,
 }) async {
@@ -244,7 +296,7 @@ Future<img.Image?> _opLoadImage(
       _resolve(rawOp['url'] ?? rawOp['dataUrl'], resolveValue);
   if (source.isEmpty) return current;
 
-  final bytes = await _resolveImageSource(source, urlCache: urlCache);
+  final bytes = await resolveImageSource(source, urlCache: urlCache);
   if (bytes == null) return current;
 
   final decoded = img.decodeImage(bytes);
@@ -270,8 +322,9 @@ Future<img.Image?> _opCompositeImage(
   final targetHeight =
       _parseInt(rawOp['height'], resolveValue, defaultValue: -1);
   final shape = _resolve(rawOp['shape'], resolveValue).toLowerCase().trim();
+  final blend = _resolve(rawOp['blend'], resolveValue).toLowerCase().trim();
 
-  final bytes = await _resolveImageSource(source, urlCache: urlCache);
+  final bytes = await resolveImageSource(source, urlCache: urlCache);
   if (bytes == null) return current;
 
   var overlay = img.decodeImage(bytes);
@@ -300,28 +353,168 @@ Future<img.Image?> _opCompositeImage(
     } else if (shape == 'triangle') {
       overlay = _makeTriangle(overlay);
     }
-    img.compositeImage(current, overlay, dstX: x, dstY: y);
+
+    // Apply blend mode if specified (non-normal)
+    if (blend.isNotEmpty && blend != 'normal' && blend != 'srcover') {
+      _blendOverlay(current, overlay, dstX: x, dstY: y, blendMode: blend);
+    } else {
+      img.compositeImage(current, overlay, dstX: x, dstY: y);
+    }
   }
 
   return current;
 }
 
+/// Blends an overlay onto the destination using a named blend mode.
+///
+/// Supported blend modes (Photoshop naming):
+/// - `multiply`    — darkens, useful for shadows
+/// - `screen`      — lightens, useful for highlights
+/// - `overlay`     — combines multiply and screen, adds contrast
+/// - `darken`      — keeps darkest pixel per channel
+/// - `lighten`     — keeps lightest pixel per channel
+/// - `difference`  — absolute difference, useful for inversion effects
+/// - `hardLight`   — strong contrast blend
+/// - `softLight`   — subtle contrast blend (like a soft spotlight)
+void _blendOverlay(
+  img.Image dst,
+  img.Image src, {
+  required int dstX,
+  required int dstY,
+  required String blendMode,
+}) {
+  for (var sy = 0; sy < src.height; sy++) {
+    final dy = dstY + sy;
+    if (dy < 0 || dy >= dst.height) continue;
+    for (var sx = 0; sx < src.width; sx++) {
+      final dx = dstX + sx;
+      if (dx < 0 || dx >= dst.width) continue;
+
+      final sp = src.getPixel(sx, sy);
+      if (sp.a == 0) continue;
+
+      final dp = dst.getPixel(dx, dy);
+      final sr = sp.r.toInt(), sg = sp.g.toInt(), sb = sp.b.toInt();
+      final dr = dp.r.toInt(), dg = dp.g.toInt(), db = dp.b.toInt();
+
+      int rb, gb, bb;
+      switch (blendMode) {
+        case 'multiply':
+          rb = ((dr * sr) / 255).round();
+          gb = ((dg * sg) / 255).round();
+          bb = ((db * sb) / 255).round();
+          break;
+        case 'screen':
+          rb = 255 - (((255 - dr) * (255 - sr)) / 255).round();
+          gb = 255 - (((255 - dg) * (255 - sg)) / 255).round();
+          bb = 255 - (((255 - db) * (255 - sb)) / 255).round();
+          break;
+        case 'overlay':
+          rb = _overlayChannel(dr, sr);
+          gb = _overlayChannel(dg, sg);
+          bb = _overlayChannel(db, sb);
+          break;
+        case 'darken':
+          rb = dr < sr ? dr : sr;
+          gb = dg < sg ? dg : sg;
+          bb = db < sb ? db : sb;
+          break;
+        case 'lighten':
+          rb = dr > sr ? dr : sr;
+          gb = dg > sg ? dg : sg;
+          bb = db > sb ? db : sb;
+          break;
+        case 'difference':
+          rb = (dr - sr).abs();
+          gb = (dg - sg).abs();
+          bb = (db - sb).abs();
+          break;
+        case 'hardlight':
+          rb = _overlayChannel(sr, dr); // Note: src/dst swapped vs overlay
+          gb = _overlayChannel(sg, dg);
+          bb = _overlayChannel(sb, db);
+          break;
+        case 'softlight':
+          rb = _softLightChannel(dr, sr);
+          gb = _softLightChannel(dg, sg);
+          bb = _softLightChannel(db, sb);
+          break;
+        default:
+          // Unknown blend mode, fall through to normal
+          rb = sr;
+          gb = sg;
+          bb = sb;
+      }
+
+      // Alpha blending: blend result with destination using src alpha
+      final a = sp.a / 255.0;
+      final finalR = (rb * a + dp.r * (1 - a)).round();
+      final finalG = (gb * a + dp.g * (1 - a)).round();
+      final finalB = (bb * a + dp.b * (1 - a)).round();
+      final finalA = ((sp.a + dp.a * (1 - a)).round()).clamp(0, 255);
+
+      dst.setPixelRgba(dx, dy, finalR, finalG, finalB, finalA);
+    }
+  }
+}
+
+/// Overlay blend mode helper per channel.
+///
+/// Formula: if base < 128, multiply; otherwise screen.
+int _overlayChannel(int base, int blend) {
+  if (base < 128) {
+    return (2 * base * blend / 255).round();
+  }
+  return 255 - (2 * (255 - base) * (255 - blend) / 255).round();
+}
+
+/// Soft light blend mode helper per channel.
+///
+/// Softer version of overlay using a different formula for dark values.
+int _softLightChannel(int base, int blend) {
+  if (blend < 128) {
+    return (base - (255 - 2 * blend) * base * (255 - base) / (255 * 255))
+        .round();
+  }
+  final db = base < 128
+      ? (2 * blend - 255) * (math.sqrt(base / 255.0) * 255 - base) / 255
+      : (2 * blend - 255) * (math.sqrt(base / 255.0) - base / 255.0);
+  return (base + db).round().clamp(0, 255);
+}
+
+/// Creates an anti-aliased circular mask of the source image.
+///
+/// Uses a smoothstep alpha transition at the circle boundary (1-pixel falloff)
+/// to produce visually pleasing anti-aliased edges, rather than the hard-edged
+/// threshold of the `image` package's built-in draw operations.
+///
+/// The algorithm:
+/// 1. For each pixel, compute distance from the circle center
+/// 2. Apply a smoothstep alpha that transitions from 1.0 (center) to 0.0 (edge)
+///    over a 1-pixel boundary zone
+/// 3. Blend the source pixel with transparent black using the computed alpha
 img.Image _makeCircular(img.Image src) {
   final size = src.width < src.height ? src.width : src.height;
   final circular = img.Image(width: size, height: size, numChannels: 4);
-  final center = size / 2.0;
+  final center = (size - 1) / 2.0;
   final radius = size / 2.0;
 
   for (var y = 0; y < size; y++) {
     for (var x = 0; x < size; x++) {
-      final dx = x - center + 0.5;
-      final dy = y - center + 0.5;
-      final distance = dx * dx + dy * dy;
+      final dx = x - center;
+      final dy = y - center;
+      final dist = math.sqrt(dx * dx + dy * dy);
 
-      if (distance <= radius * radius) {
-        circular.setPixel(x, y, src.getPixel(x, y));
+      // Smoothstep: alpha = 1.0 at center, 0.0 at edge, transition over 1px
+      final alpha = (1.0 - (dist - (radius - 1.0))).clamp(0.0, 1.0);
+
+      if (alpha > 0) {
+        final srcPixel = src.getPixel(x, y);
+        final a = (srcPixel.a * alpha).round();
+        circular.setPixelRgba(x, y,
+            srcPixel.r.toInt(), srcPixel.g.toInt(), srcPixel.b.toInt(), a);
       } else {
-        circular.setPixel(x, y, img.ColorRgba8(0, 0, 0, 0));
+        circular.setPixelRgba(x, y, 0, 0, 0, 0);
       }
     }
   }
@@ -459,6 +652,103 @@ img.Image? _opDrawRect(
   } else {
     img.drawRect(current,
         x1: x, y1: y, x2: x + width, y2: y + height, color: color);
+  }
+
+  return current;
+}
+
+/// Draws a line between two points using Bresenham's line algorithm.
+///
+/// Parameters:
+/// - `x1` (int): Start X coordinate
+/// - `y1` (int): Start Y coordinate
+/// - `x2` (int): End X coordinate
+/// - `y2` (int): End Y coordinate
+/// - `color` (string): Line color (hex or named)
+/// - `thickness` (int, default 1): Line width in pixels
+img.Image? _opDrawLine(
+    Map rawOp, String Function(String) resolveValue, img.Image? current) {
+  if (current == null) return null;
+
+  var x1 = _parseInt(rawOp['x1'], resolveValue);
+  var y1 = _parseInt(rawOp['y1'], resolveValue);
+  final x2 = _parseInt(rawOp['x2'], resolveValue);
+  final y2 = _parseInt(rawOp['y2'], resolveValue);
+  final color = _parseColor(rawOp['color'], resolveValue);
+  final thickness =
+      _parseInt(rawOp['thickness'], resolveValue, defaultValue: 1).clamp(1, 100);
+
+  // Bresenham's line algorithm with thickness support.
+  // For thickness > 1, draw the line centered on the ideal path by
+  // offsetting perpendicular to the line direction.
+  final dx = (x2 - x1).abs();
+  final dy = -(y2 - y1).abs();
+  final sx = x1 < x2 ? 1 : -1;
+  final sy = y1 < y2 ? 1 : -1;
+  var err = dx + dy;
+
+  // Collect all points on the ideal line
+  final points = <(int, int)>[];
+  while (true) {
+    points.add((x1, y1));
+    if (x1 == x2 && y1 == y2) break;
+    final e2 = 2 * err;
+    if (e2 >= dy) {
+      err += dy;
+      x1 += sx;
+    }
+    if (e2 <= dx) {
+      err += dx;
+      y1 += sy;
+    }
+  }
+
+  // For thickness > 1, expand perpendicular to line direction
+  final halfThick = thickness ~/ 2;
+  if (halfThick > 0 && points.length >= 2) {
+    // Determine perpendicular direction from first and last segment
+    final p0 = points.first;
+    final p1 = points.last;
+    final lineDx = p1.$1 - p0.$1;
+    final lineDy = p1.$2 - p0.$2;
+    final len = (lineDx * lineDx + lineDy * lineDy).toDouble();
+    final perpDx = len > 0 ? (-lineDy / len * 1000).round() : 0;
+    final perpDy = len > 0 ? (lineDx / len * 1000).round() : 0;
+
+    // Normalize perpendicular
+    final perpLen =
+        (perpDx * perpDx + perpDy * perpDy).toDouble();
+    final normX =
+        perpLen > 0 ? (perpDx / perpLen * halfThick).round() : 0;
+    final normY =
+        perpLen > 0 ? (perpDy / perpLen * halfThick).round() : 0;
+
+    for (final pt in points) {
+      final px = pt.$1;
+      final py = pt.$2;
+      for (var t = -halfThick; t <= halfThick; t++) {
+        final drawX = px + (normX * t).round();
+        final drawY = py + (normY * t).round();
+        if (drawX >= 0 &&
+            drawX < current.width &&
+            drawY >= 0 &&
+            drawY < current.height) {
+          current.setPixelRgba(
+              drawX, drawY, color.r, color.g, color.b, color.a);
+        }
+      }
+    }
+  } else {
+    // Thickness 1: just draw the single-pixel line
+    for (final pt in points) {
+      if (pt.$1 >= 0 &&
+          pt.$1 < current.width &&
+          pt.$2 >= 0 &&
+          pt.$2 < current.height) {
+        current.setPixelRgba(
+            pt.$1, pt.$2, color.r, color.g, color.b, color.a);
+      }
+    }
   }
 
   return current;

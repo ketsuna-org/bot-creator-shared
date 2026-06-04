@@ -465,11 +465,13 @@ Future<Map<String, String>> handleActions(
         case BotCreatorActionType.log:
         case BotCreatorActionType.runtimeJsonBlock:
         case BotCreatorActionType.runtimeImageBlock:
+        case BotCreatorActionType.attachImage:
         case BotCreatorActionType.canvasCreateBlock:
         case BotCreatorActionType.canvasLoadImageBlock:
         case BotCreatorActionType.canvasDrawTextBlock:
         case BotCreatorActionType.canvasDrawCircleBlock:
         case BotCreatorActionType.canvasDrawRectBlock:
+        case BotCreatorActionType.canvasDrawLineBlock:
         case BotCreatorActionType.setTemporaryVariable:
         case BotCreatorActionType.jsonForEachLoop:
         case BotCreatorActionType.wait:

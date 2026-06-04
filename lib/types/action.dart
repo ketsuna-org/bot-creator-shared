@@ -110,6 +110,7 @@ enum BotCreatorActionType {
   canvasDrawTextBlock,
   canvasDrawCircleBlock,
   canvasDrawRectBlock,
+  canvasDrawLineBlock,
   // Guild Commands
   registerGuildCommands,
   unregisterGuildCommands,
@@ -122,6 +123,8 @@ enum BotCreatorActionType {
   stop,
   randomChoice,
   leaveGuild,
+  // Image attachments
+  attachImage,
 }
 
 enum ActionOnErrorMode { stop, continueMode }
