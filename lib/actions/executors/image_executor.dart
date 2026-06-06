@@ -1,4 +1,3 @@
-import 'dart:collection';
 import 'dart:convert';
 import 'dart:math' as math;
 import 'dart:typed_data';
@@ -18,7 +17,7 @@ const _kUrlCacheMaxBytes = 50 * 1024 * 1024; // 50 MB
 
 // ─── LRU Cache ────────────────────────────────────────────────────────────
 
-/// A bounded LRU cache backed by [LinkedHashMap].
+/// A bounded LRU cache backed by a linked hash map.
 ///
 /// Tracks total byte size and evicts the least-recently-used entries when the
 /// byte budget is exceeded. Value type [V] must have a [length] getter

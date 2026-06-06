@@ -6,7 +6,7 @@
 ///
 /// Usage in UI: render as tri-state toggles (Allow / Deny / Unset).
 /// Usage in executor: compute allow/deny bitmasks from toggle states.
-library permission_flags;
+library;
 
 /// One Discord permission with metadata for UI rendering.
 class PermissionFlag {
