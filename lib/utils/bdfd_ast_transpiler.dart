@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'dart:math' as math;
 
 import 'package:bot_creator_shared/types/action.dart';
+import 'package:bot_creator_shared/utils/permission_flags.dart'
+    show bdfdPermissionListToStates;
 
 import 'bdfd_ast.dart';
 

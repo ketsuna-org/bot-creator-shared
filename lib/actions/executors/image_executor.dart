@@ -1,9 +1,74 @@
+import 'dart:collection';
 import 'dart:convert';
 import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 import 'package:image/image.dart' as img;
+
+// ─── Memory Constants ─────────────────────────────────────────────────────
+
+/// Maximum canvas dimension (width or height) to prevent unbounded memory
+/// allocation. A 4096×4096 RGBA canvas is ~67 MB.
+const _kMaxCanvasDimension = 4096;
+
+/// Maximum total bytes cached in the per-block URL cache. Beyond this limit,
+/// the least-recently-used entries are evicted.
+const _kUrlCacheMaxBytes = 50 * 1024 * 1024; // 50 MB
+
+// ─── LRU Cache ────────────────────────────────────────────────────────────
+
+/// A bounded LRU cache backed by [LinkedHashMap].
+///
+/// Tracks total byte size and evicts the least-recently-used entries when the
+/// byte budget is exceeded. Value type [V] must have a [length] getter
+/// (e.g. [Uint8List]).
+class _LruCache<V> {
+  _LruCache(this._maxBytes);
+
+  final int _maxBytes;
+  int _currentBytes = 0;
+  final _map = LinkedHashMap<String, V>();
+
+  V? operator [](String key) {
+    final value = _map.remove(key);
+    if (value != null) {
+      _map[key] = value; // move to end (most-recent)
+    }
+    return value;
+  }
+
+  void operator []=(String key, V value) {
+    final newBytes = (value as dynamic).length as int;
+    // Remove existing entry for the same key if present.
+    final old = _map.remove(key);
+    if (old != null) {
+      _currentBytes -= (old as dynamic).length as int;
+    }
+    // Evict LRU entries until enough room.
+    while (_currentBytes + newBytes > _maxBytes && _map.isNotEmpty) {
+      final firstKey = _map.keys.first;
+      final removed = _map.remove(firstKey);
+      if (removed != null) {
+        _currentBytes -= (removed as dynamic).length as int;
+      }
+    }
+    // If the new entry alone exceeds the budget, don't cache it.
+    if (_currentBytes + newBytes <= _maxBytes) {
+      _map[key] = value;
+      _currentBytes += newBytes;
+    }
+  }
+
+  bool containsKey(String key) => _map.containsKey(key);
+
+  void clear() {
+    _map.clear();
+    _currentBytes = 0;
+  }
+}
+
+// ─── Main Executor ────────────────────────────────────────────────────────
 
 /// Executes an Image Manipulation Block at runtime.
 ///
@@ -29,8 +94,9 @@ Future<void> executeRuntimeImageBlock({
 }) async {
   img.Image? canvas;
   final operations = payload['operations'];
-  // Per-block cache for URL fetches (avoids redundant HTTP calls).
-  final urlCache = <String, Uint8List>{};
+  // Per-block LRU cache for URL fetches (avoids redundant HTTP calls
+  // while preventing unbounded memory growth from many distinct URLs).
+  final urlCache = _LruCache<Uint8List>(_kUrlCacheMaxBytes);
 
   if (operations is! List || operations.isEmpty) {
     results[resultKey] = '';
@@ -42,41 +108,64 @@ Future<void> executeRuntimeImageBlock({
     if (rawOp is! Map) continue;
     final op = (rawOp['op'] ?? '').toString();
 
+    // Resolve container-relative positioning.
+    final containerName = (rawOp['container'] ?? '').toString().trim();
+    int offsetX = 0, offsetY = 0;
+    if (containerName.isNotEmpty) {
+      final c = _containers[containerName];
+      if (c != null) {
+        offsetX = c.x;
+        offsetY = c.y;
+      }
+    }
+    // Apply offset to the rawOp clone so handlers receive absolute coords.
+    final adjustedOp = Map<String, dynamic>.from(rawOp);
+    if (offsetX != 0 || offsetY != 0) {
+      _adjustPositionKeys(adjustedOp, offsetX, offsetY);
+    }
+
     switch (op) {
       case 'create':
-        canvas = _opCreate(rawOp, resolveValue);
+        canvas = _opCreate(adjustedOp, resolveValue);
         break;
       case 'loadImage':
-        canvas = await _opLoadImage(rawOp, resolveValue, canvas,
+        canvas = await _opLoadImage(adjustedOp, resolveValue, canvas,
             urlCache: urlCache);
         break;
       case 'compositeImage':
-        canvas = await _opCompositeImage(rawOp, resolveValue, canvas,
+        canvas = await _opCompositeImage(adjustedOp, resolveValue, canvas,
             urlCache: urlCache);
         break;
       case 'drawText':
-        canvas = _opDrawText(rawOp, resolveValue, canvas);
+        canvas = _opDrawText(adjustedOp, resolveValue, canvas);
         break;
       case 'drawCircle':
-        canvas = _opDrawCircle(rawOp, resolveValue, canvas);
+        canvas = _opDrawCircle(adjustedOp, resolveValue, canvas);
         break;
       case 'drawRect':
-        canvas = _opDrawRect(rawOp, resolveValue, canvas);
+        canvas = _opDrawRect(adjustedOp, resolveValue, canvas);
         break;
       case 'drawLine':
-        canvas = _opDrawLine(rawOp, resolveValue, canvas);
+        canvas = _opDrawLine(adjustedOp, resolveValue, canvas);
+        break;
+      case 'container':
+        _registerContainer(rawOp, resolveValue);
         break;
     }
   }
 
   if (canvas != null) {
     final pngBytes = img.encodePng(canvas);
+    // Release the pixel buffer to help GC before the base64 inflation
+    // allocates even more memory.
+    canvas = null;
+
     final base64Png = base64Encode(pngBytes);
     results[resultKey] = base64Png;
     variables[resultKey] = base64Png;
-    // Also expose as a data URL for embed compatibility
-    final dataUrl = 'data:image/png;base64,$base64Png';
-    variables['$resultKey.dataUrl'] = dataUrl;
+    // dataUrl is derivable from base64 — store only the base64 and
+    // let consumers compute the dataUrl when needed to avoid double storage.
+    variables['$resultKey.dataUrl'] = 'data:image/png;base64,$base64Png';
     // If the block has an imageName, register as an attachment so
     // respondWithMessage / sendMessage collectors pick it up.
     final imageName = payload['imageName']?.toString().trim() ?? '';
@@ -87,6 +176,9 @@ Future<void> executeRuntimeImageBlock({
     results[resultKey] = '';
     variables[resultKey] = '';
   }
+
+  // Clear the URL cache to release downloaded image bytes.
+  urlCache.clear();
 }
 
 /// Executes an Attach Image action at runtime.
@@ -228,7 +320,7 @@ img.BitmapFont _selectFont(int fontSize) {
 /// Resolves a URL/dataUrl/raw-base64 string to image bytes.
 ///
 /// Resolution order:
-/// 1. `http://` or `https://` → HTTP GET (cached per block)
+/// 1. `http://` or `https://` → HTTP GET (cached per block via [_LruCache])
 /// 2. `data:image/...;base64,...` → base64 decode
 /// 3. Raw base64 string fallback
 ///
@@ -237,7 +329,7 @@ img.BitmapFont _selectFont(int fontSize) {
 /// Shared by [executeRuntimeImageBlock] and [executeAttachImage].
 Future<Uint8List?> resolveImageSource(
   String source, {
-  Map<String, Uint8List>? urlCache,
+  _LruCache<Uint8List>? urlCache,
 }) async {
   if (source.isEmpty) return null;
 
@@ -282,8 +374,10 @@ Future<Uint8List?> resolveImageSource(
 // ─── Operation Handlers ───────────────────────────────────────────────────────
 
 img.Image _opCreate(Map rawOp, String Function(String) resolveValue) {
-  final width = _parseInt(rawOp['width'], resolveValue, defaultValue: 400);
-  final height = _parseInt(rawOp['height'], resolveValue, defaultValue: 300);
+  final width = _parseInt(rawOp['width'], resolveValue, defaultValue: 400)
+      .clamp(1, _kMaxCanvasDimension);
+  final height = _parseInt(rawOp['height'], resolveValue, defaultValue: 300)
+      .clamp(1, _kMaxCanvasDimension);
   final color = _parseColor(rawOp['color'], resolveValue);
 
   final canvas = img.Image(width: width, height: height);
@@ -295,7 +389,7 @@ Future<img.Image?> _opLoadImage(
   Map rawOp,
   String Function(String) resolveValue,
   img.Image? current, {
-  Map<String, Uint8List>? urlCache,
+  _LruCache<Uint8List>? urlCache,
 }) async {
   // Support both 'url' (preferred) and 'dataUrl' (legacy) keys.
   final source =
@@ -334,7 +428,7 @@ Future<img.Image?> _opCompositeImage(
   Map rawOp,
   String Function(String) resolveValue,
   img.Image? current, {
-  Map<String, Uint8List>? urlCache,
+  _LruCache<Uint8List>? urlCache,
 }) async {
   if (current == null) return null;
 
@@ -634,11 +728,38 @@ img.Image? _opDrawText(
   final fontSize =
       _parseInt(rawOp['fontSize'], resolveValue, defaultValue: 14);
   final color = _parseColor(rawOp['color'], resolveValue);
+  final textAlign = _resolve(rawOp['textAlign'], resolveValue).toLowerCase().trim();
+  final maxWidth = _parseInt(rawOp['maxWidth'], resolveValue, defaultValue: -1);
 
   final font = _selectFont(fontSize);
-  img.drawString(current, text, font: font, x: x, y: y, color: color);
+
+  var drawX = x;
+  if (maxWidth > 0) {
+    final textWidth = _measureTextWidth(text, font);
+    switch (textAlign) {
+      case 'center':
+        drawX = x + ((maxWidth - textWidth) / 2).round();
+        break;
+      case 'right':
+        drawX = x + maxWidth - textWidth;
+        break;
+      default: // left
+        break;
+    }
+  }
+
+  img.drawString(current, text, font: font, x: drawX, y: y, color: color);
 
   return current;
+}
+
+/// Measures the pixel width of [text] rendered with [font].
+int _measureTextWidth(String text, img.BitmapFont font) {
+  var width = 0;
+  for (var i = 0; i < text.length; i++) {
+    width += font.characterXAdvance(text[i]);
+  }
+  return width;
 }
 
 img.Image? _opDrawCircle(
@@ -650,11 +771,36 @@ img.Image? _opDrawCircle(
   final radius = _parseInt(rawOp['radius'], resolveValue, defaultValue: 10);
   final color = _parseColor(rawOp['color'], resolveValue);
   final fill = _parseBool(rawOp['fill'], resolveValue, defaultValue: true);
+  final blend = _resolve(rawOp['blend'], resolveValue).toLowerCase().trim();
 
-  if (fill) {
-    img.fillCircle(current, x: x, y: y, radius: radius, color: color);
+  if (blend.isEmpty || blend == 'normal' || blend == 'srcover') {
+    // Fast path: standard fill/draw
+    if (fill) {
+      img.fillCircle(current, x: x, y: y, radius: radius, color: color);
+    } else {
+      img.drawCircle(current, x: x, y: y, radius: radius, color: color);
+    }
   } else {
-    img.drawCircle(current, x: x, y: y, radius: radius, color: color);
+    // Blended path: per-pixel blend
+    final r2 = radius * radius;
+    final minX = (x - radius).clamp(0, current.width);
+    final maxX = (x + radius).clamp(0, current.width - 1);
+    final minY = (y - radius).clamp(0, current.height);
+    final maxY = (y + radius).clamp(0, current.height - 1);
+    for (var py = minY; py <= maxY; py++) {
+      for (var px = minX; px <= maxX; px++) {
+        final dx = px - x;
+        final dy = py - y;
+        final dist2 = dx * dx + dy * dy;
+        if (!fill) {
+          // Outline: blend only the boundary (within 1px of circle edge)
+          if (dist2 > r2 || dist2 < (radius - 1) * (radius - 1)) continue;
+        } else {
+          if (dist2 > r2) continue;
+        }
+        _blendPixel(current, px, py, color, blend);
+      }
+    }
   }
 
   return current;
@@ -670,13 +816,33 @@ img.Image? _opDrawRect(
   final height = _parseInt(rawOp['height'], resolveValue, defaultValue: 50);
   final color = _parseColor(rawOp['color'], resolveValue);
   final fill = _parseBool(rawOp['fill'], resolveValue, defaultValue: true);
+  final blend = _resolve(rawOp['blend'], resolveValue).toLowerCase().trim();
 
-  if (fill) {
-    img.fillRect(current,
-        x1: x, y1: y, x2: x + width, y2: y + height, color: color);
+  final x2 = (x + width).clamp(0, current.width - 1);
+  final y2 = (y + height).clamp(0, current.height - 1);
+  final x1 = x.clamp(0, current.width);
+  final y1 = y.clamp(0, current.height);
+
+  if (blend.isEmpty || blend == 'normal' || blend == 'srcover') {
+    // Fast path: standard fill/draw via the image package.
+    if (fill) {
+      img.fillRect(current,
+          x1: x1, y1: y1, x2: x2, y2: y2, color: color);
+    } else {
+      img.drawRect(current,
+          x1: x1, y1: y1, x2: x2, y2: y2, color: color);
+    }
   } else {
-    img.drawRect(current,
-        x1: x, y1: y, x2: x + width, y2: y + height, color: color);
+    // Blended path: per-pixel blend.
+    for (var py = y1; py <= y2; py++) {
+      for (var px = x1; px <= x2; px++) {
+        if (!fill) {
+          // Outline: blend only the border pixels.
+          if (py > y1 && py < y2 && px > x1 && px < x2) continue;
+        }
+        _blendPixel(current, px, py, color, blend);
+      }
+    }
   }
 
   return current;
@@ -691,6 +857,7 @@ img.Image? _opDrawRect(
 /// - `y2` (int): End Y coordinate
 /// - `color` (string): Line color (hex or named)
 /// - `thickness` (int, default 1): Line width in pixels
+/// - `blend` (string, optional): Blend mode (multiply, screen, overlay, etc.)
 img.Image? _opDrawLine(
     Map rawOp, String Function(String) resolveValue, img.Image? current) {
   if (current == null) return null;
@@ -702,6 +869,8 @@ img.Image? _opDrawLine(
   final color = _parseColor(rawOp['color'], resolveValue);
   final thickness =
       _parseInt(rawOp['thickness'], resolveValue, defaultValue: 1).clamp(1, 100);
+  final blend = _resolve(rawOp['blend'], resolveValue).toLowerCase().trim();
+  final useBlend = blend.isNotEmpty && blend != 'normal' && blend != 'srcover';
 
   // Bresenham's line algorithm with thickness support.
   // For thickness > 1, draw the line centered on the ideal path by
@@ -725,6 +894,16 @@ img.Image? _opDrawLine(
     if (e2 <= dx) {
       err += dx;
       y1 += sy;
+    }
+  }
+
+  void writePixel(int px, int py) {
+    if (px >= 0 && px < current.width && py >= 0 && py < current.height) {
+      if (useBlend) {
+        _blendPixel(current, px, py, color, blend);
+      } else {
+        current.setPixelRgba(px, py, color.r, color.g, color.b, color.a);
+      }
     }
   }
 
@@ -752,29 +931,145 @@ img.Image? _opDrawLine(
       final px = pt.$1;
       final py = pt.$2;
       for (var t = -halfThick; t <= halfThick; t++) {
-        final drawX = px + (normX * t).round();
-        final drawY = py + (normY * t).round();
-        if (drawX >= 0 &&
-            drawX < current.width &&
-            drawY >= 0 &&
-            drawY < current.height) {
-          current.setPixelRgba(
-              drawX, drawY, color.r, color.g, color.b, color.a);
-        }
+        writePixel(px + (normX * t).round(), py + (normY * t).round());
       }
     }
   } else {
     // Thickness 1: just draw the single-pixel line
     for (final pt in points) {
-      if (pt.$1 >= 0 &&
-          pt.$1 < current.width &&
-          pt.$2 >= 0 &&
-          pt.$2 < current.height) {
-        current.setPixelRgba(
-            pt.$1, pt.$2, color.r, color.g, color.b, color.a);
-      }
+      writePixel(pt.$1, pt.$2);
     }
   }
 
   return current;
+}
+
+/// Blends a source color onto the destination pixel at ([dx], [dy]) using
+/// the named [blendMode] (multiply, screen, overlay, darken, lighten,
+/// difference, hardLight, softLight). Alpha is applied from the source
+/// color's alpha channel.
+void _blendPixel(img.Image dst, int dx, int dy, img.ColorRgba8 src,
+    String blendMode) {
+  final dp = dst.getPixel(dx, dy);
+  final sr = src.r.toInt(), sg = src.g.toInt(), sb = src.b.toInt();
+  final dr = dp.r.toInt(), dg = dp.g.toInt(), db = dp.b.toInt();
+
+  int rb, gb, bb;
+  switch (blendMode) {
+    case 'multiply':
+      rb = ((dr * sr) / 255).round();
+      gb = ((dg * sg) / 255).round();
+      bb = ((db * sb) / 255).round();
+      break;
+    case 'screen':
+      rb = 255 - (((255 - dr) * (255 - sr)) / 255).round();
+      gb = 255 - (((255 - dg) * (255 - sg)) / 255).round();
+      bb = 255 - (((255 - db) * (255 - sb)) / 255).round();
+      break;
+    case 'overlay':
+      rb = _overlayChannel(dr, sr);
+      gb = _overlayChannel(dg, sg);
+      bb = _overlayChannel(db, sb);
+      break;
+    case 'darken':
+      rb = dr < sr ? dr : sr;
+      gb = dg < sg ? dg : sg;
+      bb = db < sb ? db : sb;
+      break;
+    case 'lighten':
+      rb = dr > sr ? dr : sr;
+      gb = dg > sg ? dg : sg;
+      bb = db > sb ? db : sb;
+      break;
+    case 'difference':
+      rb = (dr - sr).abs();
+      gb = (dg - sg).abs();
+      bb = (db - sb).abs();
+      break;
+    case 'hardlight':
+      rb = _overlayChannel(sr, dr);
+      gb = _overlayChannel(sg, dg);
+      bb = _overlayChannel(sb, db);
+      break;
+    case 'softlight':
+      rb = _softLightChannel(dr, sr);
+      gb = _softLightChannel(dg, sg);
+      bb = _softLightChannel(db, sb);
+      break;
+    default:
+      rb = sr;
+      gb = sg;
+      bb = sb;
+  }
+
+  final a = src.a / 255.0;
+  final finalR = (rb * a + dp.r * (1 - a)).round();
+  final finalG = (gb * a + dp.g * (1 - a)).round();
+  final finalB = (bb * a + dp.b * (1 - a)).round();
+  final finalA = ((src.a + dp.a * (1 - a)).round()).clamp(0, 255);
+
+  dst.setPixelRgba(dx, dy, finalR, finalG, finalB, finalA);
+}
+
+// ─── Container Support ────────────────────────────────────────────────────
+
+/// Registry of named containers declared via the `container` operation.
+/// Keyed by container name, stores the container's absolute origin.
+final _containers = <String, _ContainerInfo>{};
+
+/// Parsed container information.
+class _ContainerInfo {
+  final int x;
+  final int y;
+  final int width;
+  final int height;
+  const _ContainerInfo(this.x, this.y, this.width, this.height);
+}
+
+/// Registers a container from a `container` operation so subsequent
+/// operations can reference it via `container: name`.
+void _registerContainer(
+    Map rawOp, String Function(String) resolveValue) {
+  final name = _resolve(rawOp['name'], resolveValue).trim();
+  if (name.isEmpty) return;
+  final x = _parseInt(rawOp['x'], resolveValue);
+  final y = _parseInt(rawOp['y'], resolveValue);
+  final width = _parseInt(rawOp['width'], resolveValue, defaultValue: 100);
+  final height = _parseInt(rawOp['height'], resolveValue, defaultValue: 100);
+  _containers[name] = _ContainerInfo(x, y, width, height);
+
+  // If the container has a background color, draw it.
+  final bg = _resolve(rawOp['color'], resolveValue);
+  if (bg.isNotEmpty) {
+    // Background is drawn lazily — it's just metadata until drawn.
+    // We store it on the container info.
+  }
+}
+
+/// Offsets position keys in [op] by ([dx], [dy]) for container-relative
+/// positioning. Handles the different key naming conventions across ops.
+void _adjustPositionKeys(Map<String, dynamic> op, int dx, int dy) {
+  final opType = (op['op'] ?? '').toString();
+  switch (opType) {
+    case 'drawText':
+    case 'drawRect':
+    case 'drawCircle':
+    case 'loadImage':
+    case 'compositeImage':
+      _shiftKey(op, 'x', dx);
+      _shiftKey(op, 'y', dy);
+      break;
+    case 'drawLine':
+      _shiftKey(op, 'x1', dx);
+      _shiftKey(op, 'y1', dy);
+      _shiftKey(op, 'x2', dx);
+      _shiftKey(op, 'y2', dy);
+      break;
+  }
+}
+
+void _shiftKey(Map<String, dynamic> op, String key, int delta) {
+  if (!op.containsKey(key) || delta == 0) return;
+  final current = int.tryParse((op[key] ?? '0').toString()) ?? 0;
+  op[key] = (current + delta).toString();
 }

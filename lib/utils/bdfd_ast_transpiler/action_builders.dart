@@ -763,19 +763,20 @@ extension _BdfdAstTranspilationScopeActionBuilders
       );
       return null;
     }
-    final permissions = <String>[];
+    final permissionsTokens = <String>[];
     for (var i = 2; i < node.arguments.length; i++) {
       final perm = _stringifyArgument(node, i).trim();
       if (perm.isNotEmpty) {
-        permissions.add(_normalizePermissionToken(perm));
+        permissionsTokens.add(_normalizePermissionToken(perm));
       }
     }
+    final permissionsMap = bdfdPermissionListToStates(permissionsTokens);
     return Action(
       type: BotCreatorActionType.editChannelPermissions,
       payload: <String, dynamic>{
         'channelId': channelId,
         'targetId': roleOrUserId,
-        'permissions': permissions,
+        'permissions': permissionsMap,
       },
     );
   }
@@ -798,12 +799,12 @@ extension _BdfdAstTranspilationScopeActionBuilders
       );
       return null;
     }
-    final permissions = <String>[];
+    final permissionsTokens = <String>[];
     if (permissionsRaw.isNotEmpty) {
       for (final token in permissionsRaw.split(';')) {
         final perm = token.trim();
         if (perm.isNotEmpty) {
-          permissions.add(_normalizePermissionToken(perm));
+          permissionsTokens.add(_normalizePermissionToken(perm));
         }
       }
     }
@@ -811,15 +812,16 @@ extension _BdfdAstTranspilationScopeActionBuilders
     for (var i = 3; i < node.arguments.length; i++) {
       final perm = _stringifyArgument(node, i).trim();
       if (perm.isNotEmpty) {
-        permissions.add(_normalizePermissionToken(perm));
+        permissionsTokens.add(_normalizePermissionToken(perm));
       }
     }
+    final permissionsMap = bdfdPermissionListToStates(permissionsTokens);
     return Action(
       type: BotCreatorActionType.editChannelPermissions,
       payload: <String, dynamic>{
         'channelId': channelId,
         'targetId': targetId,
-        'permissions': permissions,
+        'permissions': permissionsMap,
       },
     );
   }

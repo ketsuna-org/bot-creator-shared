@@ -875,6 +875,9 @@ extension _BdfdAstTranspilationScopeDispatch on _BdfdAstTranspilationScope {
       case 'canvascreate':
         _canvasCreate(node);
         return null;
+      case 'canvascontainer':
+        _canvasContainer(node);
+        return null;
       case 'canvasloadimage':
         _canvasLoadImage(node);
         return null;

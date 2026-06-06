@@ -1,373 +1,110 @@
 [
   {
     "id": "welcome",
-    "name": "Welcome & Community",
-    "description": "Bootstrap your server with friendly hello messages, server analytics, and automatic member welcome workflows.",
+    "name": "👋 Welcome Bot",
+    "description": "Community onboarding — hello, server/user/role/bot info, avatar, invites, auto-welcome & goodbye.",
     "iconCodePoint": 59378,
     "category": "community",
-    "intents": {
-      "guildMembers": true,
-      "messageContent": true
-    },
+    "intents": { "guildMembers": true, "messageContent": true },
     "commands": [
       {
         "name": "hello",
         "description": "Say hello to the bot",
         "data": {
-          "version": 1,
-          "commandType": "chatInput",
-          "editorMode": "advanced",
-          "executionMode": "workflow",
+          "version": 1, "commandType": "chatInput", "editorMode": "advanced", "executionMode": "workflow",
           "defaultMemberPermissions": "",
           "response": {
-            "mode": "message",
-            "text": "",
-            "type": "normal",
-            "embeds": [
-              {
-                "title": "👋 Hello ((userName))!",
-                "description": "Welcome to **((guildName))**! We are glad to have you here.",
-                "color": 5793266
-              }
-            ],
-            "components": {},
-            "workflow": {
-              "autoDeferIfActions": true,
-              "visibility": "public",
-              "onError": "edit_error",
-              "conditional": {
-                "enabled": false
-              }
-            }
+            "mode": "embed", "text": "", "type": "normal",
+            "embeds": [{
+              "title": "👋 Hello, ((userName))!",
+              "description": "Welcome to **((guildName))**! We're glad to have you here.\n\nThere are currently **((guildCount))** members.",
+              "color": 5793266
+            }],
+            "components": {}, "modal": {},
+            "workflow": { "autoDeferIfActions": true, "visibility": "public", "onError": "edit_error", "conditional": { "enabled": false } }
           },
           "actions": []
         }
       },
       {
         "name": "serverinfo",
-        "description": "Display information about this server",
+        "description": "Display detailed server information",
         "data": {
-          "version": 1,
-          "commandType": "chatInput",
-          "editorMode": "advanced",
-          "executionMode": "workflow",
+          "version": 1, "commandType": "chatInput", "editorMode": "advanced", "executionMode": "workflow",
           "defaultMemberPermissions": "",
           "response": {
-            "mode": "message",
-            "text": "",
-            "type": "normal",
-            "embeds": [
-              {
-                "title": "📊 ((guildName))",
-                "description": "**Members:** ((guildCount))\n**ID:** ((guildId))",
-                "color": 3447003
-              }
-            ],
-            "components": {},
-            "workflow": {
-              "autoDeferIfActions": true,
-              "visibility": "public",
-              "onError": "edit_error",
-              "conditional": {
-                "enabled": false
-              }
-            }
+            "mode": "embed", "text": "", "type": "normal",
+            "embeds": [{
+              "title": "📊 ((guildName))",
+              "description": "**🆔 Server ID:** ((guildId))\n**👑 Owner:** <@((guildOwnerId))>\n**👥 Members:** ((guildCount))\n**📅 Created:** ((guildCreatedAt))\n**🚀 Boost Level:** ((guildBoostLevel|0))\n**💬 Channels:** ((guildChannelCount))\n**🏷️ Roles:** ((guildRoleCount))",
+              "color": 3447003
+            }],
+            "components": {}, "modal": {},
+            "workflow": { "autoDeferIfActions": true, "visibility": "public", "onError": "edit_error", "conditional": { "enabled": false } }
           },
           "actions": []
         }
-      }
-    ],
-    "workflows": [
+      },
       {
-        "name": "welcome_message",
-        "workflowType": "event",
-        "entryPoint": "main",
-        "arguments": [],
-        "eventTrigger": {
-          "category": "members",
-          "event": "guildMemberAdd"
-        },
-        "actions": [
-          {
-            "id": "action_welcome_msg",
-            "type": "sendMessage",
-            "enabled": true,
-            "key": "welcome_sender",
-            "depend_on": [],
-            "error": {
-              "mode": "stop"
-            },
-            "payload": {
-              "messageMode": "normal",
-              "channelId": "((guild.systemChannelId|channelId))",
-              "content": "🎉 Welcome <@((member.id))>! You are now part of the server."
-            },
-            "runtimeId": "action_welcome_msg"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "moderation",
-    "name": "Server Moderation",
-    "description": "Keep your server safe and structured with advanced mute, kick, ban, and clear commands.",
-    "iconCodePoint": 59624,
-    "category": "moderation",
-    "intents": {
-      "guildMembers": true,
-      "messageContent": true
-    },
-    "commands": [
-      {
-        "name": "ban",
-        "description": "Ban a member from the server",
+        "name": "userinfo",
+        "description": "Display info about a user",
         "data": {
-          "version": 1,
-          "commandType": "chatInput",
-          "editorMode": "advanced",
-          "executionMode": "workflow",
-          "defaultMemberPermissions": "4",
+          "version": 1, "commandType": "chatInput", "editorMode": "advanced", "executionMode": "workflow",
+          "defaultMemberPermissions": "",
           "options": [
-            {
-              "type": "user",
-              "name": "target",
-              "description": "User to ban",
-              "required": true
-            },
-            {
-              "type": "string",
-              "name": "reason",
-              "description": "Reason for banning",
-              "required": false
-            }
+            { "type": "user", "name": "user", "description": "User to get info about (default: yourself)", "required": false }
           ],
           "response": {
-            "mode": "message",
-            "text": "🔨 ((opts.target)) has been banned.",
-            "type": "normal",
-            "workflow": {
-              "autoDeferIfActions": true,
-              "visibility": "ephemeral",
-              "onError": "edit_error",
-              "conditional": {
-                "enabled": false
-              }
-            }
+            "mode": "embed", "text": "", "type": "normal",
+            "embeds": [{
+              "title": "👤 User Info",
+              "description": "**Username:** ((opts.user|userName))\n**🆔 ID:** ((opts.user|userId))\n**🤖 Bot:** ((opts.user|isBot|No))\n**📅 Created:** ((opts.user|createdAt))\n**📆 Joined:** ((opts.user|joinedAt))\n**🎨 Roles:** ((opts.user|roles))",
+              "color": 3447003,
+              "thumbnail": { "url": "((avatar(opts.user.avatar|userAvatar)))" }
+            }],
+            "components": {}, "modal": {},
+            "workflow": { "autoDeferIfActions": true, "visibility": "public", "onError": "edit_error", "conditional": { "enabled": false } }
           },
-          "actions": [
-            {
-              "id": "action_ban",
-              "type": "banUser",
-              "enabled": true,
-              "key": "ban_step",
-              "depend_on": [],
-              "error": {
-                "mode": "stop"
-              },
-              "payload": {
-                "userId": "((opts.target|userId))",
-                "reason": "((opts.reason))"
-              },
-              "runtimeId": "action_ban"
-            }
-          ]
+          "actions": []
         }
       },
       {
-        "name": "kick",
-        "description": "Kick a member from the server",
+        "name": "roleinfo",
+        "description": "Display info about a role",
         "data": {
-          "version": 1,
-          "commandType": "chatInput",
-          "editorMode": "advanced",
-          "executionMode": "workflow",
-          "defaultMemberPermissions": "2",
+          "version": 1, "commandType": "chatInput", "editorMode": "advanced", "executionMode": "workflow",
+          "defaultMemberPermissions": "",
           "options": [
-            {
-              "type": "user",
-              "name": "target",
-              "description": "User to kick",
-              "required": true
-            },
-            {
-              "type": "string",
-              "name": "reason",
-              "description": "Reason for kick",
-              "required": false
-            }
+            { "type": "role", "name": "role", "description": "The role to inspect", "required": true }
           ],
           "response": {
-            "mode": "message",
-            "text": "👢 ((opts.target)) has been kicked.",
-            "type": "normal",
-            "workflow": {
-              "autoDeferIfActions": true,
-              "visibility": "ephemeral",
-              "onError": "edit_error",
-              "conditional": {
-                "enabled": false
-              }
-            }
+            "mode": "embed", "text": "", "type": "normal",
+            "embeds": [{
+              "title": "🎨 Role Info",
+              "description": "**Name:** ((opts.role|name))\n**🆔 ID:** ((opts.role|roleId))\n**🎨 Color:** ((opts.role|color))\n**📊 Position:** ((opts.role|position))\n**👥 Members:** ((opts.role|memberCount))\n**📌 Hoisted:** ((opts.role|hoisted|No))\n**🔧 Managed:** ((opts.role|managed|No))",
+              "color": 3447003
+            }],
+            "components": {}, "modal": {},
+            "workflow": { "autoDeferIfActions": true, "visibility": "public", "onError": "edit_error", "conditional": { "enabled": false } }
           },
-          "actions": [
-            {
-              "id": "action_kick",
-              "type": "kickUser",
-              "enabled": true,
-              "key": "kick_step",
-              "depend_on": [],
-              "error": {
-                "mode": "stop"
-              },
-              "payload": {
-                "userId": "((opts.target|userId))",
-                "reason": "((opts.reason))"
-              },
-              "runtimeId": "action_kick"
-            }
-          ]
+          "actions": []
         }
       },
       {
-        "name": "mute",
-        "description": "Timeout a member",
+        "name": "botinfo",
+        "description": "Display bot information",
         "data": {
-          "version": 1,
-          "commandType": "chatInput",
-          "editorMode": "advanced",
-          "executionMode": "workflow",
-          "defaultMemberPermissions": "1099511627776",
-          "options": [
-            {
-              "type": "user",
-              "name": "target",
-              "description": "User to mute",
-              "required": true
-            },
-            {
-              "type": "string",
-              "name": "reason",
-              "description": "Reason for mute",
-              "required": false
-            }
-          ],
-          "response": {
-            "mode": "message",
-            "text": "🔇 ((opts.target)) has been muted.",
-            "type": "normal",
-            "workflow": {
-              "autoDeferIfActions": true,
-              "visibility": "ephemeral",
-              "onError": "edit_error",
-              "conditional": {
-                "enabled": false
-              }
-            }
-          },
-          "actions": [
-            {
-              "id": "action_mute",
-              "type": "muteUser",
-              "enabled": true,
-              "key": "mute_step",
-              "depend_on": [],
-              "error": {
-                "mode": "stop"
-              },
-              "payload": {
-                "userId": "((opts.target|userId))",
-                "reason": "((opts.reason))",
-                "duration": 600
-              },
-              "runtimeId": "action_mute"
-            }
-          ]
-        }
-      },
-      {
-        "name": "clear",
-        "description": "Delete multiple messages at once",
-        "data": {
-          "version": 1,
-          "commandType": "chatInput",
-          "editorMode": "advanced",
-          "executionMode": "workflow",
-          "defaultMemberPermissions": "8192",
-          "options": [
-            {
-              "type": "integer",
-              "name": "amount",
-              "description": "Number of messages to delete",
-              "required": true
-            }
-          ],
-          "response": {
-            "mode": "message",
-            "text": "🗑️ Deleted ((opts.amount)) message(s).",
-            "type": "normal",
-            "workflow": {
-              "autoDeferIfActions": true,
-              "visibility": "ephemeral",
-              "onError": "edit_error",
-              "conditional": {
-                "enabled": false
-              }
-            }
-          },
-          "actions": [
-            {
-              "id": "action_clear",
-              "type": "deleteMessages",
-              "enabled": true,
-              "key": "clear_step",
-              "depend_on": [],
-              "error": {
-                "mode": "stop"
-              },
-              "payload": {
-                "channelId": "((channelId))",
-                "count": "((opts.amount))"
-              },
-              "runtimeId": "action_clear"
-            }
-          ]
-        }
-      }
-    ],
-    "workflows": []
-  },
-  {
-    "id": "utility",
-    "name": "General Utility",
-    "description": "Practical tools for everyone: ping, user avatars, and custom bot broadcasts.",
-    "iconCodePoint": 59500,
-    "category": "utility",
-    "intents": {
-      "messageContent": true
-    },
-    "commands": [
-      {
-        "name": "ping",
-        "description": "Check if the bot is online",
-        "data": {
-          "version": 1,
-          "commandType": "chatInput",
-          "editorMode": "advanced",
-          "executionMode": "workflow",
+          "version": 1, "commandType": "chatInput", "editorMode": "advanced", "executionMode": "workflow",
           "defaultMemberPermissions": "",
           "response": {
-            "mode": "message",
-            "text": "🏓 Pong!",
-            "type": "normal",
-            "workflow": {
-              "autoDeferIfActions": true,
-              "visibility": "public",
-              "onError": "edit_error",
-              "conditional": {
-                "enabled": false
-              }
-            }
+            "mode": "embed", "text": "", "type": "normal",
+            "embeds": [{
+              "title": "🤖 Bot Info",
+              "description": "**Name:** Bot Creator\n**🆔 ID:** ((bot.id))\n**📡 Latency:** ((bot.ping|?))ms\n**⏱️ Uptime:** ((bot.uptime|?))\n**🌐 Servers:** ((bot.guildCount))\n**💻 Runtime:** ((bot.nodeVersion))\n\nBuilt with ❤️ using **Bot Creator**\n((bot.invite))",
+              "color": 5793266
+            }],
+            "components": {}, "modal": {},
+            "workflow": { "autoDeferIfActions": true, "visibility": "public", "onError": "edit_error", "conditional": { "enabled": false } }
           },
           "actions": []
         }
@@ -376,95 +113,401 @@
         "name": "avatar",
         "description": "Display a user's avatar",
         "data": {
-          "version": 1,
-          "commandType": "chatInput",
-          "editorMode": "advanced",
-          "executionMode": "workflow",
+          "version": 1, "commandType": "chatInput", "editorMode": "advanced", "executionMode": "workflow",
           "defaultMemberPermissions": "",
           "options": [
-            {
-              "type": "user",
-              "name": "user",
-              "description": "User to show the avatar of",
-              "required": false
-            }
+            { "type": "user", "name": "user", "description": "User to show the avatar of", "required": false }
           ],
           "response": {
-            "mode": "message",
-            "text": "",
-            "type": "normal",
-            "embeds": [
-              {
-                "title": "🖼️ ((opts.user|userName))'s avatar",
-                "image": "((avatar(opts.user.avatar|userAvatar)))",
-                "color": 3447003
-              }
-            ],
-            "components": {},
-            "workflow": {
-              "autoDeferIfActions": true,
-              "visibility": "public",
-              "onError": "edit_error",
-              "conditional": {
-                "enabled": false
-              }
-            }
+            "mode": "embed", "text": "", "type": "normal",
+            "embeds": [{
+              "title": "🖼️ Avatar",
+              "description": "**((opts.user|userName))**",
+              "image": { "url": "((avatar(opts.user.avatar|userAvatar)))" },
+              "color": 3447003
+            }],
+            "components": {}, "modal": {},
+            "workflow": { "autoDeferIfActions": true, "visibility": "public", "onError": "edit_error", "conditional": { "enabled": false } }
           },
           "actions": []
         }
       },
       {
-        "name": "say",
-        "description": "Make the bot send a message",
+        "name": "invite",
+        "description": "Create a server invite",
         "data": {
-          "version": 1,
-          "commandType": "chatInput",
-          "editorMode": "advanced",
-          "executionMode": "workflow",
-          "defaultMemberPermissions": "8",
+          "version": 1, "commandType": "chatInput", "editorMode": "advanced", "executionMode": "workflow",
+          "defaultMemberPermissions": "",
           "options": [
-            {
-              "type": "string",
-              "name": "message",
-              "description": "The message to send",
-              "required": true
-            },
-            {
-              "type": "channel",
-              "name": "channel",
-              "description": "Channel to send the message in",
-              "required": false
-            }
+            { "type": "integer", "name": "max_uses", "description": "Max uses (0 = unlimited)", "required": false, "min_value": 0, "max_value": 100 },
+            { "type": "integer", "name": "max_age", "description": "Expiry in seconds (0 = never)", "required": false, "min_value": 0, "max_value": 604800 }
           ],
           "response": {
-            "mode": "message",
-            "text": "✅ Message sent!",
-            "type": "normal",
-            "workflow": {
-              "autoDeferIfActions": true,
-              "visibility": "ephemeral",
-              "onError": "edit_error",
-              "conditional": {
-                "enabled": false
-              }
-            }
+            "mode": "embed", "text": "", "type": "normal",
+            "embeds": [{
+              "title": "🔗 Server Invite",
+              "description": "**Invite:** ((invite_url|No invite could be created.))\nMax uses: ((opts.max_uses|0)) | Expires: ((opts.max_age|0))s",
+              "color": 3066993
+            }],
+            "components": {}, "modal": {},
+            "workflow": { "autoDeferIfActions": true, "visibility": "public", "onError": "edit_error", "conditional": { "enabled": false } }
           },
           "actions": [
             {
-              "id": "action_say",
-              "type": "sendMessage",
-              "enabled": true,
-              "key": "say_step",
-              "depend_on": [],
-              "error": {
-                "mode": "stop"
-              },
+              "type": "inviteManagement", "enabled": true, "key": "invite_url",
+              "payload": { "action": "create", "channelId": "((channelId))", "maxUses": "((opts.max_uses|0))", "maxAge": "((opts.max_age|0))" }
+            }
+          ]
+        }
+      }
+    ],
+    "workflows": [
+      {
+        "name": "welcome_message", "workflowType": "event", "entryPoint": "main", "arguments": [],
+        "eventTrigger": { "category": "members", "event": "guildMemberAdd" },
+        "actions": [
+          {
+            "type": "sendMessage", "enabled": true, "key": "welcome_msg",
+            "payload": {
+              "messageMode": "normal",
+              "channelId": "((guild.systemChannelId|channelId))",
+              "content": "🎉 Welcome <@((member.id))> to **((guildName))**! You're member #((guildCount))! 🎊\nMake sure to read the rules and have fun!",
+              "embed": {
+                "title": "👋 Welcome!",
+                "description": "We hope you enjoy your stay! Feel free to introduce yourself in the chat.",
+                "color": 5793266,
+                "thumbnail": { "url": "((avatar(member.avatar|userAvatar)))" }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "goodbye_message", "workflowType": "event", "entryPoint": "main", "arguments": [],
+        "eventTrigger": { "category": "members", "event": "guildMemberRemove" },
+        "actions": [
+          {
+            "type": "sendMessage", "enabled": true, "key": "goodbye_msg",
+            "payload": {
+              "messageMode": "normal",
+              "channelId": "((guild.systemChannelId|channelId))",
+              "content": "👋 **((member.userName))#((member.userId)))** has left the server. We're now **((guildCount))** members."
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "moderation",
+    "name": "🛡️ Moderation Bot",
+    "description": "Full server moderation suite — ban, kick, mute, warn, clear, slowmode, lock, roles & more.",
+    "iconCodePoint": 59624,
+    "category": "moderation",
+    "intents": { "guildMembers": true, "messageContent": true },
+    "commands": [
+      {
+        "name": "ban",
+        "description": "Ban a member from the server",
+        "data": {
+          "version": 1, "commandType": "chatInput", "editorMode": "advanced", "executionMode": "workflow",
+          "defaultMemberPermissions": "4",
+          "options": [
+            { "type": "user", "name": "target", "description": "User to ban", "required": true },
+            { "type": "string", "name": "reason", "description": "Reason for the ban", "required": false },
+            { "type": "integer", "name": "delete_days", "description": "Days of messages to delete (0–7)", "required": false, "min_value": 0, "max_value": 7 }
+          ],
+          "response": {
+            "mode": "text", "text": "🔨 **((opts.target|userName))** has been banned.\nReason: ((opts.reason|No reason provided))", "type": "normal",
+            "embeds": [],
+            "components": {}, "modal": {},
+            "workflow": { "autoDeferIfActions": true, "visibility": "ephemeral", "onError": "edit_error", "conditional": { "enabled": false } }
+          },
+          "actions": [
+            {
+              "type": "sendDm", "enabled": true, "key": "ban_dm",
+              "payload": { "content": "🚫 You have been banned from **((guildName))**.\nReason: ((opts.reason|No reason provided))", "userId": "((opts.target|userId))" }
+            },
+            {
+              "type": "banUser", "enabled": true, "key": "ban_step",
+              "payload": { "userId": "((opts.target|userId))", "reason": "((opts.reason|No reason provided))", "deleteMessageDays": "((opts.delete_days|0))" }
+            }
+          ]
+        }
+      },
+      {
+        "name": "kick",
+        "description": "Kick a member from the server",
+        "data": {
+          "version": 1, "commandType": "chatInput", "editorMode": "advanced", "executionMode": "workflow",
+          "defaultMemberPermissions": "2",
+          "options": [
+            { "type": "user", "name": "target", "description": "User to kick", "required": true },
+            { "type": "string", "name": "reason", "description": "Reason for the kick", "required": false }
+          ],
+          "response": {
+            "mode": "text", "text": "👢 **((opts.target|userName))** has been kicked.\nReason: ((opts.reason|No reason provided))", "type": "normal",
+            "embeds": [],
+            "components": {}, "modal": {},
+            "workflow": { "autoDeferIfActions": true, "visibility": "ephemeral", "onError": "edit_error", "conditional": { "enabled": false } }
+          },
+          "actions": [
+            {
+              "type": "sendDm", "enabled": true, "key": "kick_dm",
+              "payload": { "content": "👢 You have been kicked from **((guildName))**.\nReason: ((opts.reason|No reason provided))", "userId": "((opts.target|userId))" }
+            },
+            {
+              "type": "kickUser", "enabled": true, "key": "kick_step",
+              "payload": { "userId": "((opts.target|userId))", "reason": "((opts.reason|No reason provided))" }
+            }
+          ]
+        }
+      },
+      {
+        "name": "mute",
+        "description": "Timeout a member",
+        "data": {
+          "version": 1, "commandType": "chatInput", "editorMode": "advanced", "executionMode": "workflow",
+          "defaultMemberPermissions": "1099511627776",
+          "options": [
+            { "type": "user", "name": "target", "description": "User to mute", "required": true },
+            { "type": "string", "name": "duration", "description": "Duration (e.g. 10m, 1h, 1d)", "required": false },
+            { "type": "string", "name": "reason", "description": "Reason for the mute", "required": false }
+          ],
+          "response": {
+            "mode": "text", "text": "🔇 **((opts.target|userName))** has been muted for ((opts.duration|10m)).\nReason: ((opts.reason|No reason provided))", "type": "normal",
+            "embeds": [],
+            "components": {}, "modal": {},
+            "workflow": { "autoDeferIfActions": true, "visibility": "ephemeral", "onError": "edit_error", "conditional": { "enabled": false } }
+          },
+          "actions": [
+            {
+              "type": "sendDm", "enabled": true, "key": "mute_dm",
+              "payload": { "content": "🔇 You have been muted in **((guildName))** for ((opts.duration|10m)).\nReason: ((opts.reason|No reason provided))", "userId": "((opts.target|userId))" }
+            },
+            {
+              "type": "muteUser", "enabled": true, "key": "mute_step",
+              "payload": { "userId": "((opts.target|userId))", "duration": "((opts.duration|600))", "reason": "((opts.reason|No reason provided))" }
+            }
+          ]
+        }
+      },
+      {
+        "name": "unmute",
+        "description": "Remove a timeout from a member",
+        "data": {
+          "version": 1, "commandType": "chatInput", "editorMode": "advanced", "executionMode": "workflow",
+          "defaultMemberPermissions": "1099511627776",
+          "options": [
+            { "type": "user", "name": "target", "description": "User to unmute", "required": true }
+          ],
+          "response": {
+            "mode": "text", "text": "🔊 **((opts.target|userName))** has been unmuted.", "type": "normal",
+            "embeds": [],
+            "components": {}, "modal": {},
+            "workflow": { "autoDeferIfActions": true, "visibility": "ephemeral", "onError": "edit_error", "conditional": { "enabled": false } }
+          },
+          "actions": [
+            { "type": "unmuteUser", "enabled": true, "key": "unmute_step", "payload": { "userId": "((opts.target|userId))" } }
+          ]
+        }
+      },
+      {
+        "name": "unban",
+        "description": "Unban a user by their ID",
+        "data": {
+          "version": 1, "commandType": "chatInput", "editorMode": "advanced", "executionMode": "workflow",
+          "defaultMemberPermissions": "4",
+          "options": [
+            { "type": "string", "name": "user_id", "description": "The ID of the user to unban", "required": true }
+          ],
+          "response": {
+            "mode": "text", "text": "✅ User `((opts.user_id))` has been unbanned.", "type": "normal",
+            "embeds": [],
+            "components": {}, "modal": {},
+            "workflow": { "autoDeferIfActions": true, "visibility": "ephemeral", "onError": "edit_error", "conditional": { "enabled": false } }
+          },
+          "actions": [
+            { "type": "unbanUser", "enabled": true, "key": "unban_step", "payload": { "userId": "((opts.user_id))" } }
+          ]
+        }
+      },
+      {
+        "name": "clear",
+        "description": "Delete multiple messages at once",
+        "data": {
+          "version": 1, "commandType": "chatInput", "editorMode": "advanced", "executionMode": "workflow",
+          "defaultMemberPermissions": "8192",
+          "options": [
+            { "type": "integer", "name": "amount", "description": "Number of messages to delete (1–100)", "required": true, "min_value": 1, "max_value": 100 },
+            { "type": "user", "name": "user", "description": "Only delete messages from this user (optional)", "required": false }
+          ],
+          "response": {
+            "mode": "text", "text": "🗑️ Deleted ((opts.amount)) message(s).", "type": "normal",
+            "embeds": [],
+            "components": {}, "modal": {},
+            "workflow": { "autoDeferIfActions": true, "visibility": "ephemeral", "onError": "edit_error", "conditional": { "enabled": false } }
+          },
+          "actions": [
+            { "type": "deleteMessages", "enabled": true, "key": "clear_step", "payload": { "channelId": "((channelId))", "count": "((opts.amount))", "userId": "((opts.user|userId|))" } }
+          ]
+        }
+      },
+      {
+        "name": "warn",
+        "description": "Warn a member and log it",
+        "data": {
+          "version": 1, "commandType": "chatInput", "editorMode": "advanced", "executionMode": "workflow",
+          "defaultMemberPermissions": "1099511627776",
+          "options": [
+            { "type": "user", "name": "target", "description": "User to warn", "required": true },
+            { "type": "string", "name": "reason", "description": "Reason for the warning", "required": true }
+          ],
+          "response": {
+            "mode": "text", "text": "⚠️ **((opts.target|userName))** has been warned.\nReason: ((opts.reason))", "type": "normal",
+            "embeds": [],
+            "components": {}, "modal": {},
+            "workflow": { "autoDeferIfActions": true, "visibility": "ephemeral", "onError": "edit_error", "conditional": { "enabled": false } }
+          },
+          "actions": [
+            {
+              "type": "sendDm", "enabled": true, "key": "warn_dm",
+              "payload": { "content": "⚠️ You received a warning in **((guildName))**.\nReason: ((opts.reason))\nIssued by: ((userName))", "userId": "((opts.target|userId))" }
+            },
+            { "type": "getScopedVariable", "enabled": true, "key": "warnings", "payload": { "scope": "user", "key": "warnings", "contextId": "((userId))" } },
+            { "type": "calculate", "enabled": true, "key": "new_count", "payload": { "operation": "add", "operandA": "((warnings|0))", "operandB": "1" } },
+            { "type": "setScopedVariable", "enabled": true, "payload": { "scope": "user", "key": "warnings", "value": "((new_count))", "contextId": "((userId))" } }
+          ]
+        }
+      },
+      {
+        "name": "warnings",
+        "description": "View warnings for a member",
+        "data": {
+          "version": 1, "commandType": "chatInput", "editorMode": "advanced", "executionMode": "workflow",
+          "defaultMemberPermissions": "1099511627776",
+          "options": [
+            { "type": "user", "name": "target", "description": "User to check warnings for", "required": false }
+          ],
+          "response": {
+            "mode": "embed", "text": "", "type": "normal",
+            "embeds": [{ "title": "⚠️ Warnings", "description": "**((opts.target|userName)):** ((warnings|0)) warning(s)", "color": 16705372 }],
+            "components": {}, "modal": {},
+            "workflow": { "autoDeferIfActions": true, "visibility": "ephemeral", "onError": "edit_error", "conditional": { "enabled": false } }
+          },
+          "actions": [
+            { "type": "getScopedVariable", "enabled": true, "key": "warnings", "payload": { "scope": "user", "key": "warnings", "contextId": "((userId))" } }
+          ]
+        }
+      },
+      {
+        "name": "slowmode",
+        "description": "Set the channel slowmode",
+        "data": {
+          "version": 1, "commandType": "chatInput", "editorMode": "advanced", "executionMode": "workflow",
+          "defaultMemberPermissions": "16",
+          "options": [
+            { "type": "integer", "name": "seconds", "description": "Slowmode delay in seconds (0 to disable)", "required": true, "min_value": 0, "max_value": 21600 }
+          ],
+          "response": {
+            "mode": "text", "text": "🐢 Slowmode set to ((opts.seconds)) second(s).", "type": "normal",
+            "embeds": [],
+            "components": {}, "modal": {},
+            "workflow": { "autoDeferIfActions": true, "visibility": "ephemeral", "onError": "edit_error", "conditional": { "enabled": false } }
+          },
+          "actions": [
+            { "type": "slowmode", "enabled": true, "key": "slowmode_step", "payload": { "channelId": "((channelId))", "seconds": "((opts.seconds))" } }
+          ]
+        }
+      },
+      {
+        "name": "lock",
+        "description": "Lock the current channel",
+        "data": {
+          "version": 1, "commandType": "chatInput", "editorMode": "advanced", "executionMode": "workflow",
+          "defaultMemberPermissions": "16",
+          "options": [
+            { "type": "string", "name": "reason", "description": "Reason for locking the channel", "required": false }
+          ],
+          "response": {
+            "mode": "text", "text": "🔒 This channel has been locked.\nReason: ((opts.reason|No reason provided))", "type": "normal",
+            "embeds": [],
+            "components": {}, "modal": {},
+            "workflow": { "autoDeferIfActions": true, "visibility": "public", "onError": "edit_error", "conditional": { "enabled": false } }
+          },
+          "actions": []
+        }
+      },
+      {
+        "name": "unlock",
+        "description": "Unlock the current channel",
+        "data": {
+          "version": 1, "commandType": "chatInput", "editorMode": "advanced", "executionMode": "workflow",
+          "defaultMemberPermissions": "16",
+          "response": {
+            "mode": "text", "text": "🔓 This channel has been unlocked.", "type": "normal",
+            "embeds": [],
+            "components": {}, "modal": {},
+            "workflow": { "autoDeferIfActions": true, "visibility": "public", "onError": "edit_error", "conditional": { "enabled": false } }
+          },
+          "actions": []
+        }
+      },
+      {
+        "name": "nickname",
+        "description": "Change a member's nickname",
+        "data": {
+          "version": 1, "commandType": "chatInput", "editorMode": "advanced", "executionMode": "workflow",
+          "defaultMemberPermissions": "134217728",
+          "options": [
+            { "type": "user", "name": "target", "description": "User to rename", "required": true },
+            { "type": "string", "name": "nick", "description": "New nickname (leave empty to reset)", "required": false }
+          ],
+          "response": {
+            "mode": "text", "text": "✏️ Nickname updated for **((opts.target|userName))**.", "type": "normal",
+            "embeds": [],
+            "components": {}, "modal": {},
+            "workflow": { "autoDeferIfActions": true, "visibility": "ephemeral", "onError": "edit_error", "conditional": { "enabled": false } }
+          },
+          "actions": [
+            { "type": "setNickname", "enabled": true, "key": "nick_step", "payload": { "userId": "((opts.target|userId))", "nick": "((opts.nick))" } }
+          ]
+        }
+      },
+      {
+        "name": "role",
+        "description": "Add or remove a role from a member",
+        "data": {
+          "version": 1, "commandType": "chatInput", "editorMode": "advanced", "executionMode": "workflow",
+          "defaultMemberPermissions": "268435456",
+          "options": [
+            { "type": "user", "name": "target", "description": "The member", "required": true },
+            { "type": "role", "name": "role", "description": "The role to add/remove", "required": true },
+            { "type": "string", "name": "action", "description": "add or remove", "required": true,
+              "choices": [
+                { "name": "Add", "value": "add" },
+                { "name": "Remove", "value": "remove" }
+              ]
+            }
+          ],
+          "response": {
+            "mode": "text", "text": "✅ Role **((opts.role|name))** has been ((opts.action))ed for **((opts.target|userName))**.", "type": "normal",
+            "embeds": [],
+            "components": {}, "modal": {},
+            "workflow": { "autoDeferIfActions": true, "visibility": "ephemeral", "onError": "edit_error", "conditional": { "enabled": false } }
+          },
+          "actions": [
+            {
+              "type": "ifBlock", "enabled": true, "key": "role_branch",
               "payload": {
-                "messageMode": "normal",
-                "channelId": "((opts.channel|channelId))",
-                "content": "((opts.message))"
-              },
-              "runtimeId": "action_say"
+                "left": "((opts.action))", "operator": "equals", "right": "add",
+                "thenActions": [
+                  { "type": "addRole", "enabled": true, "payload": { "userId": "((opts.target|userId))", "roleId": "((opts.role|roleId))" } }
+                ],
+                "elseActions": [
+                  { "type": "removeRole", "enabled": true, "payload": { "userId": "((opts.target|userId))", "roleId": "((opts.role|roleId))" } }
+                ]
+              }
             }
           ]
         }
@@ -474,40 +517,54 @@
   },
   {
     "id": "fun",
-    "name": "Fun & Games",
-    "description": "Add engaging interactions to your server: flip coins, run quick polls, and query the Magic 8-ball.",
+    "name": "🎮 Fun Bot",
+    "description": "Entertainment & games — 8ball, coinflip, dice, RPS, memes, jokes, polls & more.",
     "iconCodePoint": 59379,
     "category": "fun",
-    "intents": {
-      "messageContent": true
-    },
+    "intents": { "messageContent": true },
     "commands": [
+      {
+        "name": "8ball",
+        "description": "Ask the magic 8-ball a question",
+        "data": {
+          "version": 1, "commandType": "chatInput", "editorMode": "advanced", "executionMode": "workflow",
+          "defaultMemberPermissions": "",
+          "options": [
+            { "type": "string", "name": "question", "description": "Your question", "required": true }
+          ],
+          "response": {
+            "mode": "embed", "text": "", "type": "normal",
+            "embeds": [{
+              "title": "🎱 The Magic 8-Ball",
+              "description": "**Q:** ((opts.question))\n**A:** ((randomchoice(\"It is certain.\";\"It is decidedly so.\";\"Without a doubt.\";\"Yes, definitely.\";\"You may rely on it.\";\"As I see it, yes.\";\"Most likely.\";\"Outlook good.\";\"Yes.\";\"Signs point to yes.\";\"Reply hazy, try again.\";\"Ask again later.\";\"Better not tell you now.\";\"Cannot predict now.\";\"Concentrate and ask again.\";\"Don't count on it.\";\"My reply is no.\";\"My sources say no.\";\"Outlook not so good.\";\"Very doubtful.\")))",
+              "color": 1752220
+            }],
+            "components": {}, "modal": {},
+            "workflow": { "autoDeferIfActions": true, "visibility": "public", "onError": "edit_error", "conditional": { "enabled": false } }
+          },
+          "actions": []
+        }
+      },
       {
         "name": "coinflip",
         "description": "Flip a coin — heads or tails",
         "data": {
-          "version": 1,
-          "commandType": "chatInput",
-          "editorMode": "advanced",
-          "executionMode": "workflow",
+          "version": 1, "commandType": "chatInput", "editorMode": "advanced", "executionMode": "workflow",
           "defaultMemberPermissions": "",
           "response": {
-            "mode": "message",
-            "text": "",
-            "type": "normal",
+            "mode": "text", "text": "", "type": "normal",
+            "embeds": [], "components": {}, "modal": {},
             "workflow": {
-              "autoDeferIfActions": true,
-              "visibility": "public",
-              "onError": "edit_error",
+              "autoDeferIfActions": true, "visibility": "public", "onError": "edit_error",
               "conditional": {
-                "enabled": true,
-                "variable": "((coin()))",
-                "whenTrueType": "message",
-                "whenFalseType": "message",
-                "whenTrueText": "🪙 **Heads!**",
-                "whenFalseText": "🪙 **Tails!**",
-                "whenTrueEmbeds": [],
-                "whenFalseEmbeds": []
+                "enabled": true, "variable": "((coin()))",
+                "whenTrueType": "normal", "whenFalseType": "normal",
+                "whenTrueText": "🪙 The coin landed on **Heads!**",
+                "whenFalseText": "🪙 The coin landed on **Tails!**",
+                "whenTrueEmbeds": [], "whenFalseEmbeds": [],
+                "whenTrueNormalComponents": {}, "whenFalseNormalComponents": {},
+                "whenTrueComponents": {}, "whenFalseComponents": {},
+                "whenTrueModal": {}, "whenFalseModal": {}
               }
             }
           },
@@ -515,95 +572,395 @@
         }
       },
       {
-        "name": "poll",
-        "description": "Create a quick poll",
+        "name": "roll",
+        "description": "Roll dice (e.g. 2d6, 1d20)",
         "data": {
-          "version": 1,
-          "commandType": "chatInput",
-          "editorMode": "advanced",
-          "executionMode": "workflow",
+          "version": 1, "commandType": "chatInput", "editorMode": "advanced", "executionMode": "workflow",
           "defaultMemberPermissions": "",
           "options": [
-            {
-              "type": "string",
-              "name": "question",
-              "description": "The poll question",
-              "required": true
+            { "type": "string", "name": "dice", "description": "Dice notation (e.g. 2d6, default: 1d6)", "required": false }
+          ],
+          "response": {
+            "mode": "embed", "text": "", "type": "normal",
+            "embeds": [{ "title": "🎲 Dice Roll", "description": "You rolled **((opts.dice|1d6))**\nResult: **((dice_result|?))**", "color": 11027200 }],
+            "components": {}, "modal": {},
+            "workflow": { "autoDeferIfActions": true, "visibility": "public", "onError": "edit_error", "conditional": { "enabled": false } }
+          },
+          "actions": [
+            { "type": "calculate", "enabled": true, "key": "dice_count", "payload": { "operation": "random", "operandA": "1", "operandB": "((opts.dice|6))" } },
+            { "type": "setTemporaryVariable", "enabled": true, "key": "dice_result", "payload": { "key": "dice_result", "value": "((dice_count|?))" } }
+          ]
+        }
+      },
+      {
+        "name": "rps",
+        "description": "Play Rock, Paper, Scissors against the bot",
+        "data": {
+          "version": 1, "commandType": "chatInput", "editorMode": "advanced", "executionMode": "workflow",
+          "defaultMemberPermissions": "",
+          "options": [
+            { "type": "string", "name": "choice", "description": "Your choice", "required": true,
+              "choices": [
+                { "name": "🪨 Rock", "value": "rock" },
+                { "name": "📄 Paper", "value": "paper" },
+                { "name": "✂️ Scissors", "value": "scissors" }
+              ]
             }
           ],
           "response": {
-            "mode": "message",
-            "text": "📊 Poll created!",
-            "type": "normal",
-            "workflow": {
-              "autoDeferIfActions": true,
-              "visibility": "public",
-              "onError": "edit_error",
-              "conditional": {
-                "enabled": false
-              }
-            }
+            "mode": "embed", "text": "", "type": "normal",
+            "embeds": [{ "title": "🪨📄✂️ Rock Paper Scissors", "description": "You chose: **((opts.choice))**\nBot chose: **((bot_choice|?))**\n\n((rps_result|🎮 Play!))", "color": 3447003 }],
+            "components": {}, "modal": {},
+            "workflow": { "autoDeferIfActions": true, "visibility": "public", "onError": "edit_error", "conditional": { "enabled": false } }
           },
           "actions": [
+            { "type": "randomChoice", "enabled": true, "key": "bot_choice", "payload": { "choices": ["rock", "paper", "scissors"] } },
             {
-              "id": "action_poll",
-              "type": "createPoll",
-              "enabled": true,
-              "key": "poll_step",
-              "depend_on": [],
-              "error": {
-                "mode": "stop"
-              },
+              "type": "ifBlock", "enabled": true, "key": "rps_check",
               "payload": {
-                "channelId": "((channelId))",
-                "question": "((opts.question))",
-                "duration": 24,
-                "allowMultiselect": false
-              },
-              "runtimeId": "action_poll"
+                "left": "((opts.choice))", "operator": "equals", "right": "((bot_choice|?))",
+                "thenActions": [
+                  { "type": "setTemporaryVariable", "enabled": true, "key": "rps_result", "payload": { "key": "rps_result", "value": "🤝 It's a **tie!**" } }
+                ],
+                "elseActions": [
+                  {
+                    "type": "ifBlock", "enabled": true,
+                    "payload": {
+                      "left": "((opts.choice))", "operator": "equals", "right": "rock",
+                      "thenActions": [
+                        {
+                          "type": "ifBlock", "enabled": true,
+                          "payload": {
+                            "left": "((bot_choice|?))", "operator": "equals", "right": "scissors",
+                            "thenActions": [
+                              { "type": "setTemporaryVariable", "enabled": true, "key": "rps_result", "payload": { "key": "rps_result", "value": "🎉 **You win!**" } }
+                            ],
+                            "elseActions": [
+                              { "type": "setTemporaryVariable", "enabled": true, "key": "rps_result", "payload": { "key": "rps_result", "value": "😢 **Bot wins!**" } }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
             }
           ]
         }
       },
       {
-        "name": "8ball",
-        "description": "Ask the magic 8-ball a question",
+        "name": "joke",
+        "description": "Get a random joke",
         "data": {
-          "version": 1,
-          "commandType": "chatInput",
-          "editorMode": "advanced",
-          "executionMode": "workflow",
+          "version": 1, "commandType": "chatInput", "editorMode": "advanced", "executionMode": "workflow",
           "defaultMemberPermissions": "",
           "options": [
-            {
-              "type": "string",
-              "name": "question",
-              "description": "Your question",
-              "required": true
+            { "type": "string", "name": "category", "description": "Joke category", "required": false,
+              "choices": [
+                { "name": "Any", "value": "Any" },
+                { "name": "Programming", "value": "Programming" },
+                { "name": "Dark", "value": "Dark" },
+                { "name": "Pun", "value": "Pun" }
+              ]
             }
           ],
           "response": {
-            "mode": "message",
-            "text": "",
-            "type": "normal",
-            "embeds": [
-              {
-                "title": "🎱 Magic 8-Ball",
-                "description": "**Q:** ((opts.question))\n**A:** ((randomchoice(\"Yes!\", \"No.\", \"Maybe...\", \"Ask again later.\", \"Definitely!\", \"I doubt it.\", \"Without a doubt.\", \"Better not tell you now.\")))",
-                "color": 1752220
-              }
-            ],
-            "components": {},
-            "workflow": {
-              "autoDeferIfActions": true,
-              "visibility": "public",
-              "onError": "edit_error",
-              "conditional": {
-                "enabled": false
-              }
+            "mode": "embed", "text": "", "type": "normal",
+            "embeds": [{ "title": "🤣 Joke", "description": "((joke_setup))\n\n||((joke_punchline))||", "color": 16763904 }],
+            "components": {}, "modal": {},
+            "workflow": { "autoDeferIfActions": true, "visibility": "public", "onError": "edit_error", "conditional": { "enabled": false } }
+          },
+          "actions": [
+            { "type": "httpRequest", "enabled": true, "key": "joke_data",
+              "payload": { "url": "https://v2.jokeapi.dev/joke/((opts.category|Any))?type=twopart", "method": "GET", "headers": {} }
             }
+          ]
+        }
+      },
+      {
+        "name": "wouldyourather",
+        "description": "Get a \"Would You Rather\" question",
+        "data": {
+          "version": 1, "commandType": "chatInput", "editorMode": "advanced", "executionMode": "workflow",
+          "defaultMemberPermissions": "",
+          "response": {
+            "mode": "embed", "text": "", "type": "normal",
+            "embeds": [{
+              "title": "🤔 Would You Rather...",
+              "description": "🔴 **A:** ((randomchoice(\"Have unlimited bacon but no games\";\"Be able to talk to animals\";\"Live without internet for a year\";\"Have a rewind button for your life\";\"Never have to sleep again\";\"Be able to teleport anywhere\";\"Read everyone's mind\";\"Have a personal theme song\";\"Know the date of your death\";\"Be famous but poor\")))\n\n🔵 **B:** ((randomchoice(\"Have unlimited games but no bacon\";\"Be able to talk to plants\";\"Live without your phone for a year\";\"Have a pause button for your life\";\"Sleep as much as you want\";\"Be able to fly for 10 minutes\";\"Be invisible when you want\";\"Have a laugh track\";\"Know how everyone will die\";\"Be rich but unknown\")))",
+              "color": 10181046
+            }],
+            "components": {}, "modal": {},
+            "workflow": { "autoDeferIfActions": true, "visibility": "public", "onError": "edit_error", "conditional": { "enabled": false } }
           },
           "actions": []
+        }
+      },
+      {
+        "name": "ship",
+        "description": "Ship two users together",
+        "data": {
+          "version": 1, "commandType": "chatInput", "editorMode": "advanced", "executionMode": "workflow",
+          "defaultMemberPermissions": "",
+          "options": [
+            { "type": "user", "name": "user1", "description": "First user", "required": true },
+            { "type": "user", "name": "user2", "description": "Second user", "required": true }
+          ],
+          "response": {
+            "mode": "embed", "text": "", "type": "normal",
+            "embeds": [{ "title": "💕 Love Calculator", "description": "**((opts.user1|userName))** + **((opts.user2|userName))**\n\nCompatibility: **((ship_pct))%**\n\n((ship_comment))", "color": 16731392 }],
+            "components": {}, "modal": {},
+            "workflow": { "autoDeferIfActions": true, "visibility": "public", "onError": "edit_error", "conditional": { "enabled": false } }
+          },
+          "actions": [
+            { "type": "calculate", "enabled": true, "key": "ship_pct", "payload": { "operation": "random", "operandA": "50", "operandB": "100" } }
+          ]
+        }
+      },
+      {
+        "name": "poll",
+        "description": "Create a poll with multiple options",
+        "data": {
+          "version": 1, "commandType": "chatInput", "editorMode": "advanced", "executionMode": "workflow",
+          "defaultMemberPermissions": "",
+          "options": [
+            { "type": "string", "name": "question", "description": "The poll question", "required": true },
+            { "type": "string", "name": "option1", "description": "Option 1", "required": true },
+            { "type": "string", "name": "option2", "description": "Option 2", "required": true },
+            { "type": "string", "name": "option3", "description": "Option 3 (optional)", "required": false },
+            { "type": "string", "name": "option4", "description": "Option 4 (optional)", "required": false },
+            { "type": "string", "name": "option5", "description": "Option 5 (optional)", "required": false }
+          ],
+          "response": {
+            "mode": "text", "text": "📊 Poll created!", "type": "normal",
+            "embeds": [],
+            "components": {}, "modal": {},
+            "workflow": { "autoDeferIfActions": true, "visibility": "ephemeral", "onError": "edit_error", "conditional": { "enabled": false } }
+          },
+          "actions": [
+            { "type": "pollManagement", "enabled": true, "key": "poll_msg",
+              "payload": {
+                "channelId": "((channelId))",
+                "question": "((opts.question))",
+                "answers": [{"text":"((opts.option1))"},{"text":"((opts.option2))"},{"text":"((opts.option3|))"},{"text":"((opts.option4|))"},{"text":"((opts.option5|))"}],
+                "duration": 24, "allowMultiselect": false
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "workflows": []
+  },
+  {
+    "id": "economy",
+    "name": "💰 Economy Bot",
+    "description": "Virtual economy system — balance, daily, work, pay, rob, beg & leaderboard.",
+    "iconCodePoint": 58913,
+    "category": "economy",
+    "intents": { "messageContent": true },
+    "commands": [
+      {
+        "name": "balance",
+        "description": "Check your coin balance",
+        "data": {
+          "version": 1, "commandType": "chatInput", "editorMode": "advanced", "executionMode": "workflow",
+          "defaultMemberPermissions": "",
+          "options": [
+            { "type": "user", "name": "user", "description": "User to check (default: yourself)", "required": false }
+          ],
+          "response": {
+            "mode": "embed", "text": "", "type": "normal",
+            "embeds": [{ "title": "💰 Balance", "description": "**((opts.user|userName)):** 🪙 ((balance|0)) coins", "color": 16766720 }],
+            "components": {}, "modal": {},
+            "workflow": { "autoDeferIfActions": true, "visibility": "public", "onError": "edit_error", "conditional": { "enabled": false } }
+          },
+          "actions": [
+            { "type": "getScopedVariable", "enabled": true, "key": "balance", "payload": { "scope": "user", "key": "balance", "contextId": "((userId))" } }
+          ]
+        }
+      },
+      {
+        "name": "daily",
+        "description": "Claim your daily reward",
+        "data": {
+          "version": 1, "commandType": "chatInput", "editorMode": "advanced", "executionMode": "workflow",
+          "defaultMemberPermissions": "",
+          "response": {
+            "mode": "embed", "text": "", "type": "normal",
+            "embeds": [{ "title": "📅 Daily Reward", "description": "You claimed **🪙 ((daily_amount|200))** coins!\nNew balance: **🪙 ((new_balance|?))** coins", "color": 3066993 }],
+            "components": {}, "modal": {},
+            "workflow": { "autoDeferIfActions": true, "visibility": "public", "onError": "edit_error", "conditional": { "enabled": false } }
+          },
+          "actions": [
+            { "type": "cooldown", "enabled": true, "payload": { "scope": "command", "varKey": "daily", "duration": "24h" } },
+            { "type": "calculate", "enabled": true, "key": "daily_amount", "payload": { "operation": "random", "operandA": "100", "operandB": "500" } },
+            { "type": "getScopedVariable", "enabled": true, "key": "balance", "payload": { "scope": "user", "key": "balance", "contextId": "((userId))" } },
+            { "type": "calculate", "enabled": true, "key": "new_balance", "payload": { "operation": "add", "operandA": "((balance|0))", "operandB": "((daily_amount|200))" } },
+            { "type": "setScopedVariable", "enabled": true, "payload": { "scope": "user", "key": "balance", "value": "((new_balance|200))", "contextId": "((userId))" } }
+          ]
+        }
+      },
+      {
+        "name": "work",
+        "description": "Work to earn coins",
+        "data": {
+          "version": 1, "commandType": "chatInput", "editorMode": "advanced", "executionMode": "workflow",
+          "defaultMemberPermissions": "",
+          "response": {
+            "mode": "embed", "text": "", "type": "normal",
+            "embeds": [{ "title": "💼 Work", "description": "((work_message|You worked hard!))\nEarned: **🪙 ((earned|50))** coins\nNew balance: **🪙 ((new_balance|?))** coins", "color": 10181046 }],
+            "components": {}, "modal": {},
+            "workflow": { "autoDeferIfActions": true, "visibility": "public", "onError": "edit_error", "conditional": { "enabled": false } }
+          },
+          "actions": [
+            { "type": "cooldown", "enabled": true, "payload": { "scope": "command", "varKey": "work", "duration": "1h" } },
+            { "type": "calculate", "enabled": true, "key": "earned", "payload": { "operation": "random", "operandA": "50", "operandB": "300" } },
+            { "type": "getScopedVariable", "enabled": true, "key": "balance", "payload": { "scope": "user", "key": "balance", "contextId": "((userId))" } },
+            { "type": "calculate", "enabled": true, "key": "new_balance", "payload": { "operation": "add", "operandA": "((balance|0))", "operandB": "((earned|100))" } },
+            { "type": "setScopedVariable", "enabled": true, "payload": { "scope": "user", "key": "balance", "value": "((new_balance|100))", "contextId": "((userId))" } }
+          ]
+        }
+      },
+      {
+        "name": "pay",
+        "description": "Send coins to another user",
+        "data": {
+          "version": 1, "commandType": "chatInput", "editorMode": "advanced", "executionMode": "workflow",
+          "defaultMemberPermissions": "",
+          "options": [
+            { "type": "user", "name": "target", "description": "User to send coins to", "required": true },
+            { "type": "integer", "name": "amount", "description": "Amount of coins to send", "required": true, "min_value": 1 }
+          ],
+          "response": {
+            "mode": "embed", "text": "", "type": "normal",
+            "embeds": [{ "title": "💸 Payment", "description": "✅ Sent **🪙 ((opts.amount))** coins to **((opts.target|userName))**!\nYour balance: **🪙 ((new_sender_balance)))** coins", "color": 3066993 }],
+            "components": {}, "modal": {},
+            "workflow": { "autoDeferIfActions": true, "visibility": "public", "onError": "edit_error", "conditional": { "enabled": false } }
+          },
+          "actions": [
+            { "type": "getScopedVariable", "enabled": true, "key": "sender_balance", "payload": { "scope": "user", "key": "balance", "contextId": "((userId))" } },
+            { "type": "ifBlock", "enabled": true,
+              "payload": {
+                "left": "((sender_balance|0))", "operator": ">=", "right": "((opts.amount))",
+                "thenActions": [
+                  { "type": "calculate", "enabled": true, "key": "new_sender_balance", "payload": { "operation": "subtract", "operandA": "((sender_balance|0))", "operandB": "((opts.amount))" } },
+                  { "type": "setScopedVariable", "enabled": true, "payload": { "scope": "user", "key": "balance", "value": "((new_sender_balance|0))", "contextId": "((userId))" } },
+                  { "type": "getScopedVariable", "enabled": true, "key": "receiver_balance", "payload": { "scope": "user", "key": "balance", "contextId": "((opts.target|userId))" } },
+                  { "type": "calculate", "enabled": true, "key": "new_receiver_balance", "payload": { "operation": "add", "operandA": "((receiver_balance|0))", "operandB": "((opts.amount))" } },
+                  { "type": "setScopedVariable", "enabled": true, "payload": { "scope": "user", "key": "balance", "value": "((new_receiver_balance|0))", "contextId": "((opts.target|userId))" } }
+                ],
+                "elseActions": [
+                  { "type": "stop", "enabled": true, "payload": { "reason": "Insufficient balance" } }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "name": "leaderboard",
+        "description": "View the richest users",
+        "data": {
+          "version": 1, "commandType": "chatInput", "editorMode": "advanced", "executionMode": "workflow",
+          "defaultMemberPermissions": "",
+          "response": {
+            "mode": "embed", "text": "", "type": "normal",
+            "embeds": [{ "title": "🏆 Coin Leaderboard", "description": "🏅 **Top earners in this server**\n\n((leaderboard_text|No data yet. Start earning with /daily!))", "color": 16766720 }],
+            "components": {}, "modal": {},
+            "workflow": { "autoDeferIfActions": true, "visibility": "public", "onError": "edit_error", "conditional": { "enabled": false } }
+          },
+          "actions": [
+            { "type": "listScopedVariableIndex", "enabled": true, "key": "leaderboard_data",
+              "payload": { "scope": "user", "key": "balance", "sort": "desc", "limit": "10" }
+            }
+          ]
+        }
+      },
+      {
+        "name": "rob",
+        "description": "Attempt to rob another user",
+        "data": {
+          "version": 1, "commandType": "chatInput", "editorMode": "advanced", "executionMode": "workflow",
+          "defaultMemberPermissions": "",
+          "options": [
+            { "type": "user", "name": "target", "description": "User to rob", "required": true }
+          ],
+          "response": {
+            "mode": "embed", "text": "", "type": "normal",
+            "embeds": [{ "title": "🦹 Robbery Attempt", "description": "((rob_result|You failed to rob them!))", "color": 16711680 }],
+            "components": {}, "modal": {},
+            "workflow": { "autoDeferIfActions": true, "visibility": "public", "onError": "edit_error", "conditional": { "enabled": false } }
+          },
+          "actions": [
+            { "type": "cooldown", "enabled": true, "payload": { "scope": "command", "varKey": "rob", "duration": "2h" } },
+            { "type": "getScopedVariable", "enabled": true, "key": "target_balance", "payload": { "scope": "user", "key": "balance", "contextId": "((opts.target|userId))" } },
+            { "type": "ifBlock", "enabled": true,
+              "payload": {
+                "left": "((target_balance|0))", "operator": ">=", "right": "50",
+                "thenActions": [
+                  { "type": "calculate", "enabled": true, "key": "rob_chance", "payload": { "operation": "random", "operandA": "1", "operandB": "100" } },
+                  { "type": "ifBlock", "enabled": true,
+                    "payload": {
+                      "left": "((rob_chance))", "operator": "<=", "right": "40",
+                      "thenActions": [
+                        { "type": "calculate", "enabled": true, "key": "rob_amount", "payload": { "operation": "random", "operandA": "10", "operandB": "((target_balance|50))" } },
+                        { "type": "calculate", "enabled": true, "key": "new_target", "payload": { "operation": "subtract", "operandA": "((target_balance|0))", "operandB": "((rob_amount|10))" } },
+                        { "type": "setScopedVariable", "enabled": true, "payload": { "scope": "user", "key": "balance", "value": "((new_target|0))", "contextId": "((opts.target|userId))" } },
+                        { "type": "getScopedVariable", "enabled": true, "key": "robber_balance", "payload": { "scope": "user", "key": "balance", "contextId": "((userId))" } },
+                        { "type": "calculate", "enabled": true, "key": "new_robber", "payload": { "operation": "add", "operandA": "((robber_balance|0))", "operandB": "((rob_amount|10))" } },
+                        { "type": "setScopedVariable", "enabled": true, "payload": { "scope": "user", "key": "balance", "value": "((new_robber|0))", "contextId": "((userId))" } },
+                        { "type": "setTemporaryVariable", "enabled": true, "key": "rob_result", "payload": { "key": "rob_result", "value": "✅ You stole 🪙 ((rob_amount)) coins from **((opts.target|userName))**!" } }
+                      ],
+                      "elseActions": [
+                        { "type": "getScopedVariable", "enabled": true, "key": "robber_balance", "payload": { "scope": "user", "key": "balance", "contextId": "((userId))" } },
+                        { "type": "calculate", "enabled": true, "key": "fine_balance", "payload": { "operation": "subtract", "operandA": "((robber_balance|0))", "operandB": "50" } },
+                        { "type": "setScopedVariable", "enabled": true, "payload": { "scope": "user", "key": "balance", "value": "((fine_balance|0))", "contextId": "((userId))" } },
+                        { "type": "setTemporaryVariable", "enabled": true, "key": "rob_result", "payload": { "key": "rob_result", "value": "❌ You got caught! You pay a fine of 🪙 50 coins." } }
+                      ]
+                    }
+                  }
+                ],
+                "elseActions": [
+                  { "type": "stop", "enabled": true, "payload": { "reason": "That user doesn't have enough coins to rob!" } }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "name": "beg",
+        "description": "Beg for coins",
+        "data": {
+          "version": 1, "commandType": "chatInput", "editorMode": "advanced", "executionMode": "workflow",
+          "defaultMemberPermissions": "",
+          "response": {
+            "mode": "embed", "text": "", "type": "normal",
+            "embeds": [{ "title": "🥺 Begging", "description": "((beg_result|No one gave you anything...))\nNew balance: **🪙 ((new_balance|?))** coins", "color": 15844367 }],
+            "components": {}, "modal": {},
+            "workflow": { "autoDeferIfActions": true, "visibility": "public", "onError": "edit_error", "conditional": { "enabled": false } }
+          },
+          "actions": [
+            { "type": "cooldown", "enabled": true, "payload": { "scope": "command", "varKey": "beg", "duration": "30s" } },
+            { "type": "calculate", "enabled": true, "key": "beg_luck", "payload": { "operation": "random", "operandA": "1", "operandB": "100" } },
+            { "type": "ifBlock", "enabled": true,
+              "payload": {
+                "left": "((beg_luck))", "operator": ">=", "right": "40",
+                "thenActions": [
+                  { "type": "calculate", "enabled": true, "key": "beg_amount", "payload": { "operation": "random", "operandA": "1", "operandB": "100" } },
+                  { "type": "getScopedVariable", "enabled": true, "key": "balance", "payload": { "scope": "user", "key": "balance", "contextId": "((userId))" } },
+                  { "type": "calculate", "enabled": true, "key": "new_balance", "payload": { "operation": "add", "operandA": "((balance|0))", "operandB": "((beg_amount|10))" } },
+                  { "type": "setScopedVariable", "enabled": true, "payload": { "scope": "user", "key": "balance", "value": "((new_balance|0))", "contextId": "((userId))" } },
+                  { "type": "setTemporaryVariable", "enabled": true, "key": "beg_result", "payload": { "key": "beg_result", "value": "Someone gave you 🪙 ((beg_amount)) coins!" } }
+                ],
+                "elseActions": [
+                  { "type": "setTemporaryVariable", "enabled": true, "key": "beg_result", "payload": { "key": "beg_result", "value": "Nobody gave you anything... Try again!" } }
+                ]
+              }
+            }
+          ]
         }
       }
     ],

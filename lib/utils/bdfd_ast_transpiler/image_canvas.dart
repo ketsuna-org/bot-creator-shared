@@ -12,6 +12,7 @@ extension _BdfdAstTranspilationScopeImageCanvas on _BdfdAstTranspilationScope {
   bool _isImageCanvasFunction(String normalizedName) {
     switch (normalizedName) {
       case 'canvascreate':
+      case 'canvascontainer':
       case 'canvasloadimage':
       case 'canvasdrawtext':
       case 'canvasdrawcircle':
@@ -95,24 +96,8 @@ extension _BdfdAstTranspilationScopeImageCanvas on _BdfdAstTranspilationScope {
     ));
   }
 
-  /// Adds a loadImage operation to the deferred image block.
-  /// Signature: $canvasLoadImage[url;x?;y?;width?;height?]
-  void _canvasLoadImage(BdfdFunctionCallAst node) {
-    if (!_deferredImageMode) return;
-    final url = _stringifyArgument(node, 0);
-
-    _deferredImageOps.add(<String, dynamic>{
-      'op': 'loadImage',
-      'url': url,
-      if (node.arguments.length > 1) 'x': _stringifyArgument(node, 1),
-      if (node.arguments.length > 2) 'y': _stringifyArgument(node, 2),
-      if (node.arguments.length > 3) 'width': _stringifyArgument(node, 3),
-      if (node.arguments.length > 4) 'height': _stringifyArgument(node, 4),
-    });
-  }
-
   /// Adds a compositeImage operation (overlay image at position).
-  /// Signature: $canvasCompositeImage[url;x;y;width;height;shape?;blend?]
+  /// Signature: $canvasCompositeImage[url;x;y;width;height;shape?;blend?;container?]
   void _canvasCompositeImage(BdfdFunctionCallAst node) {
     if (!_deferredImageMode) return;
 
@@ -125,10 +110,12 @@ extension _BdfdAstTranspilationScopeImageCanvas on _BdfdAstTranspilationScope {
       'height': _stringifyArgument(node, 4),
       if (node.arguments.length > 5) 'shape': _stringifyArgument(node, 5),
       if (node.arguments.length > 6) 'blend': _stringifyArgument(node, 6),
+      if (node.arguments.length > 7) 'container': _stringifyArgument(node, 7),
     });
   }
 
   /// Adds a drawText operation to the deferred image block.
+  /// Signature: $canvasDrawText[text;x;y;fontSize;color;textAlign?;maxWidth?;container?]
   void _canvasDrawText(BdfdFunctionCallAst node) {
     if (!_deferredImageMode) return;
 
@@ -139,10 +126,14 @@ extension _BdfdAstTranspilationScopeImageCanvas on _BdfdAstTranspilationScope {
       'y': _stringifyArgument(node, 2),
       'fontSize': _stringifyArgument(node, 3),
       'color': _stringifyArgument(node, 4),
+      if (node.arguments.length > 5) 'textAlign': _stringifyArgument(node, 5),
+      if (node.arguments.length > 6) 'maxWidth': _stringifyArgument(node, 6),
+      if (node.arguments.length > 7) 'container': _stringifyArgument(node, 7),
     });
   }
 
   /// Adds a drawCircle operation to the deferred image block.
+  /// Signature: $canvasDrawCircle[x;y;radius;color;fill;blend?;container?]
   void _canvasDrawCircle(BdfdFunctionCallAst node) {
     if (!_deferredImageMode) return;
 
@@ -153,10 +144,13 @@ extension _BdfdAstTranspilationScopeImageCanvas on _BdfdAstTranspilationScope {
       'radius': _stringifyArgument(node, 2),
       'color': _stringifyArgument(node, 3),
       'fill': _stringifyArgument(node, 4),
+      if (node.arguments.length > 5) 'blend': _stringifyArgument(node, 5),
+      if (node.arguments.length > 6) 'container': _stringifyArgument(node, 6),
     });
   }
 
   /// Adds a drawRect operation to the deferred image block.
+  /// Signature: $canvasDrawRect[x;y;width;height;color;fill;blend?;container?]
   void _canvasDrawRect(BdfdFunctionCallAst node) {
     if (!_deferredImageMode) return;
 
@@ -168,11 +162,13 @@ extension _BdfdAstTranspilationScopeImageCanvas on _BdfdAstTranspilationScope {
       'height': _stringifyArgument(node, 3),
       'color': _stringifyArgument(node, 4),
       'fill': _stringifyArgument(node, 5),
+      if (node.arguments.length > 6) 'blend': _stringifyArgument(node, 6),
+      if (node.arguments.length > 7) 'container': _stringifyArgument(node, 7),
     });
   }
 
   /// Adds a drawLine operation to the deferred image block.
-  /// Signature: $canvasDrawLine[x1;y1;x2;y2;color;thickness]
+  /// Signature: $canvasDrawLine[x1;y1;x2;y2;color;thickness;blend?;container?]
   void _canvasDrawLine(BdfdFunctionCallAst node) {
     if (!_deferredImageMode) return;
 
@@ -184,6 +180,41 @@ extension _BdfdAstTranspilationScopeImageCanvas on _BdfdAstTranspilationScope {
       'y2': _stringifyArgument(node, 3),
       'color': _stringifyArgument(node, 4),
       'thickness': _stringifyArgument(node, 5),
+      if (node.arguments.length > 6) 'blend': _stringifyArgument(node, 6),
+      if (node.arguments.length > 7) 'container': _stringifyArgument(node, 7),
+    });
+  }
+
+  /// Adds a loadImage operation to the deferred image block.
+  /// Signature: $canvasLoadImage[url;x?;y?;width?;height?;container?]
+  void _canvasLoadImage(BdfdFunctionCallAst node) {
+    if (!_deferredImageMode) return;
+    final url = _stringifyArgument(node, 0);
+
+    _deferredImageOps.add(<String, dynamic>{
+      'op': 'loadImage',
+      'url': url,
+      if (node.arguments.length > 1) 'x': _stringifyArgument(node, 1),
+      if (node.arguments.length > 2) 'y': _stringifyArgument(node, 2),
+      if (node.arguments.length > 3) 'width': _stringifyArgument(node, 3),
+      if (node.arguments.length > 4) 'height': _stringifyArgument(node, 4),
+      if (node.arguments.length > 5) 'container': _stringifyArgument(node, 5),
+    });
+  }
+
+  /// Adds a container/frame operation to the deferred image block.
+  /// Signature: $canvasContainer[name;x;y;width;height;color?]
+  void _canvasContainer(BdfdFunctionCallAst node) {
+    if (!_deferredImageMode) return;
+
+    _deferredImageOps.add(<String, dynamic>{
+      'op': 'container',
+      'name': _stringifyArgument(node, 0),
+      'x': _stringifyArgument(node, 1),
+      'y': _stringifyArgument(node, 2),
+      'width': _stringifyArgument(node, 3),
+      'height': _stringifyArgument(node, 4),
+      if (node.arguments.length > 5) 'color': _stringifyArgument(node, 5),
     });
   }
 
