@@ -23,12 +23,12 @@ const _kUrlCacheMaxBytes = 50 * 1024 * 1024; // 50 MB
 /// Tracks total byte size and evicts the least-recently-used entries when the
 /// byte budget is exceeded. Value type [V] must have a [length] getter
 /// (e.g. [Uint8List]).
-class _LruCache<V> {
-  _LruCache(this._maxBytes);
+class LruCache<V> {
+  LruCache(this._maxBytes);
 
   final int _maxBytes;
   int _currentBytes = 0;
-  final _map = LinkedHashMap<String, V>();
+  final _map = <String, V>{};
 
   V? operator [](String key) {
     final value = _map.remove(key);
@@ -96,7 +96,7 @@ Future<void> executeRuntimeImageBlock({
   final operations = payload['operations'];
   // Per-block LRU cache for URL fetches (avoids redundant HTTP calls
   // while preventing unbounded memory growth from many distinct URLs).
-  final urlCache = _LruCache<Uint8List>(_kUrlCacheMaxBytes);
+  final urlCache = LruCache<Uint8List>(_kUrlCacheMaxBytes);
 
   if (operations is! List || operations.isEmpty) {
     results[resultKey] = '';
@@ -320,7 +320,7 @@ img.BitmapFont _selectFont(int fontSize) {
 /// Resolves a URL/dataUrl/raw-base64 string to image bytes.
 ///
 /// Resolution order:
-/// 1. `http://` or `https://` → HTTP GET (cached per block via [_LruCache])
+/// 1. `http://` or `https://` → HTTP GET (cached per block via [LruCache])
 /// 2. `data:image/...;base64,...` → base64 decode
 /// 3. Raw base64 string fallback
 ///
@@ -329,7 +329,7 @@ img.BitmapFont _selectFont(int fontSize) {
 /// Shared by [executeRuntimeImageBlock] and [executeAttachImage].
 Future<Uint8List?> resolveImageSource(
   String source, {
-  _LruCache<Uint8List>? urlCache,
+  LruCache<Uint8List>? urlCache,
 }) async {
   if (source.isEmpty) return null;
 
@@ -389,7 +389,7 @@ Future<img.Image?> _opLoadImage(
   Map rawOp,
   String Function(String) resolveValue,
   img.Image? current, {
-  _LruCache<Uint8List>? urlCache,
+  LruCache<Uint8List>? urlCache,
 }) async {
   // Support both 'url' (preferred) and 'dataUrl' (legacy) keys.
   final source =
@@ -428,7 +428,7 @@ Future<img.Image?> _opCompositeImage(
   Map rawOp,
   String Function(String) resolveValue,
   img.Image? current, {
-  _LruCache<Uint8List>? urlCache,
+  LruCache<Uint8List>? urlCache,
 }) async {
   if (current == null) return null;
 

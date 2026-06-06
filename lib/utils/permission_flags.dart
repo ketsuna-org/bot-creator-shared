@@ -6,6 +6,7 @@
 ///
 /// Usage in UI: render as tri-state toggles (Allow / Deny / Unset).
 /// Usage in executor: compute allow/deny bitmasks from toggle states.
+library permission_flags;
 
 /// One Discord permission with metadata for UI rendering.
 class PermissionFlag {
@@ -358,7 +359,7 @@ String? normalizeBdfdPermissionToken(String raw) {
 /// Convert a list of BDFD permission tokens to a map of canonical key → 'allow'.
 ///
 /// This bridges BDFD imports (which produce a list of allowed permissions)
-/// to the new [permissionFlags] format (Map<String, String> with states).
+/// to the new [permissionFlags] format (`Map<String, String>` with states).
 /// Unrecognized tokens are silently dropped.
 Map<String, String> bdfdPermissionListToStates(List<String> tokens) {
   final result = <String, String>{};

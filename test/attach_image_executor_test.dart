@@ -236,7 +236,7 @@ void main() {
     });
 
     test('uses urlCache when provided', () async {
-      final cache = <String, Uint8List>{};
+      final cache = LruCache<Uint8List>(1024);
 
       cache['http://example.com/img.png'] = Uint8List.fromList([1, 2, 3]);
       final bytes = await resolveImageSource(
