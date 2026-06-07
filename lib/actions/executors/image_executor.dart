@@ -97,9 +97,30 @@ Future<void> executeRuntimeImageBlock({
   // Merge context variables and results for resolution within the isolate
   final context = <String, String>{...variables, ...results};
 
+  // Preload HTTP images on the main isolate to avoid spawning socket pools / SSL contexts in sub-isolates
+  final preloadedImages = <String, Uint8List>{};
+  final operations = payload['operations'];
+  if (operations is List) {
+    for (final op in operations) {
+      if (op is! Map) continue;
+      final opName = (op['op'] ?? '').toString();
+      if (opName == 'loadImage' || opName == 'compositeImage') {
+        final source = resolveTemplatePlaceholders((op['url'] ?? op['dataUrl'] ?? '').toString(), context).trim();
+        if (source.startsWith('http://') || source.startsWith('https://')) {
+          if (!preloadedImages.containsKey(source)) {
+            final bytes = await resolveImageSource(source);
+            if (bytes != null) {
+              preloadedImages[source] = bytes;
+            }
+          }
+        }
+      }
+    }
+  }
+
   // Offload CPU-bound rendering to separate isolate to avoid blocking main event loop
   // and release all allocated image memory (spikes) back to OS when isolate exits.
-  final result = await Isolate.run(() => _executeImageBlockInIsolate(payload, context));
+  final result = await Isolate.run(() => _executeImageBlockInIsolate(payload, context, preloadedImages));
 
   final base64Png = result.base64Png;
   if (base64Png.isNotEmpty) {
@@ -119,6 +140,7 @@ Future<void> executeRuntimeImageBlock({
 Future<({String base64Png, String imageName})> _executeImageBlockInIsolate(
   Map<String, dynamic> payload,
   Map<String, String> context,
+  Map<String, Uint8List> preloadedImages,
 ) async {
   img.Image? canvas;
   final operations = payload['operations'];
@@ -134,54 +156,59 @@ Future<({String base64Png, String imageName})> _executeImageBlockInIsolate(
     return resolveTemplatePlaceholders(input, context);
   }
 
-  for (final rawOp in operations) {
-    if (rawOp is! Map) continue;
-    final op = (rawOp['op'] ?? '').toString();
+  final client = http.Client();
+  try {
+    for (final rawOp in operations) {
+      if (rawOp is! Map) continue;
+      final op = (rawOp['op'] ?? '').toString();
 
-    // Resolve container-relative positioning.
-    final containerName = (rawOp['container'] ?? '').toString().trim();
-    int offsetX = 0, offsetY = 0;
-    if (containerName.isNotEmpty) {
-      final c = containers[containerName];
-      if (c != null) {
-        offsetX = c.x;
-        offsetY = c.y;
+      // Resolve container-relative positioning.
+      final containerName = (rawOp['container'] ?? '').toString().trim();
+      int offsetX = 0, offsetY = 0;
+      if (containerName.isNotEmpty) {
+        final c = containers[containerName];
+        if (c != null) {
+          offsetX = c.x;
+          offsetY = c.y;
+        }
+      }
+      // Apply offset to the rawOp clone so handlers receive absolute coords.
+      final adjustedOp = Map<String, dynamic>.from(rawOp);
+      if (offsetX != 0 || offsetY != 0) {
+        _adjustPositionKeys(adjustedOp, offsetX, offsetY);
+      }
+
+      switch (op) {
+        case 'create':
+          canvas = _opCreate(adjustedOp, resolveValue);
+          break;
+        case 'loadImage':
+          canvas = await _opLoadImage(adjustedOp, resolveValue, canvas,
+              urlCache: urlCache, client: client, preloadedImages: preloadedImages);
+          break;
+        case 'compositeImage':
+          canvas = await _opCompositeImage(adjustedOp, resolveValue, canvas,
+              urlCache: urlCache, client: client, preloadedImages: preloadedImages);
+          break;
+        case 'drawText':
+          canvas = _opDrawText(adjustedOp, resolveValue, canvas);
+          break;
+        case 'drawCircle':
+          canvas = _opDrawCircle(adjustedOp, resolveValue, canvas);
+          break;
+        case 'drawRect':
+          canvas = _opDrawRect(adjustedOp, resolveValue, canvas);
+          break;
+        case 'drawLine':
+          canvas = _opDrawLine(adjustedOp, resolveValue, canvas);
+          break;
+        case 'container':
+          _registerContainer(rawOp, resolveValue, containers);
+          break;
       }
     }
-    // Apply offset to the rawOp clone so handlers receive absolute coords.
-    final adjustedOp = Map<String, dynamic>.from(rawOp);
-    if (offsetX != 0 || offsetY != 0) {
-      _adjustPositionKeys(adjustedOp, offsetX, offsetY);
-    }
-
-    switch (op) {
-      case 'create':
-        canvas = _opCreate(adjustedOp, resolveValue);
-        break;
-      case 'loadImage':
-        canvas = await _opLoadImage(adjustedOp, resolveValue, canvas,
-            urlCache: urlCache);
-        break;
-      case 'compositeImage':
-        canvas = await _opCompositeImage(adjustedOp, resolveValue, canvas,
-            urlCache: urlCache);
-        break;
-      case 'drawText':
-        canvas = _opDrawText(adjustedOp, resolveValue, canvas);
-        break;
-      case 'drawCircle':
-        canvas = _opDrawCircle(adjustedOp, resolveValue, canvas);
-        break;
-      case 'drawRect':
-        canvas = _opDrawRect(adjustedOp, resolveValue, canvas);
-        break;
-      case 'drawLine':
-        canvas = _opDrawLine(adjustedOp, resolveValue, canvas);
-        break;
-      case 'container':
-        _registerContainer(rawOp, resolveValue, containers);
-        break;
-    }
+  } finally {
+    client.close();
   }
 
   String base64Png = '';
@@ -231,16 +258,21 @@ Future<void> executeAttachImage({
     throw Exception('attachImage: imageSource is required');
   }
 
-  final bytes = await resolveImageSource(imageSource);
-  if (bytes == null || bytes.isEmpty) {
-    throw Exception('attachImage: failed to load image from source');
-  }
+  final client = http.Client();
+  try {
+    final bytes = await resolveImageSource(imageSource, client: client);
+    if (bytes == null || bytes.isEmpty) {
+      throw Exception('attachImage: failed to load image from source');
+    }
 
-  // Store under the same prefix used by $attachImage (canvas attachments)
-  // so that _collectCanvasAttachments and inline collection in
-  // messaging_executor.dart pick it up automatically.
-  variables['temp._canvasAttachment_$imageName'] = base64Encode(bytes);
-  results[resultKey] = 'attached';
+    // Store under the same prefix used by $attachImage (canvas attachments)
+    // so that _collectCanvasAttachments and inline collection in
+    // messaging_executor.dart pick it up automatically.
+    variables['temp._canvasAttachment_$imageName'] = base64Encode(bytes);
+    results[resultKey] = 'attached';
+  } finally {
+    client.close();
+  }
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -346,8 +378,14 @@ img.BitmapFont _selectFont(int fontSize) {
 Future<Uint8List?> resolveImageSource(
   String source, {
   LruCache<Uint8List>? urlCache,
+  http.Client? client,
+  Map<String, Uint8List>? preloadedImages,
 }) async {
   if (source.isEmpty) return null;
+
+  if (preloadedImages != null && preloadedImages.containsKey(source)) {
+    return preloadedImages[source];
+  }
 
   // HTTP/HTTPS URL
   if (source.startsWith('http://') || source.startsWith('https://')) {
@@ -355,8 +393,9 @@ Future<Uint8List?> resolveImageSource(
       return urlCache[source];
     }
     try {
-      final response =
-          await http.get(Uri.parse(source)).timeout(const Duration(seconds: 15));
+      final response = client != null
+          ? await client.get(Uri.parse(source)).timeout(const Duration(seconds: 15))
+          : await http.get(Uri.parse(source)).timeout(const Duration(seconds: 15));
       if (response.statusCode == 200 && response.bodyBytes.isNotEmpty) {
         urlCache?[source] = response.bodyBytes;
         return response.bodyBytes;
@@ -406,13 +445,15 @@ Future<img.Image?> _opLoadImage(
   String Function(String) resolveValue,
   img.Image? current, {
   LruCache<Uint8List>? urlCache,
+  http.Client? client,
+  Map<String, Uint8List>? preloadedImages,
 }) async {
   // Support both 'url' (preferred) and 'dataUrl' (legacy) keys.
   final source =
       _resolve(rawOp['url'] ?? rawOp['dataUrl'], resolveValue);
   if (source.isEmpty) return current;
 
-  final bytes = await resolveImageSource(source, urlCache: urlCache);
+  final bytes = await resolveImageSource(source, urlCache: urlCache, client: client, preloadedImages: preloadedImages);
   if (bytes == null) return current;
 
   var decoded = img.decodeImage(bytes);
@@ -445,6 +486,8 @@ Future<img.Image?> _opCompositeImage(
   String Function(String) resolveValue,
   img.Image? current, {
   LruCache<Uint8List>? urlCache,
+  http.Client? client,
+  Map<String, Uint8List>? preloadedImages,
 }) async {
   if (current == null) return null;
 
@@ -459,7 +502,7 @@ Future<img.Image?> _opCompositeImage(
   final shape = _resolve(rawOp['shape'], resolveValue).toLowerCase().trim();
   final blend = _resolve(rawOp['blend'], resolveValue).toLowerCase().trim();
 
-  final bytes = await resolveImageSource(source, urlCache: urlCache);
+  final bytes = await resolveImageSource(source, urlCache: urlCache, client: client, preloadedImages: preloadedImages);
   if (bytes == null) return current;
 
   var overlay = img.decodeImage(bytes);
