@@ -288,6 +288,17 @@ String _lookupMergedContextValue(
     }
   }
 
+  // Check if it's a dynamic dataUrl lookup
+  if (requestedKeyLower.endsWith('.dataurl')) {
+    final baseKey = requestedKey.substring(0, requestedKey.length - '.dataurl'.length);
+    final baseKeyLower = baseKey.toLowerCase();
+    for (final entry in mergedContext.entries) {
+      if (entry.key.toLowerCase() == baseKeyLower) {
+        return 'data:image/png;base64,${entry.value}';
+      }
+    }
+  }
+
   if (jsonReadKeyMatch != null) {
     final rootKey = (jsonReadKeyMatch.group(1) ?? '').trim().toLowerCase();
     if (rootKey.isNotEmpty) {

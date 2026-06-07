@@ -4,6 +4,7 @@ import 'package:image/image.dart' as img;
 import 'package:test/test.dart';
 
 import 'package:bot_creator_shared/actions/executors/image_executor.dart';
+import 'package:bot_creator_shared/utils/template_resolver.dart';
 
 void main() {
   group('Image Executor', () {
@@ -43,7 +44,15 @@ void main() {
       expect(bytes[1], 0x50);
       expect(bytes[2], 0x4E);
       expect(bytes[3], 0x47);
-      expect(variables['img0.dataUrl'], startsWith('data:image/png;base64,'));
+      
+      // Verify that the variables map itself does NOT contain the dataUrl (saving memory)
+      expect(variables['img0.dataUrl'], isNull);
+      
+      // Verify that resolving it dynamically via template resolver works perfectly
+      final resolvedDataUrl = resolveTemplatePlaceholders('((img0.dataUrl))', {
+        'img0': results['img0']!,
+      });
+      expect(resolvedDataUrl, startsWith('data:image/png;base64,'));
     });
 
     test('drawText renders text on canvas', () async {
@@ -1001,6 +1010,80 @@ void main() {
         expect(results['mixed'], isNotEmpty);
         final bytes = base64Decode(results['mixed']!);
         expect(bytes.length, greaterThan(50));
+      });
+    });
+
+    group('Containers scope', () {
+      test('does not leak container positions between executions', () async {
+        // First execution defines a container and uses it to position a rect
+        final results1 = <String, String>{};
+        final variables1 = <String, String>{};
+        await executeRuntimeImageBlock(
+          payload: {
+            'operations': [
+              {'op': 'create', 'width': '100', 'height': '100', 'color': 'black'},
+              {
+                'op': 'container',
+                'name': 'c1',
+                'x': '10',
+                'y': '10',
+                'width': '50',
+                'height': '50',
+              },
+              {
+                'op': 'drawRect',
+                'container': 'c1',
+                'x': '0',
+                'y': '0',
+                'width': '10',
+                'height': '10',
+                'color': 'white',
+                'fill': 'true',
+              },
+            ],
+          },
+          resultKey: 'r1',
+          results: results1,
+          variables: variables1,
+          resolveValue: resolve,
+        );
+
+        // Second execution does NOT define the container, but tries to use it.
+        // It should NOT find the container 'c1' and therefore not apply the offset (10, 10).
+        final results2 = <String, String>{};
+        final variables2 = <String, String>{};
+        await executeRuntimeImageBlock(
+          payload: {
+            'operations': [
+              {'op': 'create', 'width': '100', 'height': '100', 'color': 'black'},
+              {
+                'op': 'drawRect',
+                'container': 'c1',
+                'x': '0',
+                'y': '0',
+                'width': '10',
+                'height': '10',
+                'color': 'white',
+                'fill': 'true',
+              },
+            ],
+          },
+          resultKey: 'r2',
+          results: results2,
+          variables: variables2,
+          resolveValue: resolve,
+        );
+
+        final img1 = img.decodeImage(base64Decode(results1['r1']!))!;
+        final img2 = img.decodeImage(base64Decode(results2['r2']!))!;
+
+        // Pixel at (0, 0) should be black in img1 (due to container offset (10,10))
+        // and white in img2 (no offset applied)
+        final p1 = img1.getPixel(0, 0);
+        final p2 = img2.getPixel(0, 0);
+
+        expect(p1.r.toInt(), equals(0));
+        expect(p2.r.toInt(), equals(255));
       });
     });
   });

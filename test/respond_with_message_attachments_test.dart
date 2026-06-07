@@ -112,5 +112,33 @@ void main() {
       expect(interaction.followupBuilder!.attachments, hasLength(1));
       expect(interaction.followupBuilder!.attachments!.first.data, equals([4, 5, 6]));
     });
+
+    test('cleans up temp._canvasAttachment_* keys from variables after collection', () async {
+      final interaction = MockMessageResponse();
+      final variables = {
+        'temp._canvasAttachment_card1': base64Encode([1, 2, 3]),
+        'temp._canvasAttachment_card2': base64Encode([4, 5, 6]),
+        'other_variable': 'keep_me',
+      };
+
+      await respondWithMessageAction(
+        interaction,
+        payload: {
+          'content': 'Hello',
+          'embeds': [],
+          'components': {},
+          'ephemeral': false,
+        },
+        resolve: (val) => val,
+        botId: 'test_bot',
+        variables: variables,
+      );
+
+      // Verify that attachments are gone
+      expect(variables.containsKey('temp._canvasAttachment_card1'), isFalse);
+      expect(variables.containsKey('temp._canvasAttachment_card2'), isFalse);
+      // Verify other variables are kept
+      expect(variables['other_variable'], equals('keep_me'));
+    });
   });
 }

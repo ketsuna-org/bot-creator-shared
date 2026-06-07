@@ -909,6 +909,45 @@ void main() {
     );
 
     test(
+      'setScopedVariable resolves .dataUrl dynamically from merged context',
+      () async {
+        final store = _MemoryBotDataStore();
+        final results = <String, String>{
+          'rtImage_0': 'Zm9vYmFy',
+        };
+        final variables = <String, String>{'guildId': 'guild-1'};
+
+        final handled = await executeVariablesAction(
+          type: BotCreatorActionType.setScopedVariable,
+          store: store,
+          botId: 'bot-1',
+          payload: <String, dynamic>{
+            'scope': 'guild',
+            'key': 'items_db',
+            'valueType': 'string',
+            'value': '((rtImage_0.dataUrl))',
+          },
+          resultKey: 'setDataUrl',
+          results: results,
+          variables: variables,
+          resolveValue: (input) => resolveTemplatePlaceholders(input, <String, String>{
+            ...variables,
+            ...results,
+          }),
+          guildId: Snowflake.parse('1'),
+          fallbackChannelId: null,
+          interaction: null,
+        );
+
+        expect(handled, isTrue);
+        expect(
+          store.scopedVariables['guild']?['guild-1']?['items_db'],
+          'data:image/png;base64,Zm9vYmFy',
+        );
+      },
+    );
+
+    test(
       'setScopedVariable resolves non-empty unresolved placeholders from merged context',
       () async {
         final store = _MemoryBotDataStore();

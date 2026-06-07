@@ -600,6 +600,20 @@ void main() {
           'Server A, Server B, Server C',
         );
       });
+
+      test('resolves dataUrl property dynamically from base variable', () {
+        final updates = {
+          'rtImage_0': 'Zm9vYmFy',
+        };
+        expect(
+          resolveTemplatePlaceholders('((rtImage_0.dataUrl))', updates),
+          'data:image/png;base64,Zm9vYmFy',
+        );
+        expect(
+          resolveTemplatePlaceholders('((rtImage_0.dataurl))', updates),
+          'data:image/png;base64,Zm9vYmFy',
+        );
+      });
     });
   });
 }

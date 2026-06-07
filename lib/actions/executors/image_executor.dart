@@ -96,6 +96,8 @@ Future<void> executeRuntimeImageBlock({
   // Per-block LRU cache for URL fetches (avoids redundant HTTP calls
   // while preventing unbounded memory growth from many distinct URLs).
   final urlCache = LruCache<Uint8List>(_kUrlCacheMaxBytes);
+  // Local containers map to prevent cross-request memory leaks and concurrent run conflicts.
+  final containers = <String, _ContainerInfo>{};
 
   if (operations is! List || operations.isEmpty) {
     results[resultKey] = '';
@@ -111,7 +113,7 @@ Future<void> executeRuntimeImageBlock({
     final containerName = (rawOp['container'] ?? '').toString().trim();
     int offsetX = 0, offsetY = 0;
     if (containerName.isNotEmpty) {
-      final c = _containers[containerName];
+      final c = containers[containerName];
       if (c != null) {
         offsetX = c.x;
         offsetY = c.y;
@@ -148,7 +150,7 @@ Future<void> executeRuntimeImageBlock({
         canvas = _opDrawLine(adjustedOp, resolveValue, canvas);
         break;
       case 'container':
-        _registerContainer(rawOp, resolveValue);
+        _registerContainer(rawOp, resolveValue, containers);
         break;
     }
   }
@@ -164,7 +166,6 @@ Future<void> executeRuntimeImageBlock({
     variables[resultKey] = base64Png;
     // dataUrl is derivable from base64 — store only the base64 and
     // let consumers compute the dataUrl when needed to avoid double storage.
-    variables['$resultKey.dataUrl'] = 'data:image/png;base64,$base64Png';
     // If the block has an imageName, register as an attachment so
     // respondWithMessage / sendMessage collectors pick it up.
     final imageName = payload['imageName']?.toString().trim() ?? '';
@@ -1012,10 +1013,6 @@ void _blendPixel(img.Image dst, int dx, int dy, img.ColorRgba8 src,
 
 // ─── Container Support ────────────────────────────────────────────────────
 
-/// Registry of named containers declared via the `container` operation.
-/// Keyed by container name, stores the container's absolute origin.
-final _containers = <String, _ContainerInfo>{};
-
 /// Parsed container information.
 class _ContainerInfo {
   final int x;
@@ -1028,14 +1025,14 @@ class _ContainerInfo {
 /// Registers a container from a `container` operation so subsequent
 /// operations can reference it via `container: name`.
 void _registerContainer(
-    Map rawOp, String Function(String) resolveValue) {
+    Map rawOp, String Function(String) resolveValue, Map<String, _ContainerInfo> containers) {
   final name = _resolve(rawOp['name'], resolveValue).trim();
   if (name.isEmpty) return;
   final x = _parseInt(rawOp['x'], resolveValue);
   final y = _parseInt(rawOp['y'], resolveValue);
   final width = _parseInt(rawOp['width'], resolveValue, defaultValue: 100);
   final height = _parseInt(rawOp['height'], resolveValue, defaultValue: 100);
-  _containers[name] = _ContainerInfo(x, y, width, height);
+  containers[name] = _ContainerInfo(x, y, width, height);
 
   // If the container has a background color, draw it.
   final bg = _resolve(rawOp['color'], resolveValue);

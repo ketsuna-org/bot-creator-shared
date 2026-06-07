@@ -153,6 +153,15 @@ String? _lookupVariableValue(String key, Map<String, String> updates) {
     }
   }
 
+  // Check if it's a dynamic dataUrl lookup
+  if (loweredKey.endsWith('.dataurl')) {
+    final baseKey = key.substring(0, key.length - '.dataurl'.length);
+    final baseValue = _lookupVariableValue(baseKey, updates);
+    if (baseValue != null) {
+      return 'data:image/png;base64,$baseValue';
+    }
+  }
+
   // Dynamic time variables resolved at template evaluation time.
   if (loweredKey == 'gettimestamp') {
     return (DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000).toString();

@@ -354,6 +354,7 @@ List<AttachmentBuilder>? _collectCanvasAttachments(
   if (variables == null || variables.isEmpty) return null;
 
   final attachments = <AttachmentBuilder>[];
+  final keysToRemove = <String>[];
   for (final entry in variables.entries) {
     // setTemporaryVariable stores under 'temp.<key>'
     if (!entry.key.startsWith('temp._canvasAttachment_')) continue;
@@ -370,9 +371,14 @@ List<AttachmentBuilder>? _collectCanvasAttachments(
         data: bytes,
         fileName: '$name.png',
       ));
+      keysToRemove.add(entry.key);
     } catch (_) {
       // Not valid base64 — skip
     }
+  }
+
+  for (final key in keysToRemove) {
+    variables.remove(key);
   }
 
   return attachments.isNotEmpty ? attachments : null;
