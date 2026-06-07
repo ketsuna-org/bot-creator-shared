@@ -565,6 +565,7 @@ List<AttachmentBuilder>? _collectComponentAttachments(
   if (variables == null || variables.isEmpty) return null;
 
   final attachments = <AttachmentBuilder>[];
+  final keysToRemove = <String>[];
   for (final entry in variables.entries) {
     if (!entry.key.startsWith('temp._canvasAttachment_')) continue;
     if (entry.value.isEmpty) continue;
@@ -579,7 +580,12 @@ List<AttachmentBuilder>? _collectComponentAttachments(
         data: bytes,
         fileName: '$name.png',
       ));
+      keysToRemove.add(entry.key);
     } catch (_) {}
+  }
+
+  for (final key in keysToRemove) {
+    variables.remove(key);
   }
 
   return attachments.isNotEmpty ? attachments : null;

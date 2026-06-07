@@ -34,25 +34,37 @@ class BdfdCompileDiagnostic {
 class BdfdCompileResult {
   const BdfdCompileResult({
     required this.source,
-    required this.lexerResult,
-    required this.parserResult,
-    required this.transpileResult,
-    required this.ast,
+    this.lexerResult,
+    this.parserResult,
+    this.transpileResult,
+    this.ast,
     required this.actions,
     required this.diagnostics,
   });
 
   final String source;
-  final BdfdLexerResult lexerResult;
-  final BdfdParserResult parserResult;
-  final BdfdTranspileResult transpileResult;
-  final BdfdScriptAst ast;
+  final BdfdLexerResult? lexerResult;
+  final BdfdParserResult? parserResult;
+  final BdfdTranspileResult? transpileResult;
+  final BdfdScriptAst? ast;
   final List<Action> actions;
   final List<BdfdCompileDiagnostic> diagnostics;
 
   bool get hasErrors => diagnostics.any(
     (diagnostic) => diagnostic.severity == BdfdCompileDiagnosticSeverity.error,
   );
+
+  BdfdCompileResult toLightweight() {
+    return BdfdCompileResult(
+      source: source,
+      lexerResult: null,
+      parserResult: null,
+      transpileResult: null,
+      ast: null,
+      actions: actions,
+      diagnostics: diagnostics,
+    );
+  }
 }
 
 class BdfdCompiler {
@@ -132,7 +144,7 @@ class BdfdCompiler {
     if (_cache.length > 500) {
       _cache.clear();
     }
-    _cache[source] = result;
+    _cache[source] = result.toLightweight();
     return result;
   }
 }

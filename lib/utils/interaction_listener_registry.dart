@@ -62,6 +62,7 @@ class InteractionListenerRegistry {
 
   /// Register a listener for a specific [customId].
   void register(String customId, ListenerEntry entry) {
+    pruneExpired();
     final listeners = _listeners.putIfAbsent(customId, () => <ListenerEntry>[]);
     listeners.add(entry);
   }
