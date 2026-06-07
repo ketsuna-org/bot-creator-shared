@@ -895,6 +895,9 @@ Future<Map<String, String>> generateKeyValues(
           // let's prefix them with opts to avoid conflicts
           // with other keys
           for (final entry in subKeyValues.entries) {
+            // Subcommand-qualified key (e.g. opts.welcome.channel)
+            listOfArgs["opts.${option.name}.${entry.key}"] = entry.value;
+            // Legacy flat key for backward compatibility (e.g. opts.channel)
             listOfArgs["opts.${entry.key}"] = entry.value;
             listOfArgs["arg.${entry.key}"] = entry.value;
             listOfArgs["workflow.arg.${entry.key}"] = entry.value;
@@ -914,6 +917,9 @@ Future<Map<String, String>> generateKeyValues(
             // let's prefix them with opts to avoid conflicts
             // with other keys
             for (final entry in subKeyValues.entries) {
+              // Group-qualified key (e.g. opts.ticket.new.channel)
+              listOfArgs["opts.${option.name}.${subCommandOption.name}.${entry.key}"] = entry.value;
+              // Flat key for backward compatibility
               listOfArgs["opts.${entry.key}"] = entry.value;
               listOfArgs["arg.${entry.key}"] = entry.value;
               listOfArgs["workflow.arg.${entry.key}"] = entry.value;
