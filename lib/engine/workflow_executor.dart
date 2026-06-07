@@ -170,7 +170,14 @@ class WorkflowExecutor {
     final hasDeferAction = actions.any(
       (a) => a.type == BotCreatorActionType.deferInteraction,
     );
+    // If a respondWithModal action is present, skip the auto-defer entirely
+    // — Discord requires modals to be the FIRST response to an interaction.
+    // Deferring first would make the modal respond fail silently.
+    final hasModalAction = actions.any(
+      (a) => a.type == BotCreatorActionType.respondWithModal,
+    );
     final shouldDefer = !hasDeferAction &&
+        !hasModalAction &&
         actions.isNotEmpty &&
         workflow['autoDeferIfActions'] != false;
     var didDefer = false;

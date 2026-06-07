@@ -206,13 +206,19 @@ class CommandExecutor {
     }
 
     final actions = compileResult.actions;
-    
-    // Defer the interaction. Canvas image processing (especially HTTP fetches
-    // for avatars, etc.) can exceed Discord's 3-second response window.
-    try {
-      await interaction.acknowledge();
-    } catch (_) {
-      // Already deferred — fine.
+
+    // Defer the interaction — BUT skip if the compiled actions contain a
+    // respondWithModal action. Discord requires modals to be the FIRST
+    // response; deferring first would make the modal fail.
+    final hasModalAction = actions.any(
+      (a) => a.type == BotCreatorActionType.respondWithModal,
+    );
+    if (!hasModalAction) {
+      try {
+        await interaction.acknowledge();
+      } catch (_) {
+        // Already deferred — fine.
+      }
     }
     
     await _workflowExecutor.executeActions(

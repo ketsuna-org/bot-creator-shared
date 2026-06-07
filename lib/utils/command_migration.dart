@@ -644,3 +644,36 @@ void _migrateSubcommandWorkflows(Map<String, dynamic> data) {
     rawWorkflows[route] = payloadMap;
   }
 }
+
+/// Optimizes command maps for transmission by stripping legacy keys
+/// (`response` and `simpleConfig`) from command data when the
+/// `response` map contains the `_migrated` sentinel key.
+///
+/// This reduces payload size for R2 storage and network transmission.
+/// The check is on key presence, not value — even `_migrated: false`
+/// triggers removal.
+///
+/// Returns `true` if any modification was made.
+bool stripMigratedCommandData(List<Map<String, dynamic>> commands) {
+  var modified = false;
+  for (final cmd in commands) {
+    final data = cmd['data'];
+    if (data is! Map<String, dynamic>) continue;
+
+    final response = data['response'];
+    if (response is! Map<String, dynamic>) continue;
+
+    if (!response.containsKey('_migrated')) continue;
+
+    // Remove legacy keys
+    if (data.containsKey('response')) {
+      data.remove('response');
+      modified = true;
+    }
+    if (data.containsKey('simpleConfig')) {
+      data.remove('simpleConfig');
+      modified = true;
+    }
+  }
+  return modified;
+}
