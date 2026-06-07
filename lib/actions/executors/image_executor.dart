@@ -1,9 +1,12 @@
 import 'dart:convert';
+import 'dart:isolate';
 import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 import 'package:image/image.dart' as img;
+
+import '../../utils/template_resolver.dart';
 
 // ─── Memory Constants ─────────────────────────────────────────────────────
 
@@ -91,18 +94,44 @@ Future<void> executeRuntimeImageBlock({
   required Map<String, String> variables,
   required String Function(String input) resolveValue,
 }) async {
+  // Merge context variables and results for resolution within the isolate
+  final context = <String, String>{...variables, ...results};
+
+  // Offload CPU-bound rendering to separate isolate to avoid blocking main event loop
+  // and release all allocated image memory (spikes) back to OS when isolate exits.
+  final result = await Isolate.run(() => _executeImageBlockInIsolate(payload, context));
+
+  final base64Png = result.base64Png;
+  if (base64Png.isNotEmpty) {
+    results[resultKey] = base64Png;
+    variables[resultKey] = base64Png;
+    if (result.imageName.isNotEmpty) {
+      variables['temp._canvasAttachment_${result.imageName}'] = base64Png;
+    }
+  } else {
+    results[resultKey] = '';
+    variables[resultKey] = '';
+  }
+}
+
+/// Helper function designed to run in a separate short-lived isolate.
+/// Releases all decoded/rendered image memory to the OS upon isolate completion.
+Future<({String base64Png, String imageName})> _executeImageBlockInIsolate(
+  Map<String, dynamic> payload,
+  Map<String, String> context,
+) async {
   img.Image? canvas;
   final operations = payload['operations'];
-  // Per-block LRU cache for URL fetches (avoids redundant HTTP calls
-  // while preventing unbounded memory growth from many distinct URLs).
   final urlCache = LruCache<Uint8List>(_kUrlCacheMaxBytes);
-  // Local containers map to prevent cross-request memory leaks and concurrent run conflicts.
   final containers = <String, _ContainerInfo>{};
 
   if (operations is! List || operations.isEmpty) {
-    results[resultKey] = '';
-    variables[resultKey] = '';
-    return;
+    return (base64Png: '', imageName: '');
+  }
+
+  // Resolve values locally using the context map
+  String resolveValue(String input) {
+    return resolveTemplatePlaceholders(input, context);
   }
 
   for (final rawOp in operations) {
@@ -155,30 +184,17 @@ Future<void> executeRuntimeImageBlock({
     }
   }
 
+  String base64Png = '';
   if (canvas != null) {
     final pngBytes = img.encodePng(canvas);
-    // Release the pixel buffer to help GC before the base64 inflation
-    // allocates even more memory.
     canvas = null;
-
-    final base64Png = base64Encode(pngBytes);
-    results[resultKey] = base64Png;
-    variables[resultKey] = base64Png;
-    // dataUrl is derivable from base64 — store only the base64 and
-    // let consumers compute the dataUrl when needed to avoid double storage.
-    // If the block has an imageName, register as an attachment so
-    // respondWithMessage / sendMessage collectors pick it up.
-    final imageName = payload['imageName']?.toString().trim() ?? '';
-    if (imageName.isNotEmpty) {
-      variables['temp._canvasAttachment_$imageName'] = base64Png;
-    }
-  } else {
-    results[resultKey] = '';
-    variables[resultKey] = '';
+    base64Png = base64Encode(pngBytes);
   }
 
-  // Clear the URL cache to release downloaded image bytes.
+  final imageName = payload['imageName']?.toString().trim() ?? '';
   urlCache.clear();
+
+  return (base64Png: base64Png, imageName: imageName);
 }
 
 /// Executes an Attach Image action at runtime.
