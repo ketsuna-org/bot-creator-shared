@@ -149,6 +149,12 @@ class _FakeInteraction implements Interaction<dynamic> {
   final InteractionManager manager;
 
   @override
+  Locale? get locale => null;
+
+  @override
+  Locale? get guildLocale => null;
+
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
@@ -354,6 +360,12 @@ class _FakeApplicationCommandInteraction implements Interaction<ApplicationComma
   final InteractionType type;
   @override
   final InteractionManager manager;
+
+  @override
+  Locale? get locale => null;
+
+  @override
+  Locale? get guildLocale => null;
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);

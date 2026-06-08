@@ -812,6 +812,13 @@ Future<Map<String, String>> generateKeyValues(
   listOfArgs["command.type"] = commandTypeName;
   listOfArgs["interaction.command.type"] = commandTypeName;
 
+  // Interaction locale (Discord sends locale + guild_locale in every interaction)
+  final interactionLocale = interaction.locale;
+  final interactionGuildLocale = interaction.guildLocale;
+  listOfArgs["interaction.locale"] = interactionLocale?.identifier ?? '';
+  listOfArgs["interaction.guild_locale"] = interactionGuildLocale?.identifier ?? '';
+  listOfArgs["target.locale"] = interactionLocale?.identifier ?? '';
+
   final targetId = command.targetId;
   if (targetId != null) {
     listOfArgs["target.id"] = targetId.toString();
@@ -880,6 +887,18 @@ Future<Map<String, String>> generateKeyValues(
         listOfArgs["target.message.author.id"] =
             resolvedMessage.author.id.toString();
         listOfArgs["target.messageContent"] = resolvedMessage.content;
+      } else {
+        // nyxx stores resolved messages as PartialMessage, which lacks content/author.
+        // Fall back to fetching the full message via the API.
+        try {
+          final fullMessage = await resolvedMessage.get();
+          listOfArgs["target.message.content"] = fullMessage.content;
+          listOfArgs["target.message.author.id"] =
+              fullMessage.author.id.toString();
+          listOfArgs["target.messageContent"] = fullMessage.content;
+        } catch (_) {
+          // If fetch fails, leave content empty — the target.id is still available.
+        }
       }
     }
   }

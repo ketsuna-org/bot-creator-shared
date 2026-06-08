@@ -77,6 +77,9 @@ const Map<String, String> _descriptions = {
   'interaction.isslash': 'Whether triggered by a slash command',
   'interaction.command.name': 'Slash command name',
   'interaction.command.id': 'Slash command ID',
+  'interaction.locale': 'Locale of the user who triggered the interaction (e.g. fr, ja)',
+  'interaction.guild_locale': 'Locale of the guild where the interaction was triggered (e.g. en-US)',
+  'target.locale': 'Alias for interaction.locale',
   // Autocomplete
   'autocomplete.query': 'Current autocomplete search text',
   'autocomplete.optionname': 'Name of the option being autocompleted',
@@ -193,6 +196,10 @@ class VariableCatalog {
       const VariableSuggestion(name: 'autocomplete.query', kind: VariableSuggestionKind.nonNumeric, category: VariableCategory.interaction),
       const VariableSuggestion(name: 'autocomplete.optionName', kind: VariableSuggestionKind.nonNumeric, category: VariableCategory.interaction),
       const VariableSuggestion(name: 'autocomplete.optionType', kind: VariableSuggestionKind.nonNumeric, category: VariableCategory.interaction),
+      // Interaction locale
+      const VariableSuggestion(name: 'interaction.locale', kind: VariableSuggestionKind.nonNumeric, category: VariableCategory.interaction),
+      const VariableSuggestion(name: 'interaction.guild_locale', kind: VariableSuggestionKind.nonNumeric, category: VariableCategory.interaction),
+      const VariableSuggestion(name: 'target.locale', kind: VariableSuggestionKind.nonNumeric, category: VariableCategory.interaction),
       // Builtin helpers
       const VariableSuggestion(name: 'length(source)', kind: VariableSuggestionKind.unknown, category: VariableCategory.function_),
       const VariableSuggestion(name: 'at(source, 0)', kind: VariableSuggestionKind.unknown, category: VariableCategory.function_),
