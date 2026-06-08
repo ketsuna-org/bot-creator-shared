@@ -181,6 +181,9 @@ Future<bool> executeHttpAction({
   }
 
   onLog?.call('HTTP: $method $resolvedUrl');
+  if (headers.isNotEmpty) {
+    onLog?.call('HTTP Headers: $headers');
+  }
   if (request.body.isNotEmpty) {
     onLog?.call('HTTP Payload sent: ${request.body}');
   }
