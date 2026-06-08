@@ -208,7 +208,7 @@ Future<bool> executeHttpAction({
     variables['action.$resultKey'] = extractionResult;
     variables['action.$resultKey.status'] = '$status';
     variables['action.$resultKey.body'] = responseBody;
-    variables['$resultKey'] = extractionResult;
+    variables[resultKey] = extractionResult;
     variables['$resultKey.status'] = '$status';
     variables['$resultKey.body'] = responseBody;
 
@@ -248,7 +248,7 @@ Future<bool> executeHttpAction({
           // ((action.<key>)) resolves to the useful text, not the raw body.
           results[resultKey] = extractedAsString;
           variables['action.$resultKey'] = extractedAsString;
-          variables['$resultKey'] = extractedAsString;
+          variables[resultKey] = extractedAsString;
           variables['http.jsonPath'] = extractedAsString;
           variables['action.$resultKey.jsonPath'] = extractedAsString;
           variables['$resultKey.jsonPath'] = extractedAsString;
