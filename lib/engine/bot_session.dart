@@ -8,6 +8,7 @@ import 'package:bot_creator_shared/engine/event_dispatcher.dart';
 import 'package:bot_creator_shared/engine/command_executor.dart';
 import 'package:bot_creator_shared/engine/workflow_executor.dart';
 import 'package:bot_creator_shared/utils/interaction_listener_registry.dart';
+import 'package:bot_creator_shared/utils/template_resolver.dart';
 import 'package:bot_creator_shared/utils/global.dart';
 
 /// Represents an active bot session with its gateway connection and managers.
@@ -98,6 +99,15 @@ class BotSession {
         gateway: _gateway!,
         onLog: callbacks.onLog,
         onDebugLog: callbacks.onDebugLog,
+        resolveTemplate: (input) {
+          final startedAt = _startedAt ?? DateTime.now();
+          final vars = <String, String>{
+            'bot.id': botId,
+            'bot.guildCount': '${_gateway!.guilds.cache.length}',
+            'bot.uptime': '${DateTime.now().difference(startedAt).inMilliseconds}',
+          };
+          return resolveTemplatePlaceholders(input, vars);
+        },
       );
 
       await reload();

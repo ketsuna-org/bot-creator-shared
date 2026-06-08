@@ -10,12 +10,14 @@ class PresenceManager {
     required this.gateway,
     this.onLog,
     this.onDebugLog,
+    this.resolveTemplate,
   });
 
   final String botId;
   final NyxxGateway gateway;
   final void Function(String message, {required String botId})? onLog;
   final void Function(String message, {String? botId})? onDebugLog;
+  final String Function(String input)? resolveTemplate;
 
   Timer? _rotationTimer;
   Timer? _initialStatusTimer;
@@ -112,8 +114,15 @@ class PresenceManager {
     BotStatusConfig status,
     String presenceStatus,
   ) async {
-    final text = _sanitizeActivityText(status.name);
+    var text = _sanitizeActivityText(status.name);
     if (text.isEmpty) return;
+
+    // Resolve template placeholders like ((bot.uptime)), ((bot.guildCount))
+    if (resolveTemplate != null && text.contains('((')) {
+      text = resolveTemplate!(text).trim();
+      text = _sanitizeActivityText(text);
+      if (text.isEmpty) return;
+    }
 
     final streamUrl = _parseStreamingUrl(status.url ?? '');
 
