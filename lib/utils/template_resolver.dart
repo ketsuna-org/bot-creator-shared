@@ -1752,3 +1752,36 @@ String? _mapToLowercaseToBdfdPerm(String lowercasePerm) {
     default: return lowercasePerm.toUpperCase();
   }
 }
+
+/// Adds always-available bot-level variables to [vars].
+/// Usable in any text field across the entire bot config:
+/// ((bot.id)), ((bot.uptime)), ((bot.guildCount)), ((bot.ping)),
+/// ((getTimestamp)), ((getTimestampMs)), ((day)), ((month)),
+/// ((year)), ((hour)), ((minute)), ((second)), ((time)), ((date)).
+void injectAlwaysAvailableVariables(
+  Map<String, String> vars, {
+  required String botId,
+  int guildCount = 0,
+  int uptimeMs = 0,
+  int pingMs = 0,
+}) {
+  final now = DateTime.now().toUtc();
+  vars['bot.id'] = botId;
+  vars['bot.guildCount'] = '$guildCount';
+  vars['bot.uptime'] = '$uptimeMs';
+  vars['bot.ping'] = '$pingMs';
+  vars['getTimestamp'] = '${now.millisecondsSinceEpoch ~/ 1000}';
+  vars['getTimestampMs'] = '${now.millisecondsSinceEpoch}';
+  vars['day'] = '${now.day}';
+  vars['month'] = '${now.month}';
+  vars['year'] = '${now.year}';
+  vars['hour'] = '${now.hour}';
+  vars['minute'] = '${now.minute}';
+  vars['second'] = '${now.second}';
+  vars['time'] = '${now.hour.toString().padLeft(2, '0')}:'
+      '${now.minute.toString().padLeft(2, '0')}:'
+      '${now.second.toString().padLeft(2, '0')}';
+  vars['date'] = '${now.year}-'
+      '${now.month.toString().padLeft(2, '0')}-'
+      '${now.day.toString().padLeft(2, '0')}';
+}

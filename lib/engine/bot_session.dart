@@ -100,12 +100,13 @@ class BotSession {
         onLog: callbacks.onLog,
         onDebugLog: callbacks.onDebugLog,
         resolveTemplate: (input) {
-          final startedAt = _startedAt ?? DateTime.now();
-          final vars = <String, String>{
-            'bot.id': botId,
-            'bot.guildCount': '${_gateway!.guilds.cache.length}',
-            'bot.uptime': '${DateTime.now().difference(startedAt).inMilliseconds}',
-          };
+          final vars = <String, String>{};
+          injectAlwaysAvailableVariables(
+            vars,
+            botId: botId,
+            guildCount: _gateway!.guilds.cache.length,
+            uptimeMs: DateTime.now().difference(_startedAt ?? DateTime.now()).inMilliseconds,
+          );
           return resolveTemplatePlaceholders(input, vars);
         },
       );

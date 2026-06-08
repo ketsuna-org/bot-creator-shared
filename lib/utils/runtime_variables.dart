@@ -213,8 +213,17 @@ Future<void> hydrateRuntimeVariables({
   String? channelContextId,
   String? userContextId,
   String? messageContextId,
+  int guildCount = 0,
+  int uptimeMs = 0,
+  int pingMs = 0,
 }) async {
-  runtimeVariables['bot.id'] = botId;
+  injectAlwaysAvailableVariables(
+    runtimeVariables,
+    botId: botId,
+    guildCount: guildCount,
+    uptimeMs: uptimeMs,
+    pingMs: pingMs,
+  );
   List<Map<String, dynamic>> scopedDefinitions = const <Map<String, dynamic>>[];
   try {
     scopedDefinitions = await store.getScopedVariableDefinitions(botId);
