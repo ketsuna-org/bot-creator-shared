@@ -141,12 +141,14 @@ Future<bool> executeHttpAction({
       rawHeadersMap[key.toString()] = value?.toString() ?? '';
     });
   }
+  onLog?.call('HTTP raw headers count: ${rawHeadersMap.length}, keys: ${rawHeadersMap.keys.toList()}');
   final headers = <String, String>{};
   for (final entry in rawHeadersMap.entries) {
     final key = resolveValue(entry.key).trim();
     if (key.isEmpty) continue;
     headers[key] = resolveValue(entry.value);
   }
+  onLog?.call('HTTP resolved headers count: ${headers.length}, keys: ${headers.keys.toList()}');
 
   Object? requestBody;
   if (_supportsBody(method)) {
