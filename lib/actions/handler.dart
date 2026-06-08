@@ -1134,7 +1134,7 @@ Future<Map<String, String>> handleActions(
           final targetId = action.jumpToActionId;
           if (targetId != null) {
             final targetIndex = actions.indexWhere(
-              (a) => (a.key != null && a.key == targetId) || a.payload['id'] == targetId,
+              (a) => (a.key != null && a.key == targetId) || a.payload['_actionId'] == targetId,
             );
             if (targetIndex > i) {
               i = targetIndex - 1; // -1 because loop increments
