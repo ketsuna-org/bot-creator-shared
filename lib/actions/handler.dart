@@ -105,12 +105,22 @@ Future<Map<String, String>> handleActions(
     // Try template resolution first (variables, interaction context, etc.)
     final resolved = resolveTemplate(value);
     if (resolved != value) return resolved;
-    // Fall back to local action results (e.g. ((action_message)) from respondWithMessage)
+    // Fall back to local action results (e.g. ((action.translation)) during execution).
+    // Results are keyed by action.key (e.g. 'translation'), but placeholders use
+    // 'action.<key>' format, so strip the 'action.' prefix when looking up.
     final match = RegExp(r'^\(\((.+)\)\)$').firstMatch(value.trim());
     if (match != null) {
-      final key = match.group(1)!;
+      var key = match.group(1)!;
+      // Direct match (e.g. legacy action_message style)
       if (results.containsKey(key)) {
         return results[key]!;
+      }
+      // Strip 'action.' prefix to match results keyed by action.key
+      if (key.startsWith('action.')) {
+        final stripped = key.substring('action.'.length);
+        if (results.containsKey(stripped)) {
+          return results[stripped]!;
+        }
       }
     }
     return resolved;

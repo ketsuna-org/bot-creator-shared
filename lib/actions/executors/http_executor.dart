@@ -201,11 +201,14 @@ Future<bool> executeHttpAction({
       onLog?.call('HTTP Payload received: $responseBody');
     }
 
-    results[resultKey] = 'HTTP $status';
+    final extractionResult = responseBody;
+    results[resultKey] = extractionResult;
     variables['http.status'] = '$status';
     variables['http.body'] = responseBody;
+    variables['action.$resultKey'] = extractionResult;
     variables['action.$resultKey.status'] = '$status';
     variables['action.$resultKey.body'] = responseBody;
+    variables['$resultKey'] = extractionResult;
     variables['$resultKey.status'] = '$status';
     variables['$resultKey.body'] = responseBody;
 
@@ -241,6 +244,11 @@ Future<bool> executeHttpAction({
               : (extracted is num || extracted is bool)
                   ? extracted.toString()
                   : jsonEncode(extracted);
+          // Update the primary result to the extracted value so
+          // ((action.<key>)) resolves to the useful text, not the raw body.
+          results[resultKey] = extractedAsString;
+          variables['action.$resultKey'] = extractedAsString;
+          variables['$resultKey'] = extractedAsString;
           variables['http.jsonPath'] = extractedAsString;
           variables['action.$resultKey.jsonPath'] = extractedAsString;
           variables['$resultKey.jsonPath'] = extractedAsString;

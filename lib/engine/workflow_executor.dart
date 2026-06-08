@@ -344,8 +344,12 @@ class WorkflowExecutor {
       final newPayload = processValue(action.payload);
       return Action(
         type: action.type,
+        key: action.key,
+        enabled: action.enabled,
         payload: Map<String, dynamic>.from(newPayload as Map),
-      );
+      )
+        ..dependOn.addAll(action.dependOn)
+        ..error.addAll(action.error);
     }).toList();
   }
 }
