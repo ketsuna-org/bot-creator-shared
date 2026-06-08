@@ -232,6 +232,7 @@ Future<bool> executeHttpAction({
 
       if (decoded != null) {
         final extracted = _extractByJsonPath(decoded, extractPath);
+        onLog?.call('HTTP extractJsonPath: $extractPath → ${extracted != null ? "found (${extracted.toString().length} chars)" : "null"}');
         if (extracted != null) {
           final extractedAsString = extracted is String
               ? extracted
@@ -241,6 +242,7 @@ Future<bool> executeHttpAction({
           variables['http.jsonPath'] = extractedAsString;
           variables['action.$resultKey.jsonPath'] = extractedAsString;
           variables['$resultKey.jsonPath'] = extractedAsString;
+          onLog?.call('HTTP jsonPath stored as action.$resultKey.jsonPath = $extractedAsString');
           // Note: saveJsonPathToGlobalVar removed — use {{resultKey.jsonPath}}
         }
       }
