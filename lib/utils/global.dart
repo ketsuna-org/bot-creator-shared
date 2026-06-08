@@ -704,7 +704,10 @@ Future<Map<String, String>> generateKeyValues(
     } catch (_) {}
   }
 
+  final now = DateTime.now();
   Map<String, String> listOfArgs = {
+    "timestamp": now.millisecondsSinceEpoch.toString(),
+    "actualTime": now.toIso8601String(),
     "userName": userName,
     "userId": invokingUserIdText,
     "userUsername": user?.user?.username ?? "Unknown User",
