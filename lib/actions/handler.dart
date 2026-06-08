@@ -1127,8 +1127,32 @@ Future<Map<String, String>> handleActions(
     } catch (e) {
       results[resultKey] = 'Error: $e';
       recordTrace(resultOverride: 'Error: $e');
-      if (action.onErrorMode == ActionOnErrorMode.stop) {
-        break;
+      switch (action.onErrorMode) {
+        case ActionOnErrorMode.stop:
+          break; // exit loop
+        case ActionOnErrorMode.jump:
+          final targetId = action.jumpToActionId;
+          if (targetId != null) {
+            final targetIndex = actions.indexWhere(
+              (a) => (a.key != null && a.key == targetId) || a.payload['id'] == targetId,
+            );
+            if (targetIndex > i) {
+              i = targetIndex - 1; // -1 because loop increments
+              continue;
+            }
+          }
+          // fall through to stop if target not found
+          break;
+        case ActionOnErrorMode.skip:
+          final count = action.skipCount;
+          if (count > 0) {
+            i += count;
+            continue;
+          }
+          break;
+        case ActionOnErrorMode.continueMode:
+          // continue to next action (default)
+          break;
       }
     }
 

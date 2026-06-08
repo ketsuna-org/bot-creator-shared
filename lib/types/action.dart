@@ -127,7 +127,7 @@ enum BotCreatorActionType {
   attachImage,
 }
 
-enum ActionOnErrorMode { stop, continueMode }
+enum ActionOnErrorMode { stop, continueMode, jump, skip }
 
 class Action {
   final BotCreatorActionType type;
@@ -199,8 +199,18 @@ class Action {
   bool get hasDependOn => dependOn.isNotEmpty;
 
   ActionOnErrorMode get onErrorMode {
-    return error['mode'] == 'continue'
-        ? ActionOnErrorMode.continueMode
-        : ActionOnErrorMode.stop;
+    switch (error['mode']) {
+      case 'continue':
+        return ActionOnErrorMode.continueMode;
+      case 'jump':
+        return ActionOnErrorMode.jump;
+      case 'skip':
+        return ActionOnErrorMode.skip;
+      default:
+        return ActionOnErrorMode.stop;
+    }
   }
+
+  String? get jumpToActionId => error['jumpToActionId'];
+  int get skipCount => int.tryParse(error['skipCount'] ?? '') ?? 0;
 }
