@@ -570,10 +570,13 @@ Future<Map<String, String>> handleActions(
           results[resultKey] = result['guildId'] ?? '';
           break;
         case BotCreatorActionType.leaveGuild:
+          final resolvedGuildId = _resolveSnowflake(
+            resolveValue((action.payload['guildId'] ?? '').toString()),
+          );
           final result = await updateGuildAction(
             client,
-            guildId: guildId,
-            payload: const <String, dynamic>{'leave': true},
+            guildId: resolvedGuildId ?? guildId,
+            payload: <String, dynamic>{'leave': true},
             resolve: resolveValue,
           );
           if (result['error'] != null) {

@@ -827,9 +827,12 @@ extension _BdfdAstTranspilationScopeDispatch on _BdfdAstTranspilationScope {
         return _transpileBlacklistUsers(node);
       // Bot actions
       case 'botleave':
+        final guildIdArg = _stringifyArgument(node, 0).trim();
         return Action(
           type: BotCreatorActionType.leaveGuild,
-          payload: const <String, dynamic>{},
+          payload: <String, dynamic>{
+            if (guildIdArg.isNotEmpty) 'guildId': guildIdArg,
+          },
         );
       case 'bottyping':
         return Action(
