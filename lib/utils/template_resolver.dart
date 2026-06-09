@@ -1766,10 +1766,10 @@ void injectAlwaysAvailableVariables(
   int pingMs = 0,
 }) {
   final now = DateTime.now().toUtc();
-  vars['bot.id'] = botId;
-  vars['bot.guildCount'] = '$guildCount';
-  vars['bot.uptime'] = '$uptimeMs';
-  vars['bot.ping'] = '$pingMs';
+  vars.putIfAbsent('bot.id', () => botId);
+  vars.putIfAbsent('bot.guildCount', () => '$guildCount');
+  vars.putIfAbsent('bot.uptime', () => '$uptimeMs');
+  vars.putIfAbsent('bot.ping', () => '$pingMs');
   vars['getTimestamp'] = '${now.millisecondsSinceEpoch ~/ 1000}';
   vars['getTimestampMs'] = '${now.millisecondsSinceEpoch}';
   vars['day'] = '${now.day}';

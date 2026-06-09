@@ -316,6 +316,7 @@ class CommandExecutor {
         'autocomplete.optionType': focusedOption == null ? 'string' : commandOptionTypeToText(focusedOption.type),
       };
 
+      runtimeVariables.addAll(shared_global.extractBotRuntimeDetails(gateway));
       _injectBaseVariables(runtimeVariables, botId: botId, startedAt: startedAt);
       sessionVariableInjector?.call(runtimeVariables);
       final contextIds = _resolveContextIds(interaction, runtimeVariables);
