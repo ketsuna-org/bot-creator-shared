@@ -33,10 +33,7 @@ class DiscordEntityFetcher {
         variables[_key('channel', contextId, 'name')] = _getChannelName(cached);
         variables[_key('channel', contextId, 'id')] = cached.id.toString();
       } else if (cached is Guild) {
-        variables[_key('guild', contextId, 'name')] = cached.name;
-        variables[_key('guild', contextId, 'id')] = cached.id.toString();
-        variables[_key('guild', contextId, 'memberCount')] =
-            cached.approximateMemberCount?.toString() ?? '0';
+        _populateGuildVariables(variables, contextId, cached);
       } else if (cached is Role) {
         _populateRoleVariables(variables, contextId, cached);
       } else if (cached is Message) {
@@ -97,10 +94,7 @@ class DiscordEntityFetcher {
         case 'guild':
           final guild = await gateway.guilds.fetch(id);
           fetchedEntity = guild;
-          variables[_key('guild', contextId, 'name')] = guild.name;
-          variables[_key('guild', contextId, 'id')] = guild.id.toString();
-          variables[_key('guild', contextId, 'memberCount')] =
-              guild.approximateMemberCount?.toString() ?? '0';
+          _populateGuildVariables(variables, contextId, guild);
           break;
 
         case 'role':
@@ -275,6 +269,42 @@ class DiscordEntityFetcher {
         // Role position not available — skip silently
       }
     }
+  }
+
+  static void _populateGuildVariables(
+    Map<String, String> variables,
+    String contextId,
+    Guild guild,
+  ) {
+    variables[_key('guild', contextId, 'name')] = guild.name;
+    variables[_key('guild', contextId, 'id')] = guild.id.toString();
+    variables[_key('guild', contextId, 'memberCount')] =
+        guild.approximateMemberCount?.toString() ?? '0';
+    variables[_key('guild', contextId, 'premiumSubscriptionCount')] =
+        guild.premiumSubscriptionCount?.toString() ?? '0';
+    variables[_key('guild', contextId, 'premiumTier')] =
+        guild.premiumTier.name;
+    variables[_key('guild', contextId, 'emojiCount')] =
+        guild.emojis.length.toString();
+    variables[_key('guild', contextId, 'stickerCount')] =
+        guild.stickers.length.toString();
+    variables[_key('guild', contextId, 'exists')] = 'true';
+    variables[_key('guild', contextId, 'description')] =
+        guild.description ?? '';
+    variables[_key('guild', contextId, 'ownerId')] =
+        guild.ownerId.toString();
+    variables[_key('guild', contextId, 'verificationLevel')] =
+        guild.verificationLevel.value.toString();
+    variables[_key('guild', contextId, 'features')] =
+        guild.features.join(',');
+    variables[_key('guild', contextId, 'vanityUrlCode')] =
+        guild.vanityUrlCode ?? '';
+    variables[_key('guild', contextId, 'banner')] = guild.banner ?? '';
+    variables[_key('guild', contextId, 'splash')] = guild.splash ?? '';
+    variables[_key('guild', contextId, 'afkTimeout')] =
+        guild.afkTimeout.inSeconds.toString();
+    variables[_key('guild', contextId, 'preferredLocale')] =
+        guild.preferredLocale.name;
   }
 
   static void _populateRoleVariables(

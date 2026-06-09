@@ -386,7 +386,30 @@ extension _BdfdAstTranspilationScopeInlineRuntime
         return '';
       case 'emotecount':
       case 'emojicount':
-        return '((guild.emojiCount))';
+        if (node.arguments.isNotEmpty) {
+          final guildId = _stringifyArgument(node, 0).trim();
+          if (guildId.isNotEmpty) {
+            return '((guild[$guildId].emojiCount))';
+          }
+        }
+        return _inlineRuntimeVariables['emojicount'];
+      case 'stickercount':
+        if (node.arguments.isNotEmpty) {
+          final guildId = _stringifyArgument(node, 0).trim();
+          if (guildId.isNotEmpty) {
+            return '((guild[$guildId].stickerCount))';
+          }
+        }
+        return _inlineRuntimeVariables['stickercount'];
+      case 'boostcount':
+      case 'serverboostcount':
+        if (node.arguments.isNotEmpty) {
+          final guildId = _stringifyArgument(node, 0).trim();
+          if (guildId.isNotEmpty) {
+            return '((guild[$guildId].premiumSubscriptionCount))';
+          }
+        }
+        return _inlineRuntimeVariables['boostcount'];
       case 'emojiexists':
         final emojiName = _stringifyArgument(node, 0).trim();
         if (emojiName.isNotEmpty) {
@@ -738,7 +761,13 @@ extension _BdfdAstTranspilationScopeInlineRuntime
         return '((getTimestampMs))';
       // Misc inline
       case 'getserverinvite':
-        return '((guild.invite))';
+        if (node.arguments.isNotEmpty) {
+          final guildId = _stringifyArgument(node, 0).trim();
+          if (guildId.isNotEmpty) {
+            return '((guild[$guildId].invite))';
+          }
+        }
+        return _inlineRuntimeVariables['getserverinvite'];
       case 'getinviteinfo':
         return '((invite.info))';
       case 'hostingexpiretime':
