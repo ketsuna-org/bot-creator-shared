@@ -283,11 +283,11 @@ class DiscordEntityFetcher {
     variables[_key('guild', contextId, 'premiumSubscriptionCount')] =
         guild.premiumSubscriptionCount?.toString() ?? '0';
     variables[_key('guild', contextId, 'premiumTier')] =
-        guild.premiumTier.name;
+        guild.premiumTier.toString();
     variables[_key('guild', contextId, 'emojiCount')] =
-        guild.emojis.length.toString();
+        guild.emojis.cache.length.toString();
     variables[_key('guild', contextId, 'stickerCount')] =
-        guild.stickers.length.toString();
+        guild.stickers.cache.length.toString();
     variables[_key('guild', contextId, 'exists')] = 'true';
     variables[_key('guild', contextId, 'description')] =
         guild.description ?? '';
@@ -299,12 +299,14 @@ class DiscordEntityFetcher {
         guild.features.join(',');
     variables[_key('guild', contextId, 'vanityUrlCode')] =
         guild.vanityUrlCode ?? '';
-    variables[_key('guild', contextId, 'banner')] = guild.banner ?? '';
-    variables[_key('guild', contextId, 'splash')] = guild.splash ?? '';
+    variables[_key('guild', contextId, 'banner')] =
+        guild.banner?.toString() ?? '';
+    variables[_key('guild', contextId, 'splash')] =
+        guild.splash?.toString() ?? '';
     variables[_key('guild', contextId, 'afkTimeout')] =
         guild.afkTimeout.inSeconds.toString();
     variables[_key('guild', contextId, 'preferredLocale')] =
-        guild.preferredLocale.name;
+        guild.preferredLocale.toString();
   }
 
   static void _populateRoleVariables(
