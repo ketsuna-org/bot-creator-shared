@@ -85,6 +85,8 @@ class _BdfdAstTranspilationScope {
   List<String> _textSplitParts = <String>[];
   String? _useChannelId;
   bool _suppressErrors = false;
+  String? _suppressErrorsMessage;
+  Map<String, dynamic>? _suppressErrorsEmbed;
   int _loopIterationIndex = 0;
   int _loopDepth = 0;
   Map<String, int> _loopVariables = <String, int>{};
@@ -451,6 +453,10 @@ class _BdfdAstTranspilationScope {
               'elseIfConditions': const <Map<String, dynamic>>[],
               'elseActions': const <Map<String, dynamic>>[],
               'suppressErrors': true,
+              if (_suppressErrorsMessage != null)
+                'suppressErrorsMessage': _suppressErrorsMessage,
+              if (_suppressErrorsEmbed != null)
+                'suppressErrorsEmbed': _suppressErrorsEmbed,
             },
           ),
         ];

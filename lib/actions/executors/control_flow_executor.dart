@@ -473,7 +473,22 @@ Future<bool> executeControlFlowAction({
         return true;
       }
 
-      final branchResults = await executeActions(branchActions);
+      final suppressErrors = _parseBooleanFlag(payload['suppressErrors']);
+
+      Map<String, String> branchResults;
+      if (suppressErrors) {
+        try {
+          branchResults = await executeActions(branchActions);
+        } catch (_) {
+          // Error suppressed — clear error.message so nested try/catch
+          // don't see a stale error from within this suppressErrors block.
+          variables.remove('error.message');
+          return true;
+        }
+      } else {
+        branchResults = await executeActions(branchActions);
+      }
+
       for (final entry in branchResults.entries) {
         results['$resultKey.${entry.key}'] = entry.value;
       }

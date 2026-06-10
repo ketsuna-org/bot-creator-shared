@@ -550,10 +550,9 @@ extension _BdfdAstTranspilationScopeInlineRuntime
             gvUserId,
           );
         }
-        return _scopedVariablePlaceholder(
-          'global',
-          gvVarName,
-        );
+        // Global variable lookup — uses store.getGlobalVariable via
+        // ((global.<key>)) placeholder, injected by injectGlobalRuntimeVariables.
+        return '((global.${gvVarName.trim()}))';
       case 'var':
         if (node.arguments.length >= 2) {
           return null;

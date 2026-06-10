@@ -1128,6 +1128,7 @@ Future<Map<String, String>> handleActions(
           break;
       }
     } catch (e) {
+      variables['error.message'] = 'An error occurred';
       results[resultKey] = 'Error: $e';
       recordTrace(resultOverride: 'Error: $e');
       switch (action.onErrorMode) {
@@ -1230,6 +1231,7 @@ Future<Map<String, String>> handleActions(
   }
 
   } catch (e) {
+    variables['error.message'] = 'An error occurred';
     if (currentAction != null && currentResultKey != null) {
       results[currentResultKey] = 'Error: $e';
       replayTrace?.add(

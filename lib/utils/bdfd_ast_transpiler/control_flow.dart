@@ -41,8 +41,32 @@ extension _BdfdAstTranspilationScopeControlFlow on _BdfdAstTranspilationScope {
           );
 
           if (catchActions.isEmpty) {
+            // Empty $catch — still wrap in try/catch with default error response.
+            final defaultCatchActions = <Action>[
+              Action(
+                type: BotCreatorActionType.respondWithMessage,
+                payload: <String, dynamic>{
+                  'content': 'An error occurred',
+                },
+              ),
+            ];
             return _ConsumedLoopBlock(
-              precomputedActions: tryActions,
+              precomputedActions: <Action>[
+                Action(
+                  type: BotCreatorActionType.ifBlock,
+                  payload: <String, dynamic>{
+                    'condition.variable': '((error.message))',
+                    'condition.operator': 'isEmpty',
+                    'condition.value': '',
+                    'thenActions':
+                        tryActions.map((action) => action.toJson()).toList(),
+                    'elseIfConditions': const <Map<String, dynamic>>[],
+                    'elseActions': defaultCatchActions
+                        .map((action) => action.toJson())
+                        .toList(),
+                  },
+                ),
+              ],
               nextIndex: cursor + 1,
               bodyNodes: const <BdfdAstNode>[],
               iterations: 0,

@@ -221,14 +221,27 @@ class CommandExecutor {
       }
     }
     
-    await _workflowExecutor.executeActions(
-      actions: actions,
-      context: interaction,
-      gateway: gateway,
-      botId: botId,
-      runtimeVariables: runtimeVariables,
-      replayLabel: '/${interaction.data.name}',
-    );
+    try {
+      await _workflowExecutor.executeActions(
+        actions: actions,
+        context: interaction,
+        gateway: gateway,
+        botId: botId,
+        runtimeVariables: runtimeVariables,
+        replayLabel: '/${interaction.data.name}',
+      );
+    } catch (e) {
+      // If no error handler ($try/$catch or $suppressErrors) already sent
+      // a response, send a generic "An error occurred" follow-up.
+      try {
+        final dynInteraction = interaction as dynamic;
+        await dynInteraction.sendFollowupMessage(
+          MessageBuilder(content: 'An error occurred'),
+        );
+      } catch (_) {
+        // Best-effort — if follow-up fails, we can't do anything more.
+      }
+    }
 
     // BDFD script might have its own response logic but usually it's handled via actions.
     // If we need a final response, we can add it here.

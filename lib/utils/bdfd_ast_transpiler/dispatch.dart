@@ -469,9 +469,28 @@ extension _BdfdAstTranspilationScopeDispatch on _BdfdAstTranspilationScope {
         return true;
       case 'suppresserrors':
         _suppressErrors = true;
+        // Capture custom error message if provided: $suppressErrors[message]
+        if (node.arguments.isNotEmpty) {
+          _suppressErrorsMessage = _stringifyArgument(node, 0);
+        }
         return true;
       case 'embedsuppresserrors':
         _suppressErrors = true;
+        // Capture embed params: $embedSuppressErrors[Title;Description;Color;Author;Footer;Footer icon]
+        _suppressErrorsEmbed = <String, dynamic>{
+          if (_stringifyArgument(node, 0).isNotEmpty)
+            'title': _stringifyArgument(node, 0),
+          if (_stringifyArgument(node, 1).isNotEmpty)
+            'description': _stringifyArgument(node, 1),
+          if (_stringifyArgument(node, 2).isNotEmpty)
+            'color': _stringifyArgument(node, 2),
+          if (_stringifyArgument(node, 3).isNotEmpty)
+            'author': _stringifyArgument(node, 3),
+          if (_stringifyArgument(node, 4).isNotEmpty)
+            'footer': _stringifyArgument(node, 4),
+          if (_stringifyArgument(node, 5).isNotEmpty)
+            'footerIcon': _stringifyArgument(node, 5),
+        };
         return true;
       default:
         return false;

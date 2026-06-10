@@ -1082,6 +1082,18 @@ extension _BdfdAstTranspilationScopeRuntimeBuilders
       );
     }
 
+    // $setVar without a user/context ID → setGlobalVariable
+    if (resolvedScope == 'global' && contextId.isEmpty) {
+      return Action(
+        type: BotCreatorActionType.setGlobalVariable,
+        payload: <String, dynamic>{
+          'key': key,
+          'valueType': 'string',
+          'value': value,
+        },
+      );
+    }
+
     return Action(
       type: BotCreatorActionType.setScopedVariable,
       payload: <String, dynamic>{
