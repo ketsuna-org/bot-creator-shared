@@ -879,6 +879,25 @@ extension _BdfdAstTranspilationScopeInlineRuntime
       case 'variablescount':
         final vcType = node.arguments.isNotEmpty ? _stringifyArgument(node, 0) : '';
         return _buildRuntimeBracketExpression('variablescount', <String>[vcType]);
+      case 'error':
+        // BDFD wiki: $error[Type] — returns specific error metadata.
+        if (node.arguments.isNotEmpty) {
+          final errorType = _stringifyArgument(node, 0).trim().toLowerCase();
+          switch (errorType) {
+            case 'message':
+              return '((error.message))';
+            case 'command':
+              return '((error.command))';
+            case 'source':
+              return '((error.source))';
+            case 'row':
+              return '((error.row))';
+            case 'column':
+              return '((error.column))';
+          }
+        }
+        // $error without args or with unknown type falls back to message.
+        return '((error.message))';
       default:
         return _inlineRuntimePlaceholder(node);
     }

@@ -735,6 +735,11 @@ const Map<String, String> _inlineRuntimeVariables = <String, String>{
   'getbanreason': '((target.banReason))',
   // ── Error handling ── (only available in try/catch context)
   'error': '((error.message))',
+  'errormessage': '((error.message))',
+  'errorcommand': '((error.command))',
+  'errorsource': '((error.source))',
+  'errorrow': '((error.row))',
+  'errorcolumn': '((error.column))',
   // ── Misc ──
   'argcount': '((args.count))',
   'isslash': '((interaction.isSlash))',
