@@ -57,6 +57,7 @@ class EventDispatcher {
             ),
             botId: botId,
             context: 'Interaction handling',
+            event: event,
           ),
         );
       }),
@@ -1071,12 +1072,37 @@ class EventDispatcher {
     FutureOr<void> Function() action, {
     required String botId,
     required String context,
+    InteractionCreateEvent? event,
   }) async {
     try {
       await action();
     } catch (error, stackTrace) {
       callbacks.onLog?.call('ERROR in $context: $error', botId: botId);
       callbacks.onDebugLog?.call('Stack trace: $stackTrace', botId: botId);
+
+      // If this error occurred during an interaction, respond ephemerally
+      // so the user sees the error instead of Discord's generic timeout message.
+      if (event != null) {
+        try {
+          final interaction = event.interaction;
+          final builder = MessageBuilder(
+            content:
+                'Une erreur est survenue lors du traitement de votre requête. Veuillez réessayer.',
+            flags: MessageFlags.ephemeral,
+          );
+          if (interaction is ApplicationCommandInteraction) {
+            await interaction.respond(builder);
+          } else if (interaction is MessageComponentInteraction) {
+            await interaction.respond(builder);
+          } else if (interaction is ModalSubmitInteraction) {
+            await interaction.respond(builder);
+          } else if (interaction is ApplicationCommandAutocompleteInteraction) {
+            await interaction.respond(const []);
+          }
+        } catch (_) {
+          // Interaction may have already been responded to — ignore.
+        }
+      }
     }
   }
 }
