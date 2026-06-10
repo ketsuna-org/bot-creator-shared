@@ -87,6 +87,7 @@ class _BdfdAstTranspilationScope {
   bool _suppressErrors = false;
   String? _suppressErrorsMessage;
   Map<String, dynamic>? _suppressErrorsEmbed;
+  bool _enableDecimals = false;
   int _loopIterationIndex = 0;
   int _loopDepth = 0;
   Map<String, int> _loopVariables = <String, int>{};

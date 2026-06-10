@@ -671,44 +671,9 @@ _ResolvedExpression? _resolveBracketCollectionVariableValue(
 
 double? _evaluateSimpleMathExpression(String expression) {
   final cleaned = expression.replaceAll(' ', '');
-  if (cleaned.isEmpty) {
-    return null;
-  }
-
-  final directNum = double.tryParse(cleaned);
-  if (directNum != null) {
-    return directNum;
-  }
-
-  final twoOperandPattern = RegExp(r'^(-?[\d.]+)\s*([+\-*/%^])\s*(-?[\d.]+)$');
-  final match = twoOperandPattern.firstMatch(cleaned);
-  if (match == null) {
-    return null;
-  }
-
-  final left = double.tryParse(match.group(1)!);
-  final operator = match.group(2)!;
-  final right = double.tryParse(match.group(3)!);
-  if (left == null || right == null) {
-    return null;
-  }
-
-  switch (operator) {
-    case '+':
-      return left + right;
-    case '-':
-      return left - right;
-    case '*':
-      return left * right;
-    case '/':
-      return right != 0 ? left / right : 0;
-    case '%':
-      return right != 0 ? left % right : 0;
-    case '^':
-      return pow(left, right).toDouble();
-    default:
-      return null;
-  }
+  if (cleaned.isEmpty) return null;
+  final parser = _MathParser(cleaned);
+  return parser.parse();
 }
 
 dynamic _applyBdfdBracketFunction(
@@ -729,7 +694,8 @@ dynamic _applyBdfdBracketFunction(
       if (result == null) {
         return null;
       }
-      return _normalizeNumericResult(result);
+      return _normalizeNumericResult(result,
+          enableDecimals: _isEnableDecimals(updates));
     case 'ceil':
       final ceilValue =
           resolvedArgs.isEmpty ? null : _coerceNum(resolvedArgs[0]);
@@ -748,7 +714,8 @@ dynamic _applyBdfdBracketFunction(
       if (sqrtValue == null) {
         return null;
       }
-      return _normalizeNumericResult(sqrt(sqrtValue.toDouble()));
+      return _normalizeNumericResult(sqrt(sqrtValue.toDouble()),
+          enableDecimals: _isEnableDecimals(updates));
     case 'max':
       if (resolvedArgs.length < 2) {
         return null;
@@ -758,7 +725,8 @@ dynamic _applyBdfdBracketFunction(
       if (left == null || right == null) {
         return null;
       }
-      return _normalizeNumericResult(max(left, right));
+      return _normalizeNumericResult(max(left, right),
+          enableDecimals: _isEnableDecimals(updates));
     case 'min':
       if (resolvedArgs.length < 2) {
         return null;
@@ -768,7 +736,8 @@ dynamic _applyBdfdBracketFunction(
       if (left == null || right == null) {
         return null;
       }
-      return _normalizeNumericResult(min(left, right));
+      return _normalizeNumericResult(min(left, right),
+          enableDecimals: _isEnableDecimals(updates));
     case 'modulo':
     case 'multi':
     case 'divide':
@@ -781,15 +750,20 @@ dynamic _applyBdfdBracketFunction(
       if (left == null || right == null) {
         return null;
       }
+      final enableDecimals = _isEnableDecimals(updates);
       switch (name) {
         case 'modulo':
-          return _normalizeNumericResult(right != 0 ? left % right : 0);
+          return _normalizeNumericResult(right != 0 ? left % right : 0,
+              enableDecimals: enableDecimals);
         case 'multi':
-          return _normalizeNumericResult(left * right);
+          return _normalizeNumericResult(left * right,
+              enableDecimals: enableDecimals);
         case 'divide':
-          return _normalizeNumericResult(right != 0 ? left / right : 0);
+          return _normalizeNumericResult(right != 0 ? left / right : 0,
+              enableDecimals: enableDecimals);
         case 'sub':
-          return _normalizeNumericResult(left - right);
+          return _normalizeNumericResult(left - right,
+              enableDecimals: enableDecimals);
       }
       return null;
     case 'totitlecase':
@@ -814,6 +788,7 @@ dynamic _applyBdfdBracketFunction(
       if (resolvedArgs.isEmpty) {
         return null;
       }
+      final enableDecimals = _isEnableDecimals(updates);
       if (resolvedArgs.length == 1) {
         final source = _coerceList(resolvedArgs[0]);
         if (source != null) {
@@ -824,7 +799,7 @@ dynamic _applyBdfdBracketFunction(
               total += numeric;
             }
           }
-          return _normalizeNumericResult(total);
+          return _normalizeNumericResult(total, enableDecimals: enableDecimals);
         }
       }
       num total = 0;
@@ -837,10 +812,18 @@ dynamic _applyBdfdBracketFunction(
         foundNumeric = true;
         total += numeric;
       }
-      return foundNumeric ? _normalizeNumericResult(total) : null;
+      return foundNumeric ? _normalizeNumericResult(total, enableDecimals: enableDecimals) : null;
     case 'random':
       if (resolvedArgs.length < 2) {
         return _random.nextBool() ? 'true' : '';
+      }
+      final enableDecimals = _isEnableDecimals(updates);
+      if (enableDecimals) {
+        final min = _coerceNum(resolvedArgs[0]) ?? 0;
+        final max = _coerceNum(resolvedArgs[1]) ?? 1;
+        if (max <= min) return null;
+        final value = min + _random.nextDouble() * (max - min);
+        return _normalizeNumericResult(value, enableDecimals: true);
       }
       final min = _coerceInt(resolvedArgs[0]);
       final max = _coerceInt(resolvedArgs[1]);
@@ -970,7 +953,8 @@ dynamic _applyBdfdBracketFunction(
   }
 }
 
-dynamic _normalizeNumericResult(num value) {
+dynamic _normalizeNumericResult(num value, {bool enableDecimals = false}) {
+  if (enableDecimals) return value;
   if (value is int) {
     return value;
   }
@@ -978,6 +962,10 @@ dynamic _normalizeNumericResult(num value) {
     return value.toInt();
   }
   return value;
+}
+
+bool _isEnableDecimals(Map<String, String> updates) {
+  return (updates['temp._enableDecimals'] ?? '').trim().toLowerCase() == 'yes';
 }
 
 int? _coerceInt(dynamic value) {
@@ -1784,4 +1772,108 @@ void injectAlwaysAvailableVariables(
   vars['date'] = '${now.year}-'
       '${now.month.toString().padLeft(2, '0')}-'
       '${now.day.toString().padLeft(2, '0')}';
+}
+
+/// Recursive-descent math expression parser.
+class _MathParser {
+  final String _input;
+  int _pos = 0;
+
+  _MathParser(this._input);
+
+  double? parse() {
+    final result = _expression();
+    if (_pos < _input.length) return null;
+    return result;
+  }
+
+  double? _expression() {
+    var left = _term();
+    if (left == null) return null;
+    while (_pos < _input.length) {
+      final op = _input[_pos];
+      if (op != '+' && op != '-') break;
+      _pos++;
+      final right = _term();
+      if (right == null) return null;
+      left = op == '+' ? left! + right : left! - right;
+    }
+    return left;
+  }
+
+  double? _term() {
+    var left = _factor();
+    if (left == null) return null;
+    while (_pos < _input.length) {
+      final op = _input[_pos];
+      if (op != '*' && op != '/' && op != '%') break;
+      _pos++;
+      final right = _factor();
+      if (right == null) return null;
+      if (op == '*') {
+        left = left! * right;
+      } else if (op == '/') {
+        left = right != 0 ? left! / right : 0;
+      } else {
+        left = right != 0 ? left! % right : 0;
+      }
+    }
+    return left;
+  }
+
+  double? _factor() {
+    var left = _unary();
+    if (left == null) return null;
+    while (_pos < _input.length) {
+      final ch = _input[_pos];
+      if (ch != '^' && ch != '*') break;
+      if (ch == '*') {
+        if (_pos + 1 >= _input.length || _input[_pos + 1] != '*') break;
+        _pos++;
+      }
+      _pos++;
+      final right = _unary();
+      if (right == null) return null;
+      left = pow(left!, right).toDouble();
+    }
+    return left;
+  }
+
+  double? _unary() {
+    if (_pos >= _input.length) return null;
+    if (_input[_pos] == '-') {
+      _pos++;
+      final value = _unary();
+      return value != null ? -value : null;
+    }
+    if (_input[_pos] == '+') {
+      _pos++;
+      return _unary();
+    }
+    return _primary();
+  }
+
+  double? _primary() {
+    if (_pos >= _input.length) return null;
+    if (_input[_pos] == '(') {
+      _pos++;
+      final result = _expression();
+      if (_pos < _input.length && _input[_pos] == ')') {
+        _pos++;
+        return result;
+      }
+      return null;
+    }
+    final start = _pos;
+    if (_pos < _input.length && _input[_pos] == '-') _pos++;
+    while (_pos < _input.length && (_isDigit(_input[_pos]) || _input[_pos] == '.')) {
+      _pos++;
+    }
+    if (_pos == start + 1 && _input[start] == '-') return null;
+    if (_pos == start) return null;
+    return double.tryParse(_input.substring(start, _pos));
+  }
+
+  static bool _isDigit(String c) =>
+      c.codeUnitAt(0) >= 48 && c.codeUnitAt(0) <= 57;
 }

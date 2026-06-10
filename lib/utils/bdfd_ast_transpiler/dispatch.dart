@@ -492,6 +492,19 @@ extension _BdfdAstTranspilationScopeDispatch on _BdfdAstTranspilationScope {
             'footerIcon': _stringifyArgument(node, 5),
         };
         return true;
+      case 'enabledecimals':
+        final raw = _stringifyArgument(node, 0).trim().toLowerCase();
+        _enableDecimals = raw == 'yes' || raw == 'true' || raw == '1';
+        // Emit a temp variable so the runtime bracket handler can check it.
+        _deferredInlineActions.add(Action(
+          type: BotCreatorActionType.setTemporaryVariable,
+          payload: <String, dynamic>{
+            'key': '_enableDecimals',
+            'valueType': 'string',
+            'value': _enableDecimals ? 'yes' : 'no',
+          },
+        ));
+        return true;
       default:
         return false;
     }

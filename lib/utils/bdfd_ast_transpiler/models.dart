@@ -757,7 +757,6 @@ const Map<String, String> _inlineRuntimeVariables = <String, String>{
   'alternativeparsing': '',
   'disableinnerspaceremoval': '',
   'disablespecialescaping': '',
-  'enabledecimals': '',
   'optoff': '',
   'ignorelinks': '',
   'botlistdescription': '',

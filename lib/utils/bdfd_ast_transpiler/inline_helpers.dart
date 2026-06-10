@@ -173,54 +173,20 @@ extension _BdfdAstTranspilationScopeInlineHelpers
     if (result == null) {
       return '((calculate[$expression]))';
     }
+    if (_enableDecimals) return result.toString();
     if (result == result.roundToDouble() && result.abs() < 1e15) {
       return result.toInt().toString();
     }
     return result.toString();
   }
 
+  /// Recursive-descent math expression parser.
+  /// Supports +, -, *, /, %, ^, **, parentheses, and unary minus.
   double? _evaluateSimpleMathExpression(String expression) {
     final cleaned = expression.replaceAll(' ', '');
-    if (cleaned.isEmpty) {
-      return null;
-    }
-
-    final directNum = double.tryParse(cleaned);
-    if (directNum != null) {
-      return directNum;
-    }
-
-    final twoOperandPattern = RegExp(
-      r'^(-?[\d.]+)\s*([+\-*/%^])\s*(-?[\d.]+)$',
-    );
-    final match = twoOperandPattern.firstMatch(cleaned);
-    if (match == null) {
-      return null;
-    }
-
-    final left = double.tryParse(match.group(1)!);
-    final operator = match.group(2)!;
-    final right = double.tryParse(match.group(3)!);
-    if (left == null || right == null) {
-      return null;
-    }
-
-    switch (operator) {
-      case '+':
-        return left + right;
-      case '-':
-        return left - right;
-      case '*':
-        return left * right;
-      case '/':
-        return right != 0 ? left / right : 0;
-      case '%':
-        return right != 0 ? left % right : 0;
-      case '^':
-        return math.pow(left, right).toDouble();
-      default:
-        return null;
-    }
+    if (cleaned.isEmpty) return null;
+    final parser = _MathParser(cleaned);
+    return parser.parse();
   }
 
   String _inlineMathUnary(
@@ -245,6 +211,7 @@ extension _BdfdAstTranspilationScopeInlineHelpers
       return '((${node.normalizedName}[$raw]))';
     }
     final result = operation(value);
+    if (_enableDecimals) return result.toString();
     if (result == result.roundToDouble() && result.abs() < 1e15) {
       return result.toInt().toString();
     }
@@ -263,6 +230,7 @@ extension _BdfdAstTranspilationScopeInlineHelpers
       return '((${node.normalizedName}[$aRaw;$bRaw]))';
     }
     final result = operation(a, b);
+    if (_enableDecimals) return result.toString();
     if (result is double &&
         result == result.roundToDouble() &&
         result.abs() < 1e15) {
@@ -283,6 +251,7 @@ extension _BdfdAstTranspilationScopeInlineHelpers
       return '((${node.normalizedName}[$aRaw;$bRaw]))';
     }
     final result = operation(a, b);
+    if (_enableDecimals) return result.toString();
     if (result is double &&
         result == result.roundToDouble() &&
         result.abs() < 1e15) {
@@ -305,6 +274,7 @@ extension _BdfdAstTranspilationScopeInlineHelpers
       }
       total += value;
     }
+    if (_enableDecimals) return total.toString();
     if (total is double &&
         total == total.roundToDouble() &&
         total.abs() < 1e15) {
@@ -458,4 +428,115 @@ extension _BdfdAstTranspilationScopeInlineHelpers
     }
     return '((getMessage[$channelId;$messageId].content))';
   }
+}
+
+/// Recursive-descent math expression parser.
+/// Supports +, -, *, /, %, ^, **, parentheses, and unary minus.
+class _MathParser {
+  final String _input;
+  int _pos = 0;
+
+  _MathParser(this._input);
+
+  double? parse() {
+    final result = _expression();
+    if (_pos < _input.length) return null; // trailing garbage
+    return result;
+  }
+
+  double? _expression() {
+    var left = _term();
+    if (left == null) return null;
+
+    while (_pos < _input.length) {
+      final op = _input[_pos];
+      if (op != '+' && op != '-') break;
+      _pos++;
+      final right = _term();
+      if (right == null) return null;
+      left = op == '+' ? left! + right : left! - right;
+    }
+    return left;
+  }
+
+  double? _term() {
+    var left = _factor();
+    if (left == null) return null;
+
+    while (_pos < _input.length) {
+      final op = _input[_pos];
+      if (op != '*' && op != '/' && op != '%') break;
+      _pos++;
+      final right = _factor();
+      if (right == null) return null;
+      if (op == '*') {
+        left = left! * right;
+      } else if (op == '/') {
+        left = right != 0 ? left! / right : 0;
+      } else {
+        left = right != 0 ? left! % right : 0;
+      }
+    }
+    return left;
+  }
+
+  double? _factor() {
+    var left = _unary();
+    if (left == null) return null;
+
+    while (_pos < _input.length) {
+      final ch = _input[_pos];
+      if (ch != '^' && ch != '*') break;
+      if (ch == '*') {
+        if (_pos + 1 >= _input.length || _input[_pos + 1] != '*') break;
+        _pos++; // skip second *
+      }
+      _pos++;
+      final right = _unary();
+      if (right == null) return null;
+      left = math.pow(left!, right).toDouble();
+    }
+    return left;
+  }
+
+  double? _unary() {
+    if (_pos >= _input.length) return null;
+    if (_input[_pos] == '-') {
+      _pos++;
+      final value = _unary();
+      return value != null ? -value : null;
+    }
+    if (_input[_pos] == '+') {
+      _pos++;
+      return _unary();
+    }
+    return _primary();
+  }
+
+  double? _primary() {
+    if (_pos >= _input.length) return null;
+
+    if (_input[_pos] == '(') {
+      _pos++;
+      final result = _expression();
+      if (_pos < _input.length && _input[_pos] == ')') {
+        _pos++;
+        return result;
+      }
+      return null;
+    }
+
+    // Number
+    final start = _pos;
+    if (_pos < _input.length && _input[_pos] == '-') _pos++;
+    while (_pos < _input.length && (_isDigit(_input[_pos]) || _input[_pos] == '.')) {
+      _pos++;
+    }
+    if (_pos == start + 1 && _input[start] == '-') return null; // lone '-'
+    if (_pos == start) return null;
+    return double.tryParse(_input.substring(start, _pos));
+  }
+
+  static bool _isDigit(String c) =>
+      c.codeUnitAt(0) >= 48 && c.codeUnitAt(0) <= 57;
 }
