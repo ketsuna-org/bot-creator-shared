@@ -483,6 +483,23 @@ Future<bool> executeControlFlowAction({
           // Error suppressed — clear error.message so nested try/catch
           // don't see a stale error from within this suppressErrors block.
           variables.remove('error.message');
+
+          // Send the custom error message/embed as the response.
+          final suppressMessage =
+              (payload['suppressErrorsMessage'] ?? '').toString();
+          final suppressEmbed =
+              payload['suppressErrorsEmbed'] as Map<String, dynamic>?;
+          if (suppressMessage.isNotEmpty || suppressEmbed != null) {
+            await executeActions([
+              Action(
+                type: BotCreatorActionType.respondWithMessage,
+                payload: <String, dynamic>{
+                  if (suppressMessage.isNotEmpty) 'text': suppressMessage,
+                  'embed': ?suppressEmbed,
+                },
+              ),
+            ]);
+          }
           return true;
         }
       } else {
