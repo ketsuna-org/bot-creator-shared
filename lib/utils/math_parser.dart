@@ -114,4 +114,26 @@ class MathExpressionParser {
 
   static bool _isDigit(String c) =>
       c.codeUnitAt(0) >= 48 && c.codeUnitAt(0) <= 57;
+
+  /// Convenience: evaluates [expression] and returns the result, or null if invalid.
+  static double? evaluate(String expression) {
+    final cleaned = expression.replaceAll(' ', '');
+    if (cleaned.isEmpty) return null;
+    return MathExpressionParser(cleaned).parse();
+  }
+
+  /// Formats a numeric result, optionally preserving decimals.
+  ///
+  /// When [enableDecimals] is false (default), whole-number doubles are
+  /// truncated to int (BDFD default behaviour). When true, the full precision
+  /// is preserved.
+  static dynamic format(num value, {bool enableDecimals = false}) {
+    if (enableDecimals) return value;
+    if (value is int) return value;
+    if (value is double && value == value.roundToDouble() && value.abs() < 1e15) {
+      return value.toInt();
+    }
+    if (value.isNaN || value.isInfinite) return value.toString();
+    return value;
+  }
 }

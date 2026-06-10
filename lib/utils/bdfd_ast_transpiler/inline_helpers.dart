@@ -182,12 +182,8 @@ extension _BdfdAstTranspilationScopeInlineHelpers
 
   /// Recursive-descent math expression parser.
   /// Supports +, -, *, /, %, ^, **, parentheses, and unary minus.
-  double? _evaluateSimpleMathExpression(String expression) {
-    final cleaned = expression.replaceAll(' ', '');
-    if (cleaned.isEmpty) return null;
-    final parser = MathExpressionParser(cleaned);
-    return parser.parse();
-  }
+  double? _evaluateSimpleMathExpression(String expression) =>
+      MathExpressionParser.evaluate(expression);
 
   String _inlineMathUnary(
     BdfdFunctionCallAst node,

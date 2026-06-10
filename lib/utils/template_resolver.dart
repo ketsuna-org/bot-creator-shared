@@ -671,12 +671,8 @@ _ResolvedExpression? _resolveBracketCollectionVariableValue(
   );
 }
 
-double? _evaluateSimpleMathExpression(String expression) {
-  final cleaned = expression.replaceAll(' ', '');
-  if (cleaned.isEmpty) return null;
-  final parser = MathExpressionParser(cleaned);
-  return parser.parse();
-}
+double? _evaluateSimpleMathExpression(String expression) =>
+    MathExpressionParser.evaluate(expression);
 
 dynamic _applyBdfdBracketFunction(
   String rawName,
@@ -696,7 +692,7 @@ dynamic _applyBdfdBracketFunction(
       if (result == null) {
         return null;
       }
-      return _normalizeNumericResult(result,
+      return MathExpressionParser.format(result,
           enableDecimals: _isEnableDecimals(updates));
     case 'ceil':
       final ceilValue =
@@ -716,7 +712,7 @@ dynamic _applyBdfdBracketFunction(
       if (sqrtValue == null) {
         return null;
       }
-      return _normalizeNumericResult(sqrt(sqrtValue.toDouble()),
+      return MathExpressionParser.format(sqrt(sqrtValue.toDouble()),
           enableDecimals: _isEnableDecimals(updates));
     case 'max':
       if (resolvedArgs.length < 2) {
@@ -727,7 +723,7 @@ dynamic _applyBdfdBracketFunction(
       if (left == null || right == null) {
         return null;
       }
-      return _normalizeNumericResult(max(left, right),
+      return MathExpressionParser.format(max(left, right),
           enableDecimals: _isEnableDecimals(updates));
     case 'min':
       if (resolvedArgs.length < 2) {
@@ -738,7 +734,7 @@ dynamic _applyBdfdBracketFunction(
       if (left == null || right == null) {
         return null;
       }
-      return _normalizeNumericResult(min(left, right),
+      return MathExpressionParser.format(min(left, right),
           enableDecimals: _isEnableDecimals(updates));
     case 'modulo':
     case 'multi':
@@ -755,16 +751,16 @@ dynamic _applyBdfdBracketFunction(
       final enableDecimals = _isEnableDecimals(updates);
       switch (name) {
         case 'modulo':
-          return _normalizeNumericResult(right != 0 ? left % right : 0,
+          return MathExpressionParser.format(right != 0 ? left % right : 0,
               enableDecimals: enableDecimals);
         case 'multi':
-          return _normalizeNumericResult(left * right,
+          return MathExpressionParser.format(left * right,
               enableDecimals: enableDecimals);
         case 'divide':
-          return _normalizeNumericResult(right != 0 ? left / right : 0,
+          return MathExpressionParser.format(right != 0 ? left / right : 0,
               enableDecimals: enableDecimals);
         case 'sub':
-          return _normalizeNumericResult(left - right,
+          return MathExpressionParser.format(left - right,
               enableDecimals: enableDecimals);
       }
       return null;
@@ -801,7 +797,7 @@ dynamic _applyBdfdBracketFunction(
               total += numeric;
             }
           }
-          return _normalizeNumericResult(total, enableDecimals: enableDecimals);
+          return MathExpressionParser.format(total, enableDecimals: enableDecimals);
         }
       }
       num total = 0;
@@ -814,7 +810,7 @@ dynamic _applyBdfdBracketFunction(
         foundNumeric = true;
         total += numeric;
       }
-      return foundNumeric ? _normalizeNumericResult(total, enableDecimals: enableDecimals) : null;
+      return foundNumeric ? MathExpressionParser.format(total, enableDecimals: enableDecimals) : null;
     case 'random':
       if (resolvedArgs.length < 2) {
         return _random.nextBool() ? 'true' : '';
@@ -825,7 +821,7 @@ dynamic _applyBdfdBracketFunction(
         final max = _coerceNum(resolvedArgs[1]) ?? 1;
         if (max <= min) return null;
         final value = min + _random.nextDouble() * (max - min);
-        return _normalizeNumericResult(value, enableDecimals: true);
+        return MathExpressionParser.format(value, enableDecimals: true);
       }
       final min = _coerceInt(resolvedArgs[0]);
       final max = _coerceInt(resolvedArgs[1]);
@@ -953,17 +949,6 @@ dynamic _applyBdfdBracketFunction(
     default:
       return null;
   }
-}
-
-dynamic _normalizeNumericResult(num value, {bool enableDecimals = false}) {
-  if (enableDecimals) return value;
-  if (value is int) {
-    return value;
-  }
-  if (value is double && value == value.roundToDouble() && value.abs() < 1e15) {
-    return value.toInt();
-  }
-  return value;
 }
 
 bool _isEnableDecimals(Map<String, String> updates) {

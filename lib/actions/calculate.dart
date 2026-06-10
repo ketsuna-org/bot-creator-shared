@@ -21,7 +21,7 @@ Future<Map<String, String>> calculateAction({
       if (result == null) {
         return {'error': 'Invalid math expression: "$expression"', 'result': ''};
       }
-      return {'result': _format(result)};
+      return {'result': MathExpressionParser.format(result)};
     }
 
     final operation =
@@ -53,7 +53,7 @@ Future<Map<String, String>> calculateAction({
         };
       }
       final value = min + math.Random().nextDouble() * (max - min);
-      return {'result': _format(value)};
+      return {'result': MathExpressionParser.format(value)};
     }
 
     final a = double.tryParse(rawA);
@@ -67,9 +67,9 @@ Future<Map<String, String>> calculateAction({
         if (a < 0) {
           return {'error': 'sqrt: operandA must be >= 0', 'result': ''};
         }
-        return {'result': _format(math.sqrt(a))};
+        return {'result': MathExpressionParser.format(math.sqrt(a))};
       case 'abs':
-        return {'result': _format(a.abs())};
+        return {'result': MathExpressionParser.format(a.abs())};
       case 'floor':
         return {'result': a.floor().toString()};
       case 'ceil':
@@ -77,7 +77,7 @@ Future<Map<String, String>> calculateAction({
       case 'round':
         return {'result': a.round().toString()};
       case 'negate':
-        return {'result': _format(-a)};
+        return {'result': MathExpressionParser.format(-a)};
     }
 
     // Binary operations — need operandB
@@ -93,43 +93,43 @@ Future<Map<String, String>> calculateAction({
     switch (operation) {
       case 'add':
       case '+':
-        return {'result': _format(a + b)};
+        return {'result': MathExpressionParser.format(a + b)};
       case 'subtract':
       case 'sub':
       case '-':
-        return {'result': _format(a - b)};
+        return {'result': MathExpressionParser.format(a - b)};
       case 'multiply':
       case 'mul':
       case '*':
-        return {'result': _format(a * b)};
+        return {'result': MathExpressionParser.format(a * b)};
       case 'divide':
       case 'div':
       case '/':
         if (b == 0) {
           return {'error': 'Division by zero', 'result': ''};
         }
-        return {'result': _format(a / b)};
+        return {'result': MathExpressionParser.format(a / b)};
       case 'modulo':
       case 'mod':
       case '%':
         if (b == 0) {
           return {'error': 'Modulo by zero', 'result': ''};
         }
-        return {'result': _format(a % b)};
+        return {'result': MathExpressionParser.format(a % b)};
       case 'power':
       case 'pow':
       case '^':
-        return {'result': _format(math.pow(a, b).toDouble())};
+        return {'result': MathExpressionParser.format(math.pow(a, b).toDouble())};
       case 'min':
-        return {'result': _format(math.min(a, b))};
+        return {'result': MathExpressionParser.format(math.min(a, b))};
       case 'max':
-        return {'result': _format(math.max(a, b))};
+        return {'result': MathExpressionParser.format(math.max(a, b))};
       case 'log':
         if (a <= 0) {
           return {'error': 'log: operandA must be > 0', 'result': ''};
         }
         final base = b > 0 ? b : math.e;
-        return {'result': _format(math.log(a) / math.log(base))};
+        return {'result': MathExpressionParser.format(math.log(a) / math.log(base))};
       default:
         return {
           'error':
@@ -140,16 +140,4 @@ Future<Map<String, String>> calculateAction({
   } catch (e) {
     return {'error': 'Calculate error: $e', 'result': ''};
   }
-}
-
-/// Formats a double: removes unnecessary trailing zeros.
-String _format(double value) {
-  if (value.isNaN || value.isInfinite) {
-    return value.toString();
-  }
-  if (value == value.truncateToDouble()) {
-    return value.truncate().toString();
-  }
-  // Limit to reasonable precision
-  return double.parse(value.toStringAsFixed(10)).toString();
 }

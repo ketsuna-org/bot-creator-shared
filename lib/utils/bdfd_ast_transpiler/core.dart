@@ -327,7 +327,7 @@ class _BdfdAstTranspilationScope {
           continue;
         }
 
-        if (_isStandaloneTryDelimiter(node.normalizedName)) {
+        if (_isStandaloneTryDelimiter(node)) {
           _diagnostics.add(
             BdfdTranspileDiagnostic(
               message:
@@ -500,9 +500,12 @@ class _BdfdAstTranspilationScope {
     return node.normalizedName == 'try' && node.arguments.isEmpty;
   }
 
-  bool _isStandaloneTryDelimiter(String normalizedName) {
-    return normalizedName == 'catch' ||
-        normalizedName == 'endtry' ||
-        normalizedName == 'error';
+  bool _isStandaloneTryDelimiter(BdfdFunctionCallAst node) {
+    final name = node.normalizedName;
+    if (name == 'error') {
+      // $error without arguments is a delimiter; $error[message] is an inline function.
+      return node.arguments.isEmpty;
+    }
+    return name == 'catch' || name == 'endtry';
   }
 }
