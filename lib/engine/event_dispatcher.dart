@@ -80,6 +80,7 @@ class EventDispatcher {
             ),
             botId: botId,
             context: 'Message processing',
+            messageEvent: event,
           ),
         );
       }),
@@ -1073,6 +1074,7 @@ class EventDispatcher {
     required String botId,
     required String context,
     InteractionCreateEvent? event,
+    MessageCreateEvent? messageEvent,
   }) async {
     try {
       await action();
@@ -1101,6 +1103,20 @@ class EventDispatcher {
           }
         } catch (_) {
           // Interaction may have already been responded to — ignore.
+        }
+      }
+
+      // If this error occurred during a text command (messageCreate),
+      // send the error back to the channel.
+      if (messageEvent != null) {
+        try {
+          final builder = MessageBuilder(
+            content:
+                'Une erreur est survenue lors du traitement de votre commande. Veuillez réessayer.',
+          );
+          await messageEvent.message.channel.sendMessage(builder);
+        } catch (_) {
+          // Best-effort — if sending fails, we can't do anything more.
         }
       }
     }
