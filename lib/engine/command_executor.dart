@@ -236,7 +236,10 @@ class CommandExecutor {
       try {
         final dynInteraction = interaction as dynamic;
         await dynInteraction.sendFollowupMessage(
-          MessageBuilder(content: 'An error occurred'),
+          MessageBuilder(
+            content: 'An error occurred',
+            flags: MessageFlags(MessageFlags.ephemeral.value),
+          ),
         );
       } catch (_) {
         // Best-effort — if follow-up fails, we can't do anything more.
