@@ -20,10 +20,10 @@ class CommandExecutor {
   CommandExecutor({
     required this.store,
     required this.callbacks,
-    required WorkflowExecutor workflowExecutor,
+    required this._workflowExecutor,
     this.debugReplayCapturing = true,
     this.sessionVariableInjector,
-  }) : _workflowExecutor = workflowExecutor;
+  });
 
   final BotDataStore store;
   final BotEngineCallbacks callbacks;

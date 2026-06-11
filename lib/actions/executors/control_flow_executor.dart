@@ -522,7 +522,7 @@ Future<bool> executeControlFlowAction({
                 type: BotCreatorActionType.respondWithMessage,
                 payload: <String, dynamic>{
                   if (suppressMessage.isNotEmpty) 'text': suppressMessage,
-                  if (suppressEmbed != null) 'embed': suppressEmbed,
+                  'embed': ?suppressEmbed,
                 },
               ),
             ]);

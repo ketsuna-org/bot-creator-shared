@@ -19,9 +19,9 @@ class EventDispatcher {
     required this.store,
     required this.callbacks,
     required this.commandExecutor,
-    required WorkflowExecutor workflowExecutor,
+    required this._workflowExecutor,
     this.sessionVariableInjector,
-  }) : _workflowExecutor = workflowExecutor;
+  });
 
   final BotDataStore store;
   final BotEngineCallbacks callbacks;
