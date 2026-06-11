@@ -527,3 +527,27 @@ Future<void> hydrateActionPlaceholders({
   }
   await Future.wait(futures);
 }
+
+/// Applies workflow-level event variable aliases to a runtime variables map.
+///
+/// If the workflow defines [eventVariableAliases] (originalName → alias),
+/// each aliased name is set to the value of its original. The original keys
+/// are kept intact for backward compatibility.
+void applyEventVariableAliases(
+  Map<String, String> runtimeVariables,
+  Map<String, dynamic>? workflowData,
+) {
+  final rawAliases = workflowData?['eventVariableAliases'];
+  if (rawAliases is! Map || rawAliases.isEmpty) return;
+
+  for (final entry in rawAliases.entries) {
+    final original = entry.key.toString();
+    final alias = entry.value?.toString() ?? '';
+    if (original.isEmpty || alias.isEmpty) continue;
+
+    final value = runtimeVariables[original];
+    if (value != null) {
+      runtimeVariables[alias] = value;
+    }
+  }
+}

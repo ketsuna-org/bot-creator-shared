@@ -479,13 +479,17 @@ class EventDispatcher {
       final shouldCompileFromBdfdSource =
           executionMode == 'bdfd_script' || scriptSource.trim().isNotEmpty;
 
+      // Apply event variable aliases for this specific workflow.
+      final wfVars = Map<String, String>.from(runtimeVariables);
+      applyEventVariableAliases(wfVars, normalized);
+
       if (shouldCompileFromBdfdSource) {
         await _executeBdfdScriptInEvent(
           scriptSource,
           context: context,
           gateway: gateway,
           botId: botId,
-          runtimeVariables: Map<String, String>.from(runtimeVariables),
+          runtimeVariables: wfVars,
         );
       } else {
         await _executeEventWorkflow(
@@ -493,7 +497,7 @@ class EventDispatcher {
           context: context,
           botId: botId,
           gateway: gateway,
-          runtimeVariables: Map<String, String>.from(runtimeVariables),
+          runtimeVariables: wfVars,
         );
       }
     }
