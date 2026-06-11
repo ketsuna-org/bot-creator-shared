@@ -310,6 +310,58 @@ class CommandExecutor {
         return;
       }
 
+      // Inline mode — execute actions embedded in the autocomplete config.
+      if ((autocompleteConfig['mode'] ?? '').toString() == 'inline') {
+        final inlineRaw = autocompleteConfig['inlineActions'];
+        if (inlineRaw is! List || inlineRaw.isEmpty) {
+          await interaction.respond(const []);
+          return;
+        }
+
+        final focusedOption = shared_global.findFocusedOption(interaction.data.options);
+        final runtimeVariables = <String, String>{
+          ...await shared_global.generateKeyValues(interaction),
+          'bot.id': botId,
+          'interaction.isSlash': 'true',
+          'interaction.command.name': interaction.data.name,
+          'interaction.command.id': interaction.data.id.toString(),
+          'autocomplete.query': focusedOption?.value?.toString() ?? '',
+          'autocomplete.optionName': focusedOption?.name ?? '',
+          'autocomplete.optionType': focusedOption == null ? 'string' : commandOptionTypeToText(focusedOption.type),
+        };
+
+        runtimeVariables.addAll(shared_global.extractBotRuntimeDetails(gateway));
+        _injectBaseVariables(runtimeVariables, botId: botId, startedAt: startedAt);
+        sessionVariableInjector?.call(runtimeVariables);
+        final contextIds = _resolveContextIds(interaction, runtimeVariables);
+
+        await hydrateRuntimeVariables(
+          store: store,
+          botId: botId,
+          runtimeVariables: runtimeVariables,
+          guildContextId: contextIds.guildId,
+          channelContextId: contextIds.channelId,
+          userContextId: contextIds.userId,
+          messageContextId: contextIds.messageId,
+        );
+
+        final actions = inlineRaw
+            .whereType<Map>()
+            .map((json) => Action.fromJson(Map<String, dynamic>.from(json)))
+            .toList();
+
+        if (actions.isNotEmpty) {
+          await _workflowExecutor.executeActions(
+            actions: actions,
+            context: interaction,
+            gateway: gateway,
+            botId: botId,
+            runtimeVariables: runtimeVariables,
+          );
+        }
+        return;
+      }
+
       // Workflow mode
       final workflowName = (autocompleteConfig['workflow'] ?? '').toString().trim();
       if (workflowName.isEmpty) {

@@ -13,6 +13,7 @@ void main() {
 
       expect(config, <String, dynamic>{
         'enabled': true,
+        'mode': 'workflow',
         'workflow': 'country_search',
         'entryPoint': 'main',
         'arguments': <String, dynamic>{'dataset': 'countries'},
@@ -37,6 +38,7 @@ void main() {
                     'name': 'country',
                     'autocomplete': <String, dynamic>{
                       'enabled': true,
+                      'mode': 'workflow',
                       'workflow': 'country_search',
                       'entryPoint': 'main',
                       'arguments': <String, dynamic>{'dataset': 'countries'},
@@ -76,6 +78,7 @@ void main() {
 
       expect(config, <String, dynamic>{
         'enabled': true,
+        'mode': 'workflow',
         'workflow': 'country_search',
         'entryPoint': 'main',
         'arguments': <String, dynamic>{'dataset': 'countries'},
