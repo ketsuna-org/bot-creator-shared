@@ -60,13 +60,13 @@ extension _BdfdAstTranspilationScopeRuntimeBuilders
       type: BotCreatorActionType.updateChannel,
       payload: <String, dynamic>{
         'channelId': threadId,
-        'name': ?name,
-        'archived': ?archived,
+        if (name != null) 'name': name,
+        if (archived != null) 'archived': archived,
         if (archiveDurationRaw != null)
           'autoArchiveDuration':
               _normalizeThreadArchiveDuration(archiveDurationRaw).toString(),
-        'locked': ?locked,
-        'slowmode': ?slowmode,
+        if (locked != null) 'locked': locked,
+        if (slowmode != null) 'slowmode': slowmode,
       },
     );
   }

@@ -334,7 +334,7 @@ Future<Map<String, dynamic>> respondWithMessageAction(
       messageId: messageId,
     );
     return {
-      'messageId': ?messageId,
+      if (messageId != null) 'messageId': messageId,
       'status': 'responded',
     };
   } catch (e) {

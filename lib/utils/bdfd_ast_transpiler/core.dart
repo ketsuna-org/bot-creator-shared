@@ -44,8 +44,8 @@ class BdfdAstTranspiler {
 
 class _BdfdAstTranspilationScope {
   _BdfdAstTranspilationScope({
-    required this._diagnostics,
-  });
+    required List<BdfdTranspileDiagnostic> diagnostics,
+  }) : _diagnostics = diagnostics;
 
   final List<BdfdTranspileDiagnostic> _diagnostics;
   final Map<String, String> _pendingHttpHeaders = <String, String>{};
