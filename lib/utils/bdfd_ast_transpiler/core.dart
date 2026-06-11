@@ -462,9 +462,9 @@ class _BdfdAstTranspilationScope {
         final suppressBlock = Action(
           type: BotCreatorActionType.ifBlock,
           payload: <String, dynamic>{
-            'condition.variable': '1',
+            'condition.variable': '__suppressErrors_guard__',
             'condition.operator': 'equals',
-            'condition.value': '1',
+            'condition.value': '__suppressErrors_guard__',
             'thenActions': postActions.map((action) => action.toJson()).toList(),
             'elseIfConditions': const <Map<String, dynamic>>[],
             'elseActions': const <Map<String, dynamic>>[],
