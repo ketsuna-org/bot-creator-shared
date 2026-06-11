@@ -53,12 +53,15 @@ Future<void> handleComponentInteraction(
   if (entry == null) {
     // No registered listener — let the interactionCreate event workflow handle it.
     // Do not acknowledge here; the event workflow will respond.
+    print(
+      '[handleComponentInteraction] No listener found for customId="$customId" '
+      'botId=$botId type=$interactionType '
+      'guildId=${guildId?.toString()} '
+      'channelId=${fallbackChannelId?.toString()} '
+      'messageId=${interaction.message?.id.toString()} '
+      'userId=$userId',
+    );
     return;
-  }
-
-  // Remove listener if one-shot
-  if (entry.oneShot) {
-    InteractionListenerRegistry.instance.removeEntry(customId, entry);
   }
 
   // Build variables for the workflow
@@ -94,6 +97,11 @@ Future<void> handleComponentInteraction(
       interaction: interaction,
     );
   }
+
+  // Remove listener if one-shot — after execution
+  if (entry.oneShot) {
+    InteractionListenerRegistry.instance.removeEntry(customId, entry);
+  }
 }
 
 /// Called when a ModalSubmitInteraction arrives.
@@ -126,10 +134,6 @@ Future<void> handleModalSubmitInteraction(
     return;
   }
 
-  if (entry.oneShot) {
-    InteractionListenerRegistry.instance.removeEntry(customId, entry);
-  }
-
   // Build variables: one per modal input field
   final variables = <String, String>{
     ...await generateInteractionContextKeyValues(interaction),
@@ -157,6 +161,11 @@ Future<void> handleModalSubmitInteraction(
       variables: variables,
       interaction: interaction,
     );
+  }
+
+  // Remove listener if one-shot — after execution
+  if (entry.oneShot) {
+    InteractionListenerRegistry.instance.removeEntry(customId, entry);
   }
 }
 

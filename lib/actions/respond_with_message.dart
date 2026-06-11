@@ -242,12 +242,9 @@ Future<Map<String, dynamic>> respondWithMessageAction(
 
     final dynInteraction = interaction as dynamic;
 
-    bool isAcknowledged = false;
-    try {
-      isAcknowledged = dynInteraction.isAcknowledged == true;
-    } catch (_) {
-      isAcknowledged = false;
-    }
+    // Use the canonical Expando-based tracking instead of nyxx's private field
+    // (dynInteraction.isAcknowledged throws on nyxx 6.8.1 because the field is private).
+    final isAcknowledged = isInteractionAcknowledged(interaction);
 
     final allowedMentions = parseAllowedMentions(payload, resolve);
 

@@ -13,6 +13,7 @@ import 'package:bot_creator_shared/utils/template_resolver.dart';
 import 'package:bot_creator_shared/utils/workflow_call.dart';
 import 'package:bot_creator_shared/engine/bot_engine_callbacks.dart';
 import 'package:bot_creator_shared/engine/workflow_executor.dart';
+import 'package:bot_creator_shared/utils/interaction_ack_state.dart';
 
 /// Unified executor for Discord commands (Slash, Autocomplete, Component).
 class CommandExecutor {
@@ -216,8 +217,10 @@ class CommandExecutor {
     if (!hasModalAction) {
       try {
         await interaction.acknowledge();
+        markInteractionAcknowledged(interaction);
       } catch (_) {
-        // Already deferred — fine.
+        // Already deferred — mark as acknowledged for our tracking.
+        markInteractionAcknowledged(interaction);
       }
     }
     

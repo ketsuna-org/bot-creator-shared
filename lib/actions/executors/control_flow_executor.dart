@@ -318,6 +318,33 @@ Future<bool> executeControlFlowAction({
 
       final compileResult = BdfdCompiler().compile(bdfdSource);
       if (compileResult.hasErrors) {
+        // If $suppressErrors is present in the source, suppress compile errors
+        // and optionally send the custom error message/embed.
+        final hasSuppressErrors = RegExp(
+          r'\$suppresserrors\b',
+          caseSensitive: false,
+        ).hasMatch(bdfdSource);
+        if (hasSuppressErrors) {
+          // Extract custom error message: $suppressErrors[message]
+          final suppressMsgMatch = RegExp(
+            r'\$suppresserrors\[([^\]]*)\]',
+            caseSensitive: false,
+          ).firstMatch(bdfdSource);
+          final suppressMessage =
+              resolveValue(suppressMsgMatch?.group(1) ?? '');
+
+          if (suppressMessage.isNotEmpty) {
+            await executeActions([
+              Action(
+                type: BotCreatorActionType.respondWithMessage,
+                payload: <String, dynamic>{'content': suppressMessage},
+              ),
+            ]);
+          }
+          results[resultKey] = 'BDFD_SUPPRESSED';
+          return true;
+        }
+
         final summary = compileResult.diagnostics
             .where((d) => d.severity == BdfdCompileDiagnosticSeverity.error)
             .take(5)

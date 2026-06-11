@@ -120,9 +120,9 @@ class ButtonNode extends ComponentNode {
   String url;
   String emoji;
   bool disabled;
-  String workflowName;
-  String workflowEntryPoint;
-  Map<String, dynamic> workflowArguments;
+  /// Inline actions that execute when this button is clicked.
+  /// Replaces the legacy workflowName/workflowEntryPoint/workflowArguments.
+  List<Map<String, dynamic>> actions;
 
   ButtonNode({
     this.label = 'Button',
@@ -131,12 +131,43 @@ class ButtonNode extends ComponentNode {
     this.url = '',
     this.emoji = '',
     this.disabled = false,
-    this.workflowName = '',
-    this.workflowEntryPoint = '',
-    this.workflowArguments = const {},
+    this.actions = const [],
   }) : customId = customId ?? ComponentNode.generateId('btn');
 
   factory ButtonNode.fromJson(Map<String, dynamic> json) {
+    // Prefer inline actions; fall back to legacy workflow for backward compat.
+    List<Map<String, dynamic>> actions;
+    final legacyWorkflowName =
+        (json['workflowName'] ?? json['onClickWorkflow'] ?? '').toString();
+    if (json['actions'] is List) {
+      actions = (json['actions'] as List)
+          .whereType<Map>()
+          .map((a) => Map<String, dynamic>.from(a))
+          .toList();
+    } else if (legacyWorkflowName.isNotEmpty) {
+      actions = [
+        {
+          'type': 'callWorkflow',
+          'payload': {
+            'workflowName': legacyWorkflowName,
+            'entryPoint':
+                (json['workflowEntryPoint'] ??
+                        json['onClickEntryPoint'] ??
+                        '')
+                    .toString(),
+            'arguments':
+                Map<String, dynamic>.from(
+                  (json['workflowArguments'] as Map?)
+                          ?.cast<String, dynamic>() ??
+                      const {},
+                ),
+          },
+        },
+      ];
+    } else {
+      actions = const [];
+    }
+
     return ButtonNode(
       label: (json['label'] ?? '').toString(),
       style: BcButtonStyle.values.firstWhere(
@@ -147,15 +178,7 @@ class ButtonNode extends ComponentNode {
       url: (json['url'] ?? '').toString(),
       emoji: (json['emoji'] ?? '').toString(),
       disabled: json['disabled'] == true,
-      workflowName:
-          (json['workflowName'] ?? json['onClickWorkflow'] ?? '').toString(),
-      workflowEntryPoint:
-          (json['workflowEntryPoint'] ?? json['onClickEntryPoint'] ?? '')
-              .toString(),
-      workflowArguments: Map<String, dynamic>.from(
-        (json['workflowArguments'] as Map?)?.cast<String, dynamic>() ??
-            const {},
-      ),
+      actions: actions,
     );
   }
 
@@ -168,10 +191,7 @@ class ButtonNode extends ComponentNode {
     'url': url,
     'emoji': emoji,
     'disabled': disabled,
-    'workflowName': workflowName,
-    if (workflowEntryPoint.trim().isNotEmpty)
-      'workflowEntryPoint': workflowEntryPoint,
-    if (workflowArguments.isNotEmpty) 'workflowArguments': workflowArguments,
+    if (actions.isNotEmpty) 'actions': actions,
   };
 }
 
@@ -220,9 +240,9 @@ class SelectMenuNode extends ComponentNode {
   int minValues;
   int maxValues;
   bool disabled;
-  String workflowName;
-  String workflowEntryPoint;
-  Map<String, dynamic> workflowArguments;
+  /// Inline actions that execute when an option is selected.
+  /// Replaces the legacy workflowName/workflowEntryPoint/workflowArguments.
+  List<Map<String, dynamic>> actions;
 
   SelectMenuNode({
     this.type = ComponentV2Type.stringSelect,
@@ -232,9 +252,7 @@ class SelectMenuNode extends ComponentNode {
     this.minValues = 1,
     this.maxValues = 1,
     this.disabled = false,
-    this.workflowName = '',
-    this.workflowEntryPoint = '',
-    this.workflowArguments = const {},
+    this.actions = const [],
   }) : customId = customId ?? ComponentNode.generateId('select');
 
   factory SelectMenuNode.fromJson(Map<String, dynamic> json) {
@@ -243,6 +261,40 @@ class SelectMenuNode extends ComponentNode {
       (t) => t.name == typeStr,
       orElse: () => ComponentV2Type.stringSelect,
     );
+
+    // Prefer inline actions; fall back to legacy workflow for backward compat.
+    List<Map<String, dynamic>> actions;
+    final legacyWorkflowName =
+        (json['workflowName'] ?? json['onSelectWorkflow'] ?? '').toString();
+    if (json['actions'] is List) {
+      actions = (json['actions'] as List)
+          .whereType<Map>()
+          .map((a) => Map<String, dynamic>.from(a))
+          .toList();
+    } else if (legacyWorkflowName.isNotEmpty) {
+      actions = [
+        {
+          'type': 'callWorkflow',
+          'payload': {
+            'workflowName': legacyWorkflowName,
+            'entryPoint':
+                (json['workflowEntryPoint'] ??
+                        json['onSelectEntryPoint'] ??
+                        '')
+                    .toString(),
+            'arguments':
+                Map<String, dynamic>.from(
+                  (json['workflowArguments'] as Map?)
+                          ?.cast<String, dynamic>() ??
+                      const {},
+                ),
+          },
+        },
+      ];
+    } else {
+      actions = const [];
+    }
+
     return SelectMenuNode(
       type: resolvedType,
       customId: (json['customId'] ?? '').toString(),
@@ -257,15 +309,7 @@ class SelectMenuNode extends ComponentNode {
       minValues: json['minValues'] as int? ?? 1,
       maxValues: json['maxValues'] as int? ?? 1,
       disabled: json['disabled'] == true,
-      workflowName:
-          (json['workflowName'] ?? json['onSelectWorkflow'] ?? '').toString(),
-      workflowEntryPoint:
-          (json['workflowEntryPoint'] ?? json['onSelectEntryPoint'] ?? '')
-              .toString(),
-      workflowArguments: Map<String, dynamic>.from(
-        (json['workflowArguments'] as Map?)?.cast<String, dynamic>() ??
-            const {},
-      ),
+      actions: actions,
     );
   }
 
@@ -278,10 +322,7 @@ class SelectMenuNode extends ComponentNode {
     'minValues': minValues,
     'maxValues': maxValues,
     'disabled': disabled,
-    'workflowName': workflowName,
-    if (workflowEntryPoint.trim().isNotEmpty)
-      'workflowEntryPoint': workflowEntryPoint,
-    if (workflowArguments.isNotEmpty) 'workflowArguments': workflowArguments,
+    if (actions.isNotEmpty) 'actions': actions,
   };
 }
 
@@ -1000,29 +1041,51 @@ class ModalDefinition {
   String title;
   String customId;
   List<ModalTextInputDefinition> inputs;
-  String? onSubmitWorkflow;
-  String onSubmitEntryPoint;
-  Map<String, dynamic> onSubmitArguments;
+  /// Inline actions that execute when the modal is submitted.
+  /// Replaces the legacy onSubmitWorkflow/onSubmitEntryPoint/onSubmitArguments.
+  List<Map<String, dynamic>> actions;
 
   ModalDefinition({
     this.title = '',
     String? customId,
     this.inputs = const [],
-    this.onSubmitWorkflow,
-    this.onSubmitEntryPoint = '',
-    this.onSubmitArguments = const {},
+    this.actions = const [],
   }) : customId = customId ?? ComponentNode.generateId('modal');
 
   factory ModalDefinition.fromJson(Map<String, dynamic> json) {
+    // Prefer inline actions; fall back to legacy workflow for backward compat.
+    List<Map<String, dynamic>> actions;
+    final legacyWorkflow = json['onSubmitWorkflow']?.toString() ?? '';
+    if (json['actions'] is List) {
+      actions = (json['actions'] as List)
+          .whereType<Map>()
+          .map((a) => Map<String, dynamic>.from(a))
+          .toList();
+    } else if (legacyWorkflow.isNotEmpty) {
+      actions = [
+        {
+          'type': 'callWorkflow',
+          'payload': {
+            'workflowName': legacyWorkflow,
+            'entryPoint':
+                (json['onSubmitEntryPoint'] ?? '').toString(),
+            'arguments':
+                Map<String, dynamic>.from(
+                  (json['onSubmitArguments'] as Map?)
+                          ?.cast<String, dynamic>() ??
+                      const {},
+                ),
+          },
+        },
+      ];
+    } else {
+      actions = const [];
+    }
+
     return ModalDefinition(
       title: (json['title'] ?? '').toString(),
       customId: (json['customId'] ?? '').toString(),
-      onSubmitWorkflow: json['onSubmitWorkflow']?.toString(),
-      onSubmitEntryPoint: (json['onSubmitEntryPoint'] ?? '').toString(),
-      onSubmitArguments: Map<String, dynamic>.from(
-        (json['onSubmitArguments'] as Map?)?.cast<String, dynamic>() ??
-            const {},
-      ),
+      actions: actions,
       inputs:
           (json['inputs'] as List? ?? [])
               .whereType<Map>()
@@ -1039,9 +1102,6 @@ class ModalDefinition {
     'title': title,
     'customId': customId,
     'inputs': inputs.map((i) => i.toJson()).toList(),
-    if (onSubmitWorkflow != null) 'onSubmitWorkflow': onSubmitWorkflow,
-    if (onSubmitEntryPoint.trim().isNotEmpty)
-      'onSubmitEntryPoint': onSubmitEntryPoint,
-    if (onSubmitArguments.isNotEmpty) 'onSubmitArguments': onSubmitArguments,
+    if (actions.isNotEmpty) 'actions': actions,
   };
 }

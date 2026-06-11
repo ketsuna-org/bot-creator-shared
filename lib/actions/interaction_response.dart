@@ -1,11 +1,11 @@
 import 'package:nyxx/nyxx.dart';
+import '../types/action.dart';
 import '../types/component.dart';
 import 'package:bot_creator_shared/utils/template_resolver.dart'; // for updateString
 import 'package:bot_creator_shared/utils/embed_fields.dart';
 import '../utils/component_workflow_bindings.dart';
 import '../utils/interaction_listener_registry.dart';
 import '../utils/interaction_ack_state.dart';
-import '../utils/workflow_call.dart';
 import 'send_component_v2.dart';
 
 /// Shared logic to determine and send the final response of a workflow execution.
@@ -268,41 +268,23 @@ Future<void> sendWorkflowResponse({
           return;
         }
 
-        // Auto-register listener if onSubmitWorkflow is provided
-        if (definition.onSubmitWorkflow != null &&
-            definition.onSubmitWorkflow!.isNotEmpty) {
-          final onSubmitWorkflow =
-              resolveTemplatePlaceholders(
-                definition.onSubmitWorkflow!,
-                runtimeVariables,
-              ).trim();
-          if (onSubmitWorkflow.isNotEmpty) {
-            final onSubmitArguments = resolveWorkflowCallArguments(
-              definition.onSubmitArguments,
-              (value) => resolveTemplatePlaceholders(value, runtimeVariables),
-            );
-            InteractionListenerRegistry.instance.register(
-              resolveTemplatePlaceholders(
-                definition.customId,
-                runtimeVariables,
-              ),
-              ListenerEntry(
-                botId: botId,
-                workflowName: onSubmitWorkflow,
-                workflowEntryPoint:
-                    resolveTemplatePlaceholders(
-                      definition.onSubmitEntryPoint,
-                      runtimeVariables,
-                    ).trim(),
-                workflowArguments: onSubmitArguments,
-                expiresAt: DateTime.now().add(const Duration(hours: 1)),
-                type: 'modal',
-                oneShot: true,
-                guildId: interaction.guildId?.toString(),
-                channelId: interaction.channelId?.toString(),
-              ),
-            );
-          }
+        // Auto-register listener if inline actions are provided
+        if (definition.actions.isNotEmpty) {
+          InteractionListenerRegistry.instance.register(
+            resolveTemplatePlaceholders(
+              definition.customId,
+              runtimeVariables,
+            ),
+            ListenerEntry(
+              botId: botId,
+              inlineActions: definition.actions.map((a) => Action.fromJson(a)).toList(),
+              expiresAt: DateTime.now().add(const Duration(hours: 1)),
+              type: 'modal',
+              oneShot: true,
+              guildId: interaction.guildId?.toString(),
+              channelId: interaction.channelId?.toString(),
+            ),
+          );
         }
 
         onLog?.call('Modal sent', botId: botId);

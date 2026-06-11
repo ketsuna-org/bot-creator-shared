@@ -1196,6 +1196,8 @@ Future<Map<String, String>> generateInteractionContextKeyValues(
     }
   } catch (_) {}
 
+  final displayName = (member?.nick?.isNotEmpty == true) ? member!.nick! : username;
+
   final guildName = guild?.name ?? 'DM';
   final guildIcon = makeGuildIcon(
     guildId?.toString() ?? 'DM',
@@ -1226,6 +1228,8 @@ Future<Map<String, String>> generateInteractionContextKeyValues(
     'author.tag': tag,
     'author.avatar': userAvatarUrl,
     'author.banner': userBannerUrl,
+    'author.displayName': displayName,
+    'user.displayName': displayName,
     'interaction.user.id': userIdText,
     'interaction.user.username': username,
     'interaction.user.tag': tag,

@@ -7,6 +7,7 @@ import 'package:bot_creator_shared/types/action.dart';
 import 'package:bot_creator_shared/utils/template_resolver.dart';
 import 'package:bot_creator_shared/utils/bdfd_compiler.dart';
 import 'package:bot_creator_shared/engine/bot_engine_callbacks.dart';
+import 'package:bot_creator_shared/utils/interaction_ack_state.dart';
 
 /// Helper to execute visual workflows or BDFD actions for both interactions and events.
 class WorkflowExecutor {
@@ -193,6 +194,7 @@ class WorkflowExecutor {
         } else {
           await (interaction as dynamic).acknowledge(isEphemeral: isEphemeral);
         }
+        markInteractionAcknowledged(interaction);
         // Fix 3: only set didDefer on success
         didDefer = true;
         callbacks.onDebugLog?.call(

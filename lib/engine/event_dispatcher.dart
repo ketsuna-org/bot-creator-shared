@@ -1089,7 +1089,7 @@ class EventDispatcher {
           final interaction = event.interaction;
           final builder = MessageBuilder(
             content:
-                'Une erreur est survenue lors du traitement de votre requête. Veuillez réessayer.',
+                'An error occurred while processing your request. Please try again.',
             flags: MessageFlags.ephemeral,
           );
           if (interaction is ApplicationCommandInteraction) {
@@ -1112,7 +1112,7 @@ class EventDispatcher {
         try {
           final builder = MessageBuilder(
             content:
-                'Une erreur est survenue lors du traitement de votre commande. Veuillez réessayer.',
+                'An error occurred while processing your command. Please try again.',
           );
           await messageEvent.message.channel.sendMessage(builder);
         } catch (_) {

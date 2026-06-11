@@ -10,6 +10,7 @@ class ListenerEntry {
   final String workflowEntryPoint;
   final Map<String, String> workflowArguments;
   final List<Action>? inlineActions;
+  final String? customId; // Used when registering with a specific customId
   final DateTime expiresAt;
   final bool oneShot;
   final String type; // 'button' | 'select' | 'modal'
@@ -24,6 +25,7 @@ class ListenerEntry {
     this.workflowEntryPoint = 'main',
     this.workflowArguments = const <String, String>{},
     this.inlineActions,
+    this.customId,
     required this.expiresAt,
     required this.type,
     this.oneShot = true,

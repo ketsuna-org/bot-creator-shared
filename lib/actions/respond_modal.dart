@@ -1,5 +1,6 @@
 ﻿import 'package:nyxx/nyxx.dart';
 import 'package:bot_creator_shared/types/component.dart' as bc;
+import 'package:bot_creator_shared/utils/interaction_ack_state.dart';
 
 /// Respond to an interaction with a Modal dialog.
 /// NOTE: Modals can only be sent as the FIRST response (not after defer).
@@ -65,17 +66,17 @@ Future<Map<String, dynamic>> respondWithModalAction(
 
     if (interaction is ApplicationCommandInteraction) {
       await interaction.respondModal(modalBuilder);
+      markInteractionAcknowledged(interaction);
     } else if (interaction is MessageComponentInteraction) {
       await interaction.respondModal(modalBuilder);
+      markInteractionAcknowledged(interaction);
     } else {
       return {'error': 'This interaction type does not support modals'};
     }
     return {
       'status': 'modal_sent',
       'customId': resolvedCustomId,
-      'onSubmitWorkflow': definition.onSubmitWorkflow,
-      'onSubmitEntryPoint': definition.onSubmitEntryPoint,
-      'onSubmitArguments': definition.onSubmitArguments,
+      'actions': definition.actions,
     };
   } catch (e) {
     return {'error': e.toString()};

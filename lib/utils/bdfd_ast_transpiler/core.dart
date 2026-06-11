@@ -87,6 +87,9 @@ class _BdfdAstTranspilationScope {
   bool _suppressErrors = false;
   String? _suppressErrorsMessage;
   Map<String, dynamic>? _suppressErrorsEmbed;
+  /// Number of actions already emitted when [_suppressErrors] was first set.
+  /// Used to avoid wrapping actions that precede $suppressErrors.
+  int? _suppressErrorsActionCount;
   bool _enableDecimals = false;
   int _loopIterationIndex = 0;
   int _loopDepth = 0;
@@ -342,7 +345,13 @@ class _BdfdAstTranspilationScope {
         }
 
         if (_applyResponseMutation(node, pendingResponse)) {
+          final wasSuppressErrors = _suppressErrors;
           actions.addAll(_drainDeferredInlineActions());
+          // Record the split point when suppressErrors is first activated.
+          // Actions emitted before this point should NOT be wrapped.
+          if (_suppressErrors && !wasSuppressErrors) {
+            _suppressErrorsActionCount ??= actions.length;
+          }
           index += 1;
           continue;
         }
@@ -443,24 +452,30 @@ class _BdfdAstTranspilationScope {
       }
 
       if (_suppressErrors && actions.isNotEmpty) {
-        return <Action>[
-          Action(
-            type: BotCreatorActionType.ifBlock,
-            payload: <String, dynamic>{
-              'condition.variable': '1',
-              'condition.operator': 'equals',
-              'condition.value': '1',
-              'thenActions': actions.map((action) => action.toJson()).toList(),
-              'elseIfConditions': const <Map<String, dynamic>>[],
-              'elseActions': const <Map<String, dynamic>>[],
-              'suppressErrors': true,
-              if (_suppressErrorsMessage != null)
-                'suppressErrorsMessage': _suppressErrorsMessage,
-              if (_suppressErrorsEmbed != null)
-                'suppressErrorsEmbed': _suppressErrorsEmbed,
-            },
-          ),
-        ];
+        final splitIndex = _suppressErrorsActionCount ?? 0;
+        // If suppressErrors was set after all actions were emitted, don't wrap anything.
+        if (splitIndex >= actions.length) {
+          return actions;
+        }
+        final preActions = actions.sublist(0, splitIndex);
+        final postActions = actions.sublist(splitIndex);
+        final suppressBlock = Action(
+          type: BotCreatorActionType.ifBlock,
+          payload: <String, dynamic>{
+            'condition.variable': '1',
+            'condition.operator': 'equals',
+            'condition.value': '1',
+            'thenActions': postActions.map((action) => action.toJson()).toList(),
+            'elseIfConditions': const <Map<String, dynamic>>[],
+            'elseActions': const <Map<String, dynamic>>[],
+            'suppressErrors': true,
+            if (_suppressErrorsMessage != null)
+              'suppressErrorsMessage': _suppressErrorsMessage,
+            if (_suppressErrorsEmbed != null)
+              'suppressErrorsEmbed': _suppressErrorsEmbed,
+          },
+        );
+        return <Action>[...preActions, suppressBlock];
       }
 
       return actions;

@@ -150,15 +150,31 @@ Future<bool> executeComponentsInteractionsAction({
       final customId = modalResult['customId'] ?? 'modal_sent';
       results[resultKey] = customId;
 
+      // Support inline actions (new format) alongside legacy onSubmitWorkflow.
+      final rawActions = modalResult['actions'];
+      final hasInlineActions =
+          rawActions is List && rawActions.isNotEmpty;
+
       final onSubmitWorkflow =
           resolveValue(
             (modalResult['onSubmitWorkflow'] ?? '').toString(),
           ).trim();
-      if (onSubmitWorkflow.isNotEmpty) {
+
+      if (hasInlineActions || onSubmitWorkflow.isNotEmpty) {
+        List<Action>? inlineActions;
+        if (hasInlineActions) {
+          inlineActions = rawActions
+              .whereType<Map>()
+              .map((a) => Action.fromJson(Map<String, dynamic>.from(a)))
+              .toList();
+        }
+
         final onSubmitEntryPoint =
-            resolveValue(
-              (modalResult['onSubmitEntryPoint'] ?? '').toString(),
-            ).trim();
+            onSubmitWorkflow.isNotEmpty
+                ? resolveValue(
+                    (modalResult['onSubmitEntryPoint'] ?? '').toString(),
+                  ).trim()
+                : '';
         final onSubmitArguments = resolveWorkflowCallArguments(
           modalResult['onSubmitArguments'],
           resolveValue,
@@ -170,6 +186,7 @@ Future<bool> executeComponentsInteractionsAction({
             workflowName: onSubmitWorkflow,
             workflowEntryPoint: onSubmitEntryPoint,
             workflowArguments: onSubmitArguments,
+            inlineActions: inlineActions,
             expiresAt: DateTime.now().add(const Duration(hours: 1)),
             type: 'modal',
             oneShot: true,
