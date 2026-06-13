@@ -767,6 +767,7 @@ dynamic _applyBdfdBracketFunction(
     case 'totitlecase':
     case 'tolowercase':
     case 'touppercase':
+    case 'url':
     case 'charcount':
     case 'linescount':
     case 'croptext':
@@ -1105,6 +1106,22 @@ dynamic _applyFunction(
         return null;
       }
       return _stringifyResolvedValue(args.first).toLowerCase();
+    case 'url':
+      if (args.length < 2) {
+        return null;
+      }
+      final urlMode = _stringifyResolvedValue(args[0]).trim().toLowerCase();
+      final urlText = _stringifyResolvedValue(args[1]);
+      try {
+        if (urlMode == 'encode') {
+          return Uri.encodeQueryComponent(urlText);
+        } else if (urlMode == 'decode') {
+          return Uri.decodeQueryComponent(urlText);
+        }
+      } catch (_) {
+        return urlText;
+      }
+      return urlText;
     case 'upper':
     case 'uppercase':
     case 'touppercase':
@@ -1429,6 +1446,16 @@ _ResolvedExpression _evaluateSingleExpression(
             nameLower == 'listvar' ||
             nameLower == 'variablescount' ||
             nameLower == 'userperms' ||
+            nameLower == 'url' ||
+            nameLower == 'tolowercase' ||
+            nameLower == 'touppercase' ||
+            nameLower == 'totitlecase' ||
+            nameLower == 'trimcontent' ||
+            nameLower == 'trimspace' ||
+            nameLower == 'charcount' ||
+            nameLower == 'linescount' ||
+            nameLower == 'croptext' ||
+            nameLower == 'bytecount' ||
             nameLower == 'servernames') {
           resolvedArgs.add(arg.trim());
           continue;
