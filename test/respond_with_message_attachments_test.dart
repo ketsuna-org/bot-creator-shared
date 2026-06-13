@@ -38,7 +38,8 @@ class MockMessageResponse implements MessageResponse {
     return _MockMessage();
   }
 
-  Future<Message> sendFollowupMessage(MessageBuilder builder, {bool? isEphemeral}) async {
+  @override
+  Future<Message> createFollowup(MessageBuilder builder, {bool? isEphemeral}) async {
     followedUp = true;
     followupBuilder = builder;
     return _MockMessage();

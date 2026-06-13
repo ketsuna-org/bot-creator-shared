@@ -263,17 +263,15 @@ Future<Map<String, dynamic>> respondWithMessageAction(
       //   updateOriginalResponse (MessageUpdateBuilder) doesn't support
       //   file attachments — Discord doesn't allow editing message attachments.
       if (isEphemeral || canvasAttachments != null) {
-        final followupMsg = await dynInteraction.sendFollowupMessage(
+        final followupMsg = await dynInteraction.createFollowup(
           MessageBuilder(
             content: effectiveContent,
             embeds: embeds.isEmpty ? null : embeds,
             components: componentNodes.isEmpty ? null : componentNodes,
-            flags: isEphemeral
-                ? MessageFlags(MessageFlags.ephemeral.value)
-                : null,
             allowedMentions: allowedMentions,
             attachments: canvasAttachments,
           ),
+          isEphemeral: isEphemeral,
         );
         markInteractionAcknowledged(interaction);
         registerComponentWorkflowBindings(

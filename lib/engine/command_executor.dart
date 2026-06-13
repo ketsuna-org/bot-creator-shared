@@ -244,11 +244,9 @@ class CommandExecutor {
       // a response, send a generic "An error occurred" follow-up.
       try {
         final dynInteraction = interaction as dynamic;
-        await dynInteraction.sendFollowupMessage(
-          MessageBuilder(
-            content: 'An error occurred',
-            flags: MessageFlags(MessageFlags.ephemeral.value),
-          ),
+        await dynInteraction.createFollowup(
+          MessageBuilder(content: 'An error occurred'),
+          isEphemeral: true,
         );
       } catch (_) {
         // Best-effort — if follow-up fails, we can't do anything more.
