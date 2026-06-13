@@ -141,5 +141,16 @@ void main() {
         'Second=beta Joined=alpha, beta, gamma Limited=alpha/beta',
       );
     });
+    test('resolves nested guild name placeholders', () {
+      final resolved = resolveTemplatePlaceholders(
+        '((guild[((guild.id))].name))',
+        <String, String>{
+          'guild.id': '123456',
+          'guild[123456].name': 'Test Server',
+        },
+      );
+
+      expect(resolved, 'Test Server');
+    });
   });
 }

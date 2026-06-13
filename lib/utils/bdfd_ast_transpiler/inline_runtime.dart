@@ -230,13 +230,45 @@ extension _BdfdAstTranspilationScopeInlineRuntime
         }
         return _inlineRuntimeVariables['channelid'];
       case 'guildid':
+      case 'serverid':
         if (node.arguments.isNotEmpty) {
           final guildName = _stringifyArgument(node, 0).trim();
           if (guildName.isNotEmpty) {
             return '((guild[$guildName].id))';
           }
         }
-        return _inlineRuntimeVariables['guildid'];
+        return _inlineRuntimeVariables[node.normalizedName];
+      case 'servername':
+      case 'servericon':
+      case 'serverdescription':
+      case 'serverowner':
+      case 'serververificationlevel':
+      case 'serververificationlvl':
+      case 'serverfeatures':
+      case 'servervanityurl':
+      case 'serverbanner':
+      case 'serversplash':
+      case 'serverregion':
+        if (node.arguments.isNotEmpty) {
+          final guildId = _stringifyArgument(node, 0).trim();
+          if (guildId.isNotEmpty) {
+            final field = switch (node.normalizedName) {
+              'servername' => 'name',
+              'servericon' => 'icon',
+              'serverdescription' => 'description',
+              'serverowner' => 'ownerId',
+              'serververificationlevel' || 'serververificationlvl' => 'verificationLevel',
+              'serverfeatures' => 'features',
+              'servervanityurl' => 'vanityUrlCode',
+              'serverbanner' => 'banner',
+              'serversplash' => 'splash',
+              'serverregion' => 'region',
+              _ => 'name',
+            };
+            return '((guild[$guildId].$field))';
+          }
+        }
+        return _inlineRuntimeVariables[node.normalizedName];
       case 'roleid':
         final roleName = _stringifyArgument(node, 0).trim();
         if (roleName.isNotEmpty) {

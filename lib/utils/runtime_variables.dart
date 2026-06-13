@@ -331,7 +331,7 @@ void _collectScopedPlaceholders(
   List<(String, String, String)> out,
 ) {
   // Look for a known scope name followed by '['
-  final scopeStartPattern = RegExp(r'\b(member|user|guild|channel|role|emoji|message|webhook|temp|bot)\[');
+  final scopeStartPattern = RegExp(r'\b(member|user|guild|channel|role|emoji|message|webhook|temp|bot|getMessage|getmessage)\[');
   for (final match in scopeStartPattern.allMatches(input)) {
     final scope = match.group(1)!;
     final bracketStart = match.end - 1; // position of '['
@@ -360,6 +360,39 @@ void _collectScopedPlaceholders(
               final property = input.substring(propStart, propEnd);
               out.add((scope, contextId, property));
             }
+          }
+          break;
+        }
+      }
+      pos++;
+    }
+  }
+}
+
+/// Walks [input] and collects all `scope[contextId]` patterns that do NOT have
+/// a property suffix, e.g. `getReactions[channelId;messageId;emoji]` or `emoji[name]`.
+void _collectBracketPlaceholdersWithoutProperty(
+  String input,
+  List<(String, String)> out,
+) {
+  final scopeStartPattern = RegExp(r'\b(getReactions|getreactions|emoji)\[');
+  for (final match in scopeStartPattern.allMatches(input)) {
+    final scope = match.group(1)!;
+    final bracketStart = match.end - 1; // position of '['
+    var depth = 0;
+    var pos = bracketStart;
+    while (pos < input.length) {
+      final ch = input[pos];
+      if (ch == '[') {
+        depth++;
+      } else if (ch == ']') {
+        depth--;
+        if (depth == 0) {
+          // Found the closing bracket. Ensure it's NOT followed by '.property'
+          final afterBracket = pos + 1;
+          if (afterBracket >= input.length || input[afterBracket] != '.') {
+            final contextId = input.substring(bracketStart + 1, pos);
+            out.add((scope, contextId));
           }
           break;
         }
@@ -442,6 +475,23 @@ Future<void> hydrateActionPlaceholders({
             if (!variables.containsKey(varKey)) {
               discordContextsToFetch.add((scope, contextId));
             }
+          }
+        }
+      }
+
+      final nonPropMatches = <(String, String)>[];
+      _collectBracketPlaceholdersWithoutProperty(obj, nonPropMatches);
+      for (final match in nonPropMatches) {
+        final scope = match.$1;
+        var contextId = match.$2;
+        if (contextId.contains('((')) {
+          contextId = resolveTemplatePlaceholders(contextId, variables).trim();
+          if (contextId.isEmpty) continue;
+        }
+        if (contextId.isNotEmpty) {
+          final varKey = '$scope[$contextId]';
+          if (!variables.containsKey(varKey)) {
+            discordContextsToFetch.add((scope, contextId));
           }
         }
       }

@@ -95,6 +95,58 @@ void main() {
       );
       expect(resolved, 'Resolved user');
     });
+
+    test('correctly identifies getMessage, getReactions, and emoji placeholders', () async {
+      final variables = <String, String>{};
+      final actions = [
+        {
+          'payload': {
+            'content': 'Msg: ((getMessage[111;222].content)) count: ((getReactions[111;222;👍])) emoji: ((emoji[smile]))'
+          }
+        }
+      ];
+
+      final hydrated = <String>[];
+
+      Future<void> mockDiscordFetcher(
+        String scope,
+        String contextId,
+        Map<String, String> vars,
+      ) async {
+        hydrated.add('$scope[$contextId]');
+        if (scope == 'getMessage' || scope == 'getmessage') {
+          vars['getMessage[111;222].content'] = 'Hello World';
+        } else if (scope == 'getReactions' || scope == 'getreactions') {
+          vars['getReactions[111;222;👍]'] = '5';
+        } else if (scope == 'emoji') {
+          vars['emoji[smile]'] = '<:smile:777>';
+        }
+      }
+
+      final store = _FakeBotDataStore(
+        globalVariables: const {},
+        scopedVariables: const {},
+      );
+
+      await hydrateActionPlaceholders(
+        store: store,
+        botId: 'bot-1',
+        actions: actions,
+        variables: variables,
+        discordFetcher: mockDiscordFetcher,
+      );
+
+      expect(hydrated, contains('getMessage[111;222]'));
+      expect(hydrated, contains('getReactions[111;222;👍]'));
+      expect(hydrated, contains('emoji[smile]'));
+      expect(hydrated.length, 3);
+
+      final resolved = resolveTemplatePlaceholders(
+        'Msg: ((getMessage[111;222].content)) count: ((getReactions[111;222;👍])) emoji: ((emoji[smile]))',
+        variables,
+      );
+      expect(resolved, 'Msg: Hello World count: 5 emoji: <:smile:777>');
+    });
   });
 }
 

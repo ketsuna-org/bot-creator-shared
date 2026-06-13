@@ -1018,30 +1018,58 @@ class EventDispatcher {
     final userId = context.userId;
 
     if (guildId != null) {
-      try {
-        final guild = await gateway.guilds.get(guildId);
+      // Try cache first to avoid unnecessary API calls
+      final cachedGuild = gateway.guilds.cache[guildId];
+      if (cachedGuild != null) {
         variables.addAll(
           await shared_global.extractGuildRuntimeDetails(
-            guild,
+            cachedGuild,
             client: gateway,
             guildId: guildId,
           ),
         );
         if (userId != null) {
-          final member = await guild.members.fetch(userId);
+          try {
+            final member = await cachedGuild.members.fetch(userId);
+            variables.addAll(
+              shared_global.extractMemberRuntimeDetails(
+                member: member,
+                guild: cachedGuild,
+                guildId: guildId.toString(),
+              ),
+            );
+          } catch (_) {}
+        }
+        variables.putIfAbsent('guildName', () => cachedGuild.name);
+        variables.putIfAbsent('guild.name', () => cachedGuild.name);
+        variables.putIfAbsent('interaction.guild.name', () => cachedGuild.name);
+      } else {
+        // Fallback: try to fetch from API
+        try {
+          final guild = await gateway.guilds.get(guildId);
           variables.addAll(
-            shared_global.extractMemberRuntimeDetails(
-              member: member,
-              guild: guild,
-              guildId: guildId.toString(),
+            await shared_global.extractGuildRuntimeDetails(
+              guild,
+              client: gateway,
+              guildId: guildId,
             ),
           );
+          if (userId != null) {
+            final member = await guild.members.fetch(userId);
+            variables.addAll(
+              shared_global.extractMemberRuntimeDetails(
+                member: member,
+                guild: guild,
+                guildId: guildId.toString(),
+              ),
+            );
+          }
+        } catch (e) {
+          callbacks.onDebugLog?.call(
+            'Error hydrating guild context: $e',
+            botId: gateway.application.id.toString(),
+          );
         }
-      } catch (e) {
-        callbacks.onDebugLog?.call(
-          'Error hydrating guild context: $e',
-          botId: gateway.application.id.toString(),
-        );
       }
     }
 

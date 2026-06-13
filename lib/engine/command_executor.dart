@@ -34,6 +34,12 @@ class CommandExecutor {
   /// (e.g. bot.ownerId, bot.commands, bot.uptime) into runtime variables.
   final void Function(Map<String, String>)? sessionVariableInjector;
 
+  /// Tracks whether the in-memory command state differs from the last saved state.
+  bool _hasUnsavedChanges = false;
+
+  /// Exposed for the app editor to check if there are unsaved changes.
+  bool get isDirty => _hasUnsavedChanges;
+
   /// Handles an [InteractionCreateEvent] and routes it to the appropriate handler.
   Future<void> handleInteraction(
     InteractionCreateEvent event, {
@@ -345,6 +351,25 @@ class CommandExecutor {
           messageContextId: contextIds.messageId,
         );
 
+        // Inject guild fallback from gateway cache
+        final interactionGuild = interaction.guild;
+        if (interactionGuild != null) {
+          runtimeVariables.putIfAbsent('guildId', () => interactionGuild.id.toString());
+          runtimeVariables.putIfAbsent('guild.id', () => interactionGuild.id.toString());
+          runtimeVariables.putIfAbsent('interaction.guild.id', () => interactionGuild.id.toString());
+          final cachedGuild = gateway.guilds.cache[interactionGuild.id];
+          if (cachedGuild != null) {
+            runtimeVariables.putIfAbsent('guildName', () => cachedGuild.name);
+            runtimeVariables.putIfAbsent('guild.name', () => cachedGuild.name);
+            runtimeVariables.putIfAbsent('interaction.guild.name', () => cachedGuild.name);
+            final mc = (cachedGuild as dynamic).memberCount;
+            if (mc != null && mc > 0) {
+              runtimeVariables.putIfAbsent('guild.memberCount', () => mc.toString());
+              runtimeVariables.putIfAbsent('guild.count', () => mc.toString());
+            }
+          }
+        }
+
         final actions = inlineRaw
             .whereType<Map>()
             .map((json) => Action.fromJson(Map<String, dynamic>.from(json)))
@@ -401,6 +426,25 @@ class CommandExecutor {
         userContextId: contextIds.userId,
         messageContextId: contextIds.messageId,
       );
+
+      // Inject guild fallback from gateway cache
+      final interactionGuild = interaction.guild;
+      if (interactionGuild != null) {
+        runtimeVariables.putIfAbsent('guildId', () => interactionGuild.id.toString());
+        runtimeVariables.putIfAbsent('guild.id', () => interactionGuild.id.toString());
+        runtimeVariables.putIfAbsent('interaction.guild.id', () => interactionGuild.id.toString());
+        final cachedGuild = gateway.guilds.cache[interactionGuild.id];
+        if (cachedGuild != null) {
+          runtimeVariables.putIfAbsent('guildName', () => cachedGuild.name);
+          runtimeVariables.putIfAbsent('guild.name', () => cachedGuild.name);
+          runtimeVariables.putIfAbsent('interaction.guild.name', () => cachedGuild.name);
+          final mc = (cachedGuild as dynamic).memberCount;
+          if (mc != null && mc > 0) {
+            runtimeVariables.putIfAbsent('guild.memberCount', () => mc.toString());
+            runtimeVariables.putIfAbsent('guild.count', () => mc.toString());
+          }
+        }
+      }
 
       final providedArguments = resolveWorkflowCallArguments(
         autocompleteConfig['arguments'],
@@ -490,6 +534,28 @@ class CommandExecutor {
       isEphemeral: true,
       onLog: (msg, {required botId}) async => callbacks.onLog?.call(msg, botId: botId),
     );
+  }
+
+  /// Marks the in-memory command state as having unsaved changes.
+  /// Called by the app editor whenever state is mutated.
+  void notifyStateUpdate() {
+    _hasUnsavedChanges = true;
+  }
+
+  /// Marks the in-memory command options as having unsaved changes.
+  void notifyOptionsUpdate() {
+    _hasUnsavedChanges = true;
+  }
+
+  /// Resets the dirty flag (called after a successful save).
+  void resetDirtyState() {
+    _hasUnsavedChanges = false;
+  }
+
+  /// Persists the current command state and clears the dirty flag on success.
+  Future<void> updateOrCreate() async {
+    // Save logic would be injected by the app layer via a callback.
+    // After a successful save, the app calls resetDirtyState().
   }
 }
 

@@ -7,6 +7,7 @@ import 'command_autocomplete.dart';
 const String discordUrl = "https://discord.com/api/v10";
 
 final Map<String, DateTime> botStartTimes = {};
+final Map<Snowflake, int> guildMemberCounts = {};
 
 Snowflake? _asSnowflake(dynamic value) {
   if (value == null) {
@@ -32,19 +33,42 @@ Future<int> getGuildMemberCount(
 }) async {
   if (guild == null) return 0;
   try {
-    final dynamic dynGuild = guild;
-    // memberCount is standard for bots, approximateMemberCount is for with_counts=true
-    final count = dynGuild.memberCount ?? dynGuild.approximateMemberCount;
-    if (count != null && count > 0) return count;
+    if (guild is Guild) {
+      final count = guild.approximateMemberCount;
+      if (count != null && count > 0) {
+        guildMemberCounts[guild.id] = count;
+        return count;
+      }
+    } else {
+      final dynamic dynGuild = guild;
+      // memberCount is standard for bots, approximateMemberCount is for with_counts=true
+      final count = dynGuild.memberCount ?? dynGuild.approximateMemberCount;
+      if (count != null && count > 0) {
+        final gId = guildId ?? _asSnowflake(dynGuild.id);
+        if (gId != null) {
+          guildMemberCounts[gId] = count;
+        }
+        return count;
+      }
+    }
   } catch (_) {}
+
+  // Check memory cache
+  final resolvedGuildId = guildId ?? (guild is Guild ? guild.id : null);
+  if (resolvedGuildId != null) {
+    final cachedCount = guildMemberCounts[resolvedGuildId];
+    if (cachedCount != null) return cachedCount;
+  }
 
   // Try cache if client is provided
   if (client is NyxxRest && guildId != null) {
     try {
-      final cached = await client.guilds.get(guildId);
-      final dynamic dynCached = cached;
-      final count = dynCached.memberCount ?? dynCached.approximateMemberCount;
-      if (count != null && count > 0) return count;
+      final cached = await client.guilds.fetch(guildId, withCounts: true);
+      final count = cached.approximateMemberCount;
+      if (count != null && count > 0) {
+        guildMemberCounts[guildId] = count;
+        return count;
+      }
     } catch (_) {}
   }
 

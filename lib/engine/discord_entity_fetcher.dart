@@ -15,7 +15,14 @@ class DiscordEntityFetcher {
     Map<String, dynamic>? cache,
   }) async {
     final id = _parseSnowflake(contextId);
-    if (id == null) return;
+    if (id == null &&
+        scope != 'getMessage' &&
+        scope != 'getmessage' &&
+        scope != 'getReactions' &&
+        scope != 'getreactions' &&
+        scope != 'emoji') {
+      return;
+    }
 
     final flightKey = '$scope:$contextId';
 
@@ -37,7 +44,21 @@ class DiscordEntityFetcher {
       } else if (cached is Role) {
         _populateRoleVariables(variables, contextId, cached);
       } else if (cached is Message) {
-        _populateMessageVariables(variables, contextId, cached);
+        if (scope == 'getMessage' || scope == 'getmessage') {
+          final parts = contextId.split(';');
+          if (parts.length == 2) {
+            _populateGetMessageVariables(variables, parts[0], parts[1], cached);
+          }
+        } else if (scope == 'getReactions' || scope == 'getreactions') {
+          final parts = contextId.split(';');
+          if (parts.length == 3) {
+            _populateGetReactionsVariables(variables, parts[0], parts[1], parts[2], cached);
+          }
+        } else {
+          _populateMessageVariables(variables, contextId, cached);
+        }
+      } else if (cached is Emoji) {
+        _populateEmojiVariables(variables, contextId, cached);
       }
       return;
     }
@@ -58,7 +79,7 @@ class DiscordEntityFetcher {
 
       switch (scope) {
         case 'user':
-          final user = await gateway.users.fetch(id);
+          final user = await gateway.users.fetch(id!);
           fetchedEntity = user;
           _populateUserVariables(variables, contextId, user);
           break;
@@ -66,13 +87,13 @@ class DiscordEntityFetcher {
         case 'member':
           final guildId = _resolveGuildId(variables);
           if (guildId == null) {
-            final user = await gateway.users.fetch(id);
+            final user = await gateway.users.fetch(id!);
             fetchedEntity = user;
             _populateUserVariables(variables, contextId, user);
             break;
           }
 
-          final member = await gateway.guilds[guildId].members.fetch(id);
+          final member = await gateway.guilds[guildId].members.fetch(id!);
           fetchedEntity = member;
           final guild = await gateway.guilds[guildId].get();
           _populateMemberVariables(variables, contextId, member,
@@ -83,7 +104,7 @@ class DiscordEntityFetcher {
           break;
 
         case 'channel':
-          final channel = await gateway.channels.fetch(id);
+          final channel = await gateway.channels.fetch(id!);
           fetchedEntity = channel;
           variables[_key('channel', contextId, 'name')] = _getChannelName(
             channel,
@@ -92,7 +113,7 @@ class DiscordEntityFetcher {
           break;
 
         case 'guild':
-          final guild = await gateway.guilds.fetch(id);
+          final guild = await gateway.guilds.fetch(id!);
           fetchedEntity = guild;
           _populateGuildVariables(variables, contextId, guild);
           break;
@@ -100,7 +121,7 @@ class DiscordEntityFetcher {
         case 'role':
           final guildId = _resolveGuildId(variables);
           if (guildId != null) {
-            final role = await gateway.guilds[guildId].roles.fetch(id);
+            final role = await gateway.guilds[guildId].roles.fetch(id!);
             fetchedEntity = role;
             _populateRoleVariables(variables, contextId, role);
           }
@@ -111,9 +132,73 @@ class DiscordEntityFetcher {
           if (channelId != null) {
             final message = await (gateway.channels[channelId] as dynamic)
                 .messages
-                .fetch(id);
+                .fetch(id!);
             fetchedEntity = message;
             _populateMessageVariables(variables, contextId, message);
+          }
+          break;
+
+        case 'getMessage':
+        case 'getmessage':
+          final parts = contextId.split(';');
+          if (parts.length == 2) {
+            final chanId = _parseSnowflake(parts[0]);
+            final msgId = _parseSnowflake(parts[1]);
+            if (chanId != null && msgId != null) {
+              final message = await (gateway.channels[chanId] as dynamic)
+                  .messages
+                  .fetch(msgId);
+              fetchedEntity = message;
+              _populateGetMessageVariables(variables, parts[0], parts[1], message);
+            }
+          }
+          break;
+
+        case 'getReactions':
+        case 'getreactions':
+          final parts = contextId.split(';');
+          if (parts.length == 3) {
+            final chanId = _parseSnowflake(parts[0]);
+            final msgId = _parseSnowflake(parts[1]);
+            final emoji = parts[2];
+            if (chanId != null && msgId != null) {
+              final message = await (gateway.channels[chanId] as dynamic)
+                  .messages
+                  .fetch(msgId);
+              fetchedEntity = message;
+              _populateGetReactionsVariables(variables, parts[0], parts[1], emoji, message);
+            }
+          }
+          break;
+
+        case 'emoji':
+          final guildId = _resolveGuildId(variables);
+          Emoji? foundEmoji;
+          if (guildId != null) {
+            try {
+              final guild = await gateway.guilds[guildId].get();
+              for (final emoji in guild.emojis.cache.values) {
+                if (emoji.id.toString() == contextId || emoji.name == contextId) {
+                  foundEmoji = emoji;
+                  break;
+                }
+              }
+            } catch (_) {}
+          }
+          if (foundEmoji == null) {
+            for (final guild in gateway.guilds.cache.values) {
+              for (final emoji in guild.emojis.cache.values) {
+                if (emoji.id.toString() == contextId || emoji.name == contextId) {
+                  foundEmoji = emoji;
+                  break;
+                }
+              }
+              if (foundEmoji != null) break;
+            }
+          }
+          if (foundEmoji != null) {
+            fetchedEntity = foundEmoji;
+            _populateEmojiVariables(variables, contextId, foundEmoji);
           }
           break;
 
@@ -374,5 +459,61 @@ class DiscordEntityFetcher {
     }
     if (channel is DmChannel) return 'DM';
     return 'Unknown Channel';
+  }
+
+  static void _populateGetMessageVariables(
+    Map<String, String> variables,
+    String channelId,
+    String messageId,
+    Message message,
+  ) {
+    final prefix = 'getMessage[$channelId;$messageId]';
+    variables['$prefix.content'] = message.content;
+    variables['$prefix.id'] = message.id.toString();
+    variables['$prefix.authorId'] = message.author.id.toString();
+    variables['$prefix.channelId'] = message.channelId.toString();
+    variables['$prefix.createdAt'] = message.timestamp.toIso8601String();
+    variables['$prefix.author'] = message.author.username;
+  }
+
+  static void _populateGetReactionsVariables(
+    Map<String, String> variables,
+    String channelId,
+    String messageId,
+    String emoji,
+    Message message,
+  ) {
+    final key = 'getReactions[$channelId;$messageId;$emoji]';
+    final rx = message.reactions;
+    if (rx.isEmpty) {
+      variables[key] = '0';
+      return;
+    }
+    for (final r in rx) {
+      final emojiObj = r.emoji;
+      final name = emojiObj is Emoji ? (emojiObj.name ?? '') : '';
+      final id = emojiObj.id.toString();
+      if (name == emoji || id == emoji || '$name:$id' == emoji) {
+        variables[key] = r.count.toString();
+        return;
+      }
+    }
+    variables[key] = '0';
+  }
+
+  static void _populateEmojiVariables(
+    Map<String, String> variables,
+    String contextId,
+    Emoji emoji,
+  ) {
+    final prefix = 'emoji[$contextId]';
+    final isAnimated = (emoji as dynamic).isAnimated == true;
+    final formatted = emoji.id == Snowflake.zero
+        ? (emoji.name ?? '')
+        : '<${isAnimated ? 'a' : ''}:${emoji.name}:${emoji.id}>';
+    variables[prefix] = formatted;
+    variables['$prefix.id'] = emoji.id.toString();
+    variables['$prefix.name'] = emoji.name ?? '';
+    variables['$prefix.isAnimated'] = isAnimated.toString();
   }
 }

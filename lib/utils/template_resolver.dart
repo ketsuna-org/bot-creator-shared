@@ -1419,6 +1419,7 @@ _ResolvedExpression _evaluateSingleExpression(
   if (bracketFunctionCall != null) {
     final rawArgs = _splitTopLevel(bracketFunctionCall.inner, ';');
     final resolvedArgs = <dynamic>[];
+    var argsResolved = true;
     for (final arg in rawArgs) {
       final outcome = _evaluateExpression(arg, updates);
       if (!outcome.found) {
@@ -1432,18 +1433,28 @@ _ResolvedExpression _evaluateSingleExpression(
           resolvedArgs.add(arg.trim());
           continue;
         }
-        return const _ResolvedExpression(found: false);
+        argsResolved = false;
+        break;
       }
       resolvedArgs.add(outcome.value);
     }
-    final value = _applyBdfdBracketFunction(
-      bracketFunctionCall.name,
-      rawArgs,
-      resolvedArgs,
-      updates,
-    );
-    if (value != null) {
-      return _ResolvedExpression(found: true, value: value);
+    if (argsResolved) {
+      final value = _applyBdfdBracketFunction(
+        bracketFunctionCall.name,
+        rawArgs,
+        resolvedArgs,
+        updates,
+      );
+      if (value != null) {
+        return _ResolvedExpression(found: true, value: value);
+      }
+    }
+    // Fallback: If argument resolution or function evaluation fails,
+    // check if the fully-resolved key exists directly in updates.
+    final resolvedFullKey = resolveTemplatePlaceholders(trimmed, updates).trim();
+    final directVal = _lookupVariableValue(resolvedFullKey, updates);
+    if (directVal != null) {
+      return _ResolvedExpression(found: true, value: directVal);
     }
   }
 

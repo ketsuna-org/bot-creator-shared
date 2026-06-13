@@ -271,5 +271,48 @@ void main() {
       expect(result.diagnostics, hasLength(1));
       expect(result.diagnostics.single.functionName, r'$let');
     });
+
+    test('transpiles servername and other server-related properties dynamically when guild ID is passed', () {
+      final result = BdfdAstTranspiler().transpile(
+        const BdfdScriptAst(
+          nodes: [
+            BdfdFunctionCallAst(
+              name: r'$servername',
+              arguments: [
+                <BdfdAstNode>[BdfdTextAst('123456')],
+              ],
+            ),
+          ],
+        ),
+      );
+
+      expect(result.diagnostics, isEmpty);
+      expect(result.actions, hasLength(1));
+      expect(result.actions.single.payload['content'], '((guild[123456].name))');
+    });
+
+    test('transpiles servername with nested serverID function', () {
+      final result = BdfdAstTranspiler().transpile(
+        const BdfdScriptAst(
+          nodes: [
+            BdfdFunctionCallAst(
+              name: r'$servername',
+              arguments: [
+                <BdfdAstNode>[
+                  BdfdFunctionCallAst(
+                    name: r'$serverid',
+                    arguments: [],
+                  )
+                ],
+              ],
+            ),
+          ],
+        ),
+      );
+
+      expect(result.diagnostics, isEmpty);
+      expect(result.actions, hasLength(1));
+      expect(result.actions.single.payload['content'], '((guild[((guild.id))].name))');
+    });
   });
 }
