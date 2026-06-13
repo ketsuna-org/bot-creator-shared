@@ -1115,7 +1115,6 @@ extension _BdfdAstTranspilationScopeInlineRuntime
       case 'webhookcontent':
       case 'isticket':
       case 'getmessage':
-      case 'url':
       case 'c':
       case 'globaluserleaderboard':
       case 'serverleaderboard':
