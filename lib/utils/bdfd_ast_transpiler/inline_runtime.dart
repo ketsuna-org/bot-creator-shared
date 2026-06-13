@@ -482,6 +482,25 @@ extension _BdfdAstTranspilationScopeInlineRuntime
       case 'getmessage':
         return _inlineGetMessage(node);
       // $c - comment function, returns empty
+      case 'url':
+        if (node.arguments.isEmpty) {
+          return _inlineRuntimeVariables['url'];
+        }
+        final urlMode = _stringifyArgument(node, 0).trim().toLowerCase();
+        final urlText = _stringifyArgument(node, 1);
+        if (_containsRuntimePlaceholder(urlText) || _containsRuntimePlaceholder(urlMode)) {
+          return _buildRuntimeBracketExpression('url', <String>[urlMode, urlText]);
+        }
+        try {
+          if (urlMode == 'encode') {
+            return Uri.encodeQueryComponent(urlText);
+          } else if (urlMode == 'decode') {
+            return Uri.decodeQueryComponent(urlText);
+          }
+        } catch (_) {
+          return urlText;
+        }
+        return urlText;
       case 'c':
         return '';
       default:
@@ -626,6 +645,7 @@ extension _BdfdAstTranspilationScopeInlineRuntime
       // Text manipulation (compile-time)
       case 'replacetext':
         return _inlineReplaceText(node);
+
       case 'tolowercase':
         final lowerValue = _stringifyArgument(node, 0);
         if (_containsRuntimePlaceholder(lowerValue)) {
@@ -997,6 +1017,7 @@ extension _BdfdAstTranspilationScopeInlineRuntime
       case 'getcooldown':
       // Text manipulation
       case 'replacetext':
+      case 'url':
       case 'tolowercase':
       case 'touppercase':
       case 'totitlecase':
@@ -1094,6 +1115,7 @@ extension _BdfdAstTranspilationScopeInlineRuntime
       case 'webhookcontent':
       case 'isticket':
       case 'getmessage':
+      case 'url':
       case 'c':
       case 'globaluserleaderboard':
       case 'serverleaderboard':
@@ -1285,3 +1307,4 @@ extension _BdfdAstTranspilationScopeInlineRuntime
     return drained;
   }
 }
+

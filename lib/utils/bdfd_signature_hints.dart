@@ -368,6 +368,7 @@ const Map<String, List<String>> bdfdSignatureHints = <String, List<String>>{
 
   // ── HTTP ─────────────────────────────────────────────────────────────
   'httpaddheader': ['name', 'value'],
+  'url': ['Mode', 'Text'],
   'httpdelete': ['url'],
   'httpget': ['url'],
   'httppatch': ['url', 'body (opt)'],
