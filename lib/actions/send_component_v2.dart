@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:nyxx/nyxx.dart';
 import 'package:bot_creator_shared/types/component.dart';
 import 'package:bot_creator_shared/utils/component_workflow_bindings.dart';
+import 'package:bot_creator_shared/utils/custom_message_update_builder.dart';
 import 'package:bot_creator_shared/utils/interaction_ack_state.dart';
 
 class CustomSectionBuilder extends ComponentBuilder<SectionComponent> {
@@ -500,9 +501,10 @@ Future<Map<String, dynamic>> respondWithComponentV2Action(
 
       try {
         if (isAcknowledged) {
-          final builder = MessageUpdateBuilder(
+          final builder = CustomMessageUpdateBuilder(
             content: null,
             components: nodes,
+            customFlags: flagsOpt,
           );
           final message = await dynInt.updateOriginalResponse(builder);
           markInteractionAcknowledged(interaction);

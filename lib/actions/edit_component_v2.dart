@@ -1,9 +1,10 @@
-﻿import 'package:nyxx/nyxx.dart';
+import 'package:nyxx/nyxx.dart';
 import 'package:bot_creator_shared/utils/global.dart';
 import 'package:bot_creator_shared/types/component.dart';
 import 'package:bot_creator_shared/utils/component_workflow_bindings.dart';
 
 import 'send_component_v2.dart';
+import 'package:bot_creator_shared/utils/custom_message_update_builder.dart';
 
 Snowflake? _toSnowflake(dynamic value) {
   final parsed = int.tryParse(value?.toString() ?? '');
@@ -53,7 +54,10 @@ Future<Map<String, dynamic>> editComponentV2Action(
       resolve: resolve,
     );
 
-    await message.edit(MessageUpdateBuilder(components: components));
+    await message.edit(CustomMessageUpdateBuilder(
+      components: components,
+      customFlags: 32768,
+    ));
     if (botId != null && botId.trim().isNotEmpty) {
       registerComponentWorkflowBindings(
         definition: definition,

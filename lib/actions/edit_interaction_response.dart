@@ -4,6 +4,7 @@ import 'package:bot_creator_shared/types/component.dart';
 import 'package:bot_creator_shared/actions/send_component_v2.dart';
 import 'package:bot_creator_shared/utils/embed_fields.dart';
 import 'package:bot_creator_shared/utils/interaction_ack_state.dart';
+import 'package:bot_creator_shared/utils/custom_message_update_builder.dart';
 
 /// Edit the original/deferred interaction response.
 /// Can update content, and/or components.
@@ -161,7 +162,9 @@ Future<Map<String, dynamic>> editInteractionMessageAction(
       );
     }
 
-    final builder = MessageUpdateBuilder();
+    final builder = CustomMessageUpdateBuilder(
+      customFlags: definition != null ? 32768 : null,
+    );
     if (content.isNotEmpty) {
       builder.content = content;
     }

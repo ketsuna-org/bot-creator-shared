@@ -6,6 +6,7 @@ import 'package:bot_creator_shared/utils/embed_fields.dart';
 import '../utils/component_workflow_bindings.dart';
 import '../utils/interaction_listener_registry.dart';
 import '../utils/interaction_ack_state.dart';
+import 'package:bot_creator_shared/utils/custom_message_update_builder.dart';
 import 'send_component_v2.dart';
 
 /// Shared logic to determine and send the final response of a workflow execution.
@@ -536,9 +537,10 @@ Future<void> sendWorkflowResponse({
         onLog?.call('Error sending response to fallback channel: $e', botId: botId);
       }
     } else if (didDefer) {
-      final updateBuilder = MessageUpdateBuilder(
+      final updateBuilder = CustomMessageUpdateBuilder(
         content: useV2Flag ? null : (finalText.isEmpty ? null : finalText),
         components: componentNodes,
+        customFlags: useV2Flag ? 32768 : null,
       );
       if (useV2Flag) {
         updateBuilder.embeds = [];

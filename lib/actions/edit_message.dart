@@ -5,6 +5,7 @@ import '../utils/component_workflow_bindings.dart';
 import '../utils/embed_fields.dart';
 import '../utils/allowed_mentions_parser.dart';
 import 'send_component_v2.dart';
+import 'package:bot_creator_shared/utils/custom_message_update_builder.dart';
 
 Snowflake? _toSnowflake(dynamic value) {
   final parsed = int.tryParse(value?.toString() ?? '');
@@ -203,8 +204,9 @@ Future<Map<String, String>> editMessageAction(
 
     final allowedMentions = parseAllowedMentions(payload, resolve ?? (s) => s);
 
-    final builder = MessageUpdateBuilder(
+    final builder = CustomMessageUpdateBuilder(
       allowedMentions: allowedMentions,
+      customFlags: definition != null ? 32768 : null,
     );
     if (content.isNotEmpty) {
       builder.content = content;
