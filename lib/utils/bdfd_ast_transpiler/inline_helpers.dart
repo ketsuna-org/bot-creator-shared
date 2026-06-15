@@ -325,6 +325,15 @@ extension _BdfdAstTranspilationScopeInlineHelpers
     if (expression.isEmpty) {
       return 'false';
     }
+    // If the expression references a runtime-resolved placeholder (a deferred
+    // math result like ((sub[...])), a timestamp ((getTimestamp)), or a
+    // variable read), it cannot be evaluated at compile time. The numeric
+    // comparators in _evaluateConditionStatically would see a non-numeric
+    // operand and always return false. Defer to the runtime checkCondition
+    // handler, which resolves the operands first and then compares.
+    if (expression.contains('((')) {
+      return '((checkCondition[$expression]))';
+    }
     final condition = _parseSimpleCondition(expression);
     return _evaluateConditionStatically(condition) ? 'true' : 'false';
   }

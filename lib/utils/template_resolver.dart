@@ -764,6 +764,14 @@ dynamic _applyBdfdBracketFunction(
               enableDecimals: enableDecimals);
       }
       return null;
+    case 'checkcondition':
+      // Argument is the raw (unresolved) condition expression, e.g.
+      // "((sub[((getTimestamp));((uservar[...]...))]))>=86400". Resolve the
+      // operand placeholders, then evaluate the comparison.
+      if (rawArgs.isEmpty) {
+        return null;
+      }
+      return _evaluateStringCondition(rawArgs[0], updates) ? 'true' : 'false';
     case 'totitlecase':
     case 'tolowercase':
     case 'touppercase':
@@ -1456,7 +1464,8 @@ _ResolvedExpression _evaluateSingleExpression(
             nameLower == 'linescount' ||
             nameLower == 'croptext' ||
             nameLower == 'bytecount' ||
-            nameLower == 'servernames') {
+            nameLower == 'servernames' ||
+            nameLower == 'checkcondition') {
           resolvedArgs.add(arg.trim());
           continue;
         }
