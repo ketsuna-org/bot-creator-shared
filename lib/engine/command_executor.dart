@@ -6,6 +6,7 @@ import 'package:bot_creator_shared/actions/handle_component_interaction.dart';
 import 'package:bot_creator_shared/types/action.dart';
 import 'package:bot_creator_shared/utils/bdfd_compiler.dart';
 import 'package:bot_creator_shared/utils/command_autocomplete.dart';
+import 'package:bot_creator_shared/utils/interaction_ack_state.dart';
 import 'package:bot_creator_shared/utils/command_workflow_routing.dart';
 import 'package:bot_creator_shared/utils/global.dart' as shared_global;
 import 'package:bot_creator_shared/utils/runtime_variables.dart';
@@ -13,7 +14,6 @@ import 'package:bot_creator_shared/utils/template_resolver.dart';
 import 'package:bot_creator_shared/utils/workflow_call.dart';
 import 'package:bot_creator_shared/engine/bot_engine_callbacks.dart';
 import 'package:bot_creator_shared/engine/workflow_executor.dart';
-import 'package:bot_creator_shared/utils/interaction_ack_state.dart';
 
 /// Unified executor for Discord commands (Slash, Autocomplete, Component).
 class CommandExecutor {
@@ -242,15 +242,19 @@ class CommandExecutor {
     } catch (e) {
       // If no error handler ($try/$catch or $suppressErrors) already sent
       // a response, send a human-readable follow-up with the actual error.
-      try {
-        final dynInteraction = interaction as dynamic;
-        final message = _formatCommandError(e);
-        await dynInteraction.createFollowup(
-          MessageBuilder(content: message),
-          isEphemeral: true,
-        );
-      } catch (_) {
-        // Best-effort — if follow-up fails, we can't do anything more.
+      // Skip if the interaction was already responded to — the custom
+      // message from $suppressErrors / $try/$catch takes priority.
+      if (!isInteractionAcknowledged(interaction)) {
+        try {
+          final dynInteraction = interaction as dynamic;
+          final message = _formatCommandError(e);
+          await dynInteraction.createFollowup(
+            MessageBuilder(content: message),
+            isEphemeral: true,
+          );
+        } catch (_) {
+          // Best-effort — if follow-up fails, we can't do anything more.
+        }
       }
     }
 

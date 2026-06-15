@@ -12,6 +12,7 @@ import 'package:bot_creator_shared/actions/send_message.dart';
 import 'package:bot_creator_shared/utils/bdfd_compiler.dart';
 import 'package:bot_creator_shared/events/event_contexts.dart';
 import 'package:bot_creator_shared/utils/interaction_listener_registry.dart';
+import 'package:bot_creator_shared/utils/interaction_ack_state.dart';
 
 /// Central dispatcher for Discord gateway events.
 class EventDispatcher {
@@ -1120,24 +1121,28 @@ class EventDispatcher {
 
       // If this error occurred during an interaction, respond ephemerally
       // so the user sees the error instead of Discord's generic timeout message.
+      // Skip if the interaction was already handled (e.g. by $suppressErrors
+      // or $try/$catch) — the custom message takes priority.
       if (event != null) {
-        try {
-          final interaction = event.interaction;
-          final builder = MessageBuilder(
-            content: userMessage,
-            flags: MessageFlags.ephemeral,
-          );
-          if (interaction is ApplicationCommandInteraction) {
-            await interaction.respond(builder);
-          } else if (interaction is MessageComponentInteraction) {
-            await interaction.respond(builder);
-          } else if (interaction is ModalSubmitInteraction) {
-            await interaction.respond(builder);
-          } else if (interaction is ApplicationCommandAutocompleteInteraction) {
-            await interaction.respond(const []);
+        final interaction = event.interaction;
+        if (!isInteractionAcknowledged(interaction)) {
+          try {
+            final builder = MessageBuilder(
+              content: userMessage,
+              flags: MessageFlags.ephemeral,
+            );
+            if (interaction is ApplicationCommandInteraction) {
+              await interaction.respond(builder);
+            } else if (interaction is MessageComponentInteraction) {
+              await interaction.respond(builder);
+            } else if (interaction is ModalSubmitInteraction) {
+              await interaction.respond(builder);
+            } else if (interaction is ApplicationCommandAutocompleteInteraction) {
+              await interaction.respond(const []);
+            }
+          } catch (_) {
+            // Interaction may have already been responded to — ignore.
           }
-        } catch (_) {
-          // Interaction may have already been responded to — ignore.
         }
       }
 
