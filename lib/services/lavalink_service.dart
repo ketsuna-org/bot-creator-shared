@@ -75,7 +75,7 @@ class LavalinkService {
     required LavalinkPlugin plugin,
     required LavalinkConfig config,
     this.onLog,
-  }) : _plugin = plugin;
+  }) : _plugin = plugin; // ignore: prefer_initializing_formals
 
   /// Create a [LavalinkPlugin] from a config, or return null if no config is set.
   static LavalinkPlugin? createPlugin(LavalinkConfig? config) {

@@ -121,7 +121,7 @@ class BotSession {
       _gateway!.onVoiceServerUpdate.listen((event) {
         final tokenSnippet = event.token.length > 5 ? event.token.substring(0, 5) : event.token;
         callbacks.onLog?.call(
-          'DEBUG VOICE SERVER: guildId=${event.guildId}, endpoint=${event.endpoint}, token=${tokenSnippet}...',
+          'DEBUG VOICE SERVER: guildId=${event.guildId}, endpoint=${event.endpoint}, token=$tokenSnippet...',
           botId: botId,
         );
       });

@@ -14,7 +14,7 @@ Snowflake? _findUserVoiceChannel(NyxxGateway client, Snowflake guildId, Snowflak
     final voiceState = guild.voiceStates[userId];
     // Debug: log cache state
     client.logger.fine(
-      'Lavalink voice lookup: userId=$userId, guildFound=${guild != null}, '
+      'Lavalink voice lookup: userId=$userId, guildFound=true, '
       'voiceStateFound=${voiceState != null}, '
       'totalVoiceStates=${guild.voiceStates.length}',
     );
