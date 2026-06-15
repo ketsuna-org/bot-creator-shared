@@ -40,12 +40,14 @@ void main() {
 
       expect(result.hasErrors, isFalse);
       expect(result.actions, hasLength(2));
-      expect(result.actions.last.type, BotCreatorActionType.setScopedVariable);
-      expect(result.actions.last.payload['scope'], 'user');
-      expect(result.actions.last.payload['key'], 'await_say');
-      expect(result.actions.last.payload['valueType'], 'json');
+      // awaitFunc is a side-effect action — no longer flushes pending content,
+      // so it appears before the response.
+      expect(result.actions.first.type, BotCreatorActionType.setScopedVariable);
+      expect(result.actions.first.payload['scope'], 'user');
+      expect(result.actions.first.payload['key'], 'await_say');
+      expect(result.actions.first.payload['valueType'], 'json');
       expect(
-        (result.actions.last.payload['jsonValue'] as String),
+        (result.actions.first.payload['jsonValue'] as String),
         contains('"name":"say"'),
       );
     });

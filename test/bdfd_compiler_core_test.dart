@@ -11,20 +11,21 @@ void main() {
       );
 
       expect(result.hasErrors, isFalse);
-      expect(result.actions, hasLength(3));
+      // Single response: setUserVar no longer flushes, so the text content from
+      // before and after the variable set is merged into one respondWithMessage.
+      expect(result.actions, hasLength(2));
       expect(
         result.actions.first.type,
-        BotCreatorActionType.respondWithMessage,
+        BotCreatorActionType.setScopedVariable,
       );
+      expect(result.actions.first.payload['scope'], 'user');
+      expect(result.actions.first.payload['key'], 'lastAuthor');
+      expect(result.actions.first.payload['value'], '((author.id))');
+      expect(result.actions.last.type, BotCreatorActionType.respondWithMessage);
       expect(
-        result.actions.first.payload['content'],
-        'Hello ((user.username))',
+        result.actions.last.payload['content'],
+        'Hello ((user.username))((user.bc_lastAuthor))',
       );
-      expect(result.actions[1].type, BotCreatorActionType.setScopedVariable);
-      expect(result.actions[1].payload['scope'], 'user');
-      expect(result.actions[1].payload['key'], 'lastAuthor');
-      expect(result.actions[1].payload['value'], '((author.id))');
-      expect(result.actions[2].payload['content'], '((user.bc_lastAuthor))');
     });
 
     test('compiles message[] helper for normal/slash fallback', () {

@@ -138,7 +138,7 @@ Future<Map<String, dynamic>> respondWithMessageAction(
         embed.timestamp = timestamp;
       }
 
-      final colorRaw = (embedJson['color'] ?? '').toString();
+      final colorRaw = resolve((embedJson['color'] ?? '').toString());
       if (colorRaw.isNotEmpty) {
         int? colorInt;
         if (colorRaw.startsWith('#')) {

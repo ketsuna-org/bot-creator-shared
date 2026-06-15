@@ -1138,9 +1138,15 @@ extension _BdfdAstTranspilationScopeInlineRuntime
 
   bool _requiresPendingResponseFlush(String normalizedName) {
     switch (normalizedName) {
+      // ── Message sending / channel switching ──
       case 'sendmessage':
-      case 'reply':
       case 'channelsendmessage':
+      case 'reply':
+      case 'dm':
+      case 'sendembedmessage':
+      case 'replyin':
+      case 'usechannel':
+      // ── Guards ──
       case 'onlyif':
       case 'onlyforusers':
       case 'onlyforchannels':
@@ -1158,122 +1164,28 @@ extension _BdfdAstTranspilationScopeInlineRuntime
       case 'checkuserperms':
       case 'checkusersperms':
       case 'onlyifmessagecontains':
+      case 'argscheck':
+      // ── Control flow ──
+      case 'if':
+      case 'stop':
       case 'enabled':
+      // ── Threads (change message target) ──
       case 'startthread':
       case 'editthread':
       case 'threadaddmember':
       case 'threadremovemember':
-      case 'if':
-      case 'stop':
-      case 'httpget':
-      case 'httppost':
-      case 'httpput':
-      case 'httpdelete':
-      case 'httppatch':
-      case 'setuservar':
-      case 'setservervar':
-      case 'setguildvar':
-      case 'setchannelvar':
-      case 'setmembervar':
-      case 'setguildmembervar':
-      case 'setmessagevar':
-      case 'setvar':
-      case 'awaitfunc':
-      case 'changeusername':
-      case 'changeusernamewithid':
-      // Moderation
-      case 'ban':
-      case 'banid':
-      case 'unban':
-      case 'unbanid':
-      case 'kick':
-      case 'kickmention':
-      case 'timeout':
-      case 'mute':
-      case 'untimeout':
-      case 'unmute':
-      case 'clear':
-      // Roles
-      case 'giverole':
-      case 'giveroles':
-      case 'rolegrant':
-      case 'takerole':
-      case 'takeroles':
-      case 'createrole':
-      case 'deleterole':
-      case 'colorrole':
-      case 'modifyrole':
-      case 'modifyroleperms':
-      case 'setuserroles':
-      // Messages
-      case 'deletemessage':
-      case 'deletein':
-      case 'dm':
-      case 'editmessage':
-      case 'editin':
-      case 'editembedin':
-      case 'pinmessage':
-      case 'unpinmessage':
-      case 'publishmessage':
-      case 'replyin':
-      case 'sendembedmessage':
-      case 'usechannel':
-      // Channels
-      case 'createchannel':
-      case 'deletechannels':
-      case 'deletechannelsbyname':
-      case 'modifychannel':
-      case 'editchannelperms':
-      case 'modifychannelperms':
-      case 'slowmode':
-      // Reactions
-      case 'addreactions':
-      case 'addcmdreactions':
-      case 'addmessagereactions':
-      case 'clearreactions':
-      // Emoji
-      case 'addemoji':
-      case 'removeemoji':
-      // Webhooks
+      // ── Webhook / interaction output ──
       case 'webhooksend':
-      case 'webhookcreate':
-      case 'webhookdelete':
-      // Modal
       case 'newmodal':
       case 'defer':
-      // Cooldown
+      // ── Cooldown (guard-like, stops execution) ──
       case 'cooldown':
       case 'globalcooldown':
       case 'servercooldown':
-      case 'changecooldowntime':
-      // Variable reset
-      case 'resetuservar':
-      case 'resetservervar':
-      case 'resetguildvar':
-      case 'resetchannelvar':
-      case 'resetmembervar':
-      case 'resetguildmembervar':
-      // Blacklist
-      case 'blacklistids':
-      case 'blacklistroles':
-      case 'blacklistrolesids':
-      case 'blacklistroleids':
-      case 'blacklistservers':
-      case 'blacklistusers':
-      // Bot actions
-      case 'botleave':
-      case 'bottyping':
-      // Ticket
-      case 'closeticket':
-      case 'newticket':
-      // Args check
-      case 'argscheck':
-      // Workflow call
-      case 'callworkflow':
-      // Dynamic eval
+      // ── Meta (foreign script execution; pending content must go first) ──
       case 'eval':
-      // Debug profiling
       case 'debug':
+      case 'callworkflow':
         return true;
       default:
         return false;

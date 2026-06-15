@@ -132,7 +132,9 @@ void main() {
         expect(result.hasErrors, isFalse);
         expect(result.actions, hasLength(2));
 
-        final reactAction = result.actions[1];
+        // addReactions is a side-effect action — no longer flushes pending
+        // content, so the reaction action appears before the response.
+        final reactAction = result.actions.first;
         expect(reactAction.type, BotCreatorActionType.addReaction);
         expect(reactAction.payload['messageId'], '((lastSentMessageId))');
         expect(reactAction.payload['emojis'], ['🔥', '✨', '🌟']);
@@ -143,7 +145,7 @@ void main() {
         expect(result.hasErrors, isFalse);
         expect(result.actions, hasLength(2));
 
-        final reactAction = result.actions[1];
+        final reactAction = result.actions.first;
         expect(reactAction.type, BotCreatorActionType.addReaction);
         expect(reactAction.payload['channelId'], '999999');
         expect(reactAction.payload['messageId'], '123456789');
