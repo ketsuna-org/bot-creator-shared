@@ -86,7 +86,7 @@ class BotSession {
         final app =
             await (_gateway! as NyxxRest).applications
                 .fetchCurrentApplication();
-        _ownerId = (app.owner?.id.toString() ?? app.team?.ownerId.toString())!;
+        _ownerId = (app.team?.ownerId.toString() ?? app.owner?.id.toString())!;
       } catch (_) {}
 
       try {

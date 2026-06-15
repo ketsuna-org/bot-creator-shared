@@ -33,7 +33,14 @@ class _FakeModalData {
   _FakeModalData({required this.customId, required this.components});
 
   final String customId;
-  final List<_FakeModalRow> components;
+  final List<dynamic> components;
+}
+
+class _FakeLabelComponent {
+  _FakeLabelComponent(this.component);
+
+  final ComponentType type = ComponentType.label;
+  final dynamic component;
 }
 
 class _FakeUserAvatar implements CdnAsset {
@@ -287,6 +294,34 @@ void main() {
       expect(variables['opts.body'], 'World');
       expect(variables['arg.body'], 'World');
       expect(variables['workflow.arg.body'], 'World');
+      expect(variables['interaction.userId'], '77');
+    });
+
+    test('extracts V2 modal fields values (wrapped in LabelNode)', () {
+      final variables = buildInteractionRuntimeVariables(
+        _FakeInteraction(
+              data: _FakeModalData(
+                customId: 'modal:feedback',
+                components: <dynamic>[
+                  _FakeLabelComponent(_FakeModalInput('title', 'Hello V2')),
+                  _FakeLabelComponent(_FakeModalInput('body', 'World V2')),
+                ],
+              ),
+              type: InteractionType.modalSubmit,
+              member: _FakeMember(_FakeUser('77')),
+            )
+            as Interaction<dynamic>,
+      );
+
+      expect(variables['modal.customId'], 'modal:feedback');
+      expect(variables['modal.title'], 'Hello V2');
+      expect(variables['opts.title'], 'Hello V2');
+      expect(variables['arg.title'], 'Hello V2');
+      expect(variables['workflow.arg.title'], 'Hello V2');
+      expect(variables['modal.body'], 'World V2');
+      expect(variables['opts.body'], 'World V2');
+      expect(variables['arg.body'], 'World V2');
+      expect(variables['workflow.arg.body'], 'World V2');
       expect(variables['interaction.userId'], '77');
     });
   });

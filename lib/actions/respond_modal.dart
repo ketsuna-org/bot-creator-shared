@@ -1,4 +1,4 @@
-﻿import 'package:nyxx/nyxx.dart';
+import 'package:nyxx/nyxx.dart';
 import 'package:bot_creator_shared/types/component.dart' as bc;
 import 'package:bot_creator_shared/utils/interaction_ack_state.dart';
 import 'send_component_v2.dart';
@@ -49,7 +49,7 @@ Future<Map<String, dynamic>> respondWithModalAction(
         final child = label.component;
         if (child == null) continue;
 
-        final childBuilder = buildComponentNode(child, resolve);
+        final childBuilder = buildComponentNode(child, resolve, inLabel: true);
         modalComponents.add(
           LabelComponentBuilder(
             label: resolve(label.label),

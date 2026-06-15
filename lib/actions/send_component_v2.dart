@@ -62,6 +62,26 @@ class _SelectMenuOptionBuilderWithEmojiFix extends SelectMenuOptionBuilder {
   }
 }
 
+class _TextInputBuilderWithoutLabel extends TextInputBuilder {
+  _TextInputBuilderWithoutLabel({
+    required super.customId,
+    required super.style,
+    super.placeholder,
+    super.value,
+    super.isRequired,
+    super.minLength,
+    super.maxLength,
+  }) : super(label: '');
+
+  @override
+  Map<String, Object?> build() {
+    final base = Map<String, Object?>.from(super.build());
+    base.remove('label');
+    return base;
+  }
+}
+
+
 Emoji? _parseEmoji(dynamic emojiData, String Function(String) resolve) {
   if (emojiData == null) return null;
 
@@ -105,12 +125,13 @@ Emoji? _parseEmoji(dynamic emojiData, String Function(String) resolve) {
 
 ComponentBuilder buildComponentNode(
   ComponentNode node,
-  String Function(String) resolve,
-) {
+  String Function(String) resolve, {
+  bool inLabel = false,
+}) {
   if (node is ActionRowNode) {
     return ActionRowBuilder(
       components:
-          node.components.map((c) => buildComponentNode(c, resolve)).toList(),
+          node.components.map((c) => buildComponentNode(c, resolve, inLabel: inLabel)).toList(),
     );
   } else if (node is ButtonNode) {
     if (node.style == BcButtonStyle.link) {
@@ -260,7 +281,7 @@ ComponentBuilder buildComponentNode(
     }
     return ContainerComponentBuilder(
       components:
-          node.components.map((c) => buildComponentNode(c, resolve)).toList(),
+          node.components.map((c) => buildComponentNode(c, resolve, inLabel: inLabel)).toList(),
       accentColor: accentColor,
       isSpoiler: node.isSpoiler ? true : null,
     );
@@ -271,10 +292,24 @@ ComponentBuilder buildComponentNode(
           node.description.isNotEmpty ? resolve(node.description) : null,
       component:
           node.component != null
-              ? buildComponentNode(node.component!, resolve)
+              ? buildComponentNode(node.component!, resolve, inLabel: true)
               : TextDisplayComponentBuilder(content: ''),
     );
   } else if (node is ModalTextInputNode) {
+    if (inLabel) {
+      return _TextInputBuilderWithoutLabel(
+        customId: resolve(node.customId),
+        style: node.style == BcTextInputStyle.paragraph
+            ? TextInputStyle.paragraph
+            : TextInputStyle.short,
+        placeholder:
+            node.placeholder.isNotEmpty ? resolve(node.placeholder) : null,
+        value: node.value.isNotEmpty ? resolve(node.value) : null,
+        isRequired: node.required ? true : null,
+        minLength: node.minLength,
+        maxLength: node.maxLength,
+      );
+    }
     return TextInputBuilder(
       customId: resolve(node.customId),
       label: resolve(node.label),

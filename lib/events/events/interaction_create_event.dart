@@ -166,21 +166,48 @@ Map<String, String> buildInteractionRuntimeVariables(Interaction interaction) {
   final modalInputPairs = <String, String>{};
   if (modalComponents is Iterable) {
     for (final component in modalComponents) {
-      final innerComponents = _safeRead(component, () => component.components);
-      if (innerComponents is! Iterable) {
-        continue;
-      }
-      for (final inner in innerComponents) {
-        final key =
-            (_safeRead(inner, () => inner.customId) ?? '').toString().trim();
-        if (key.isEmpty) {
-          continue;
+      final type = _safeRead(component, () => component.type);
+      if (type == ComponentType.label || type == 18 || (type is ComponentType && type.value == 18)) {
+        // V2 Label wrapper
+        final inner = _safeRead(component, () => component.component);
+        if (inner != null) {
+          final key = (_safeRead(inner, () => inner.customId) ?? '').toString().trim();
+          if (key.isNotEmpty) {
+            String val = '';
+            final values = _safeRead(inner, () => inner.values);
+            if (values is Iterable) {
+              val = values.join(',');
+            } else {
+              val = (_safeRead(inner, () => inner.value) ?? '').toString();
+            }
+            modalInputPairs['modal.$key'] = val;
+            modalInputPairs['opts.$key'] = val;
+            modalInputPairs['arg.$key'] = val;
+            modalInputPairs['workflow.arg.$key'] = val;
+          }
         }
-        final value = (_safeRead(inner, () => inner.value) ?? '').toString();
-        modalInputPairs['modal.$key'] = value;
-        modalInputPairs['opts.$key'] = value;
-        modalInputPairs['arg.$key'] = value;
-        modalInputPairs['workflow.arg.$key'] = value;
+      } else {
+        // Legacy Action Row wrapper
+        final innerComponents = _safeRead(component, () => component.components);
+        if (innerComponents is Iterable) {
+          for (final inner in innerComponents) {
+            final key = (_safeRead(inner, () => inner.customId) ?? '').toString().trim();
+            if (key.isEmpty) {
+              continue;
+            }
+            String val = '';
+            final values = _safeRead(inner, () => inner.values);
+            if (values is Iterable) {
+              val = values.join(',');
+            } else {
+              val = (_safeRead(inner, () => inner.value) ?? '').toString();
+            }
+            modalInputPairs['modal.$key'] = val;
+            modalInputPairs['opts.$key'] = val;
+            modalInputPairs['arg.$key'] = val;
+            modalInputPairs['workflow.arg.$key'] = val;
+          }
+        }
       }
     }
   }
