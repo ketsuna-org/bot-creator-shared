@@ -1114,14 +1114,17 @@ class EventDispatcher {
       callbacks.onLog?.call('ERROR in $context: $error', botId: botId);
       callbacks.onDebugLog?.call('Stack trace: $stackTrace', botId: botId);
 
+      // Build a human-readable error message from the actual error.
+      // Stack traces stay in logs only — never sent to the user.
+      final userMessage = _formatUserFacingError(error);
+
       // If this error occurred during an interaction, respond ephemerally
       // so the user sees the error instead of Discord's generic timeout message.
       if (event != null) {
         try {
           final interaction = event.interaction;
           final builder = MessageBuilder(
-            content:
-                'An error occurred while processing your request. Please try again.',
+            content: userMessage,
             flags: MessageFlags.ephemeral,
           );
           if (interaction is ApplicationCommandInteraction) {
@@ -1142,15 +1145,37 @@ class EventDispatcher {
       // send the error back to the channel.
       if (messageEvent != null) {
         try {
-          final builder = MessageBuilder(
-            content:
-                'An error occurred while processing your command. Please try again.',
-          );
+          final builder = MessageBuilder(content: userMessage);
           await messageEvent.message.channel.sendMessage(builder);
         } catch (_) {
           // Best-effort — if sending fails, we can't do anything more.
         }
       }
     }
+  }
+
+  /// Formats an error into a user-facing message (always in English).
+  ///
+  /// Strips the noisy "Exception: " / "StateError: " prefix, truncates to
+  /// Discord's 2000‑character message limit, and never includes stack traces.
+  static String _formatUserFacingError(Object error) {
+    const kMaxLength = 1950; // leave margin for future indicators
+
+    var text = error.toString();
+    // Strip the Dart exception class name prefix — "Exception: ...",
+    // "StateError: ...", etc. — to show just the human-readable text.
+    final colonIndex = text.indexOf(': ');
+    if (colonIndex > 0 && colonIndex < 30) {
+      text = text.substring(colonIndex + 2);
+    }
+
+    if (text.length <= kMaxLength) {
+      return '❌ $text';
+    }
+
+    // Truncate and add ellipsis.
+    const suffix = '…';
+    final maxContent = kMaxLength - suffix.length;
+    return '❌ ${text.substring(0, maxContent)}$suffix';
   }
 }

@@ -348,7 +348,13 @@ Future<bool> executeControlFlowAction({
         final summary = compileResult.diagnostics
             .where((d) => d.severity == BdfdCompileDiagnosticSeverity.error)
             .take(5)
-            .map((d) => d.message)
+            .map((d) {
+              final loc =
+                  d.line != null
+                      ? 'L${d.line}${d.column != null ? ':${d.column}' : ''}'
+                      : '';
+              return loc.isNotEmpty ? '$loc: ${d.message}' : d.message;
+            })
             .join('; ');
         throw Exception('BDFD compile error: $summary');
       }

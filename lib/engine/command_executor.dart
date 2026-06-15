@@ -241,11 +241,12 @@ class CommandExecutor {
       );
     } catch (e) {
       // If no error handler ($try/$catch or $suppressErrors) already sent
-      // a response, send a generic "An error occurred" follow-up.
+      // a response, send a human-readable follow-up with the actual error.
       try {
         final dynInteraction = interaction as dynamic;
+        final message = _formatCommandError(e);
         await dynInteraction.createFollowup(
-          MessageBuilder(content: 'An error occurred'),
+          MessageBuilder(content: message),
           isEphemeral: true,
         );
       } catch (_) {
@@ -554,6 +555,23 @@ class CommandExecutor {
   Future<void> updateOrCreate() async {
     // Save logic would be injected by the app layer via a callback.
     // After a successful save, the app calls resetDirtyState().
+  }
+
+  /// Formats a raw error into a concise, human-readable message (English).
+  ///
+  /// Strips the "Exception: " / "StateError: " Dart prefix so users see only
+  /// the meaningful text, and truncates to fit Discord's 2000-character limit.
+  static String _formatCommandError(Object error) {
+    const kMax = 1950;
+    var text = error.toString();
+    final colon = text.indexOf(': ');
+    if (colon > 0 && colon < 30) {
+      text = text.substring(colon + 2);
+    }
+    if (text.length <= kMax) {
+      return '❌ $text';
+    }
+    return '❌ ${text.substring(0, kMax - 1)}…';
   }
 }
 
