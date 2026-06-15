@@ -17,6 +17,8 @@ dependencies:
 
 dependency_overrides:
   meta: 1.18.0
+  _fe_analyzer_shared: 99.0.0
+  analyzer: 12.1.0
 
 dev_dependencies:
   lints: ^6.0.0
