@@ -455,7 +455,9 @@ extension _BdfdAstTranspilationScopeDispatch on _BdfdAstTranspilationScope {
           if (child is! Map) continue;
           if (child['type'] != 'radioGroup') continue;
           if (resolvedGroupId.isNotEmpty &&
-              child['customId'] != resolvedGroupId) continue;
+              child['customId'] != resolvedGroupId) {
+            continue;
+          }
           final options =
               (child['options'] as List<Map<String, dynamic>>?) ??
               <Map<String, dynamic>>[];
@@ -473,7 +475,9 @@ extension _BdfdAstTranspilationScopeDispatch on _BdfdAstTranspilationScope {
             final comp = response._components[i];
             if (comp['type'] != 'radioGroup') continue;
             if (resolvedGroupId.isNotEmpty &&
-                comp['customId'] != resolvedGroupId) continue;
+                comp['customId'] != resolvedGroupId) {
+              continue;
+            }
             final options =
                 (comp['options'] as List<Map<String, dynamic>>?) ??
                 <Map<String, dynamic>>[];
@@ -525,7 +529,9 @@ extension _BdfdAstTranspilationScopeDispatch on _BdfdAstTranspilationScope {
           if (child is! Map) continue;
           if (child['type'] != 'checkboxGroup') continue;
           if (resolvedGroupIdC.isNotEmpty &&
-              child['customId'] != resolvedGroupIdC) continue;
+              child['customId'] != resolvedGroupIdC) {
+            continue;
+          }
           final options =
               (child['options'] as List<Map<String, dynamic>>?) ??
               <Map<String, dynamic>>[];
@@ -543,7 +549,9 @@ extension _BdfdAstTranspilationScopeDispatch on _BdfdAstTranspilationScope {
             final comp = response._components[i];
             if (comp['type'] != 'checkboxGroup') continue;
             if (resolvedGroupIdC.isNotEmpty &&
-                comp['customId'] != resolvedGroupIdC) continue;
+                comp['customId'] != resolvedGroupIdC) {
+              continue;
+            }
             final options =
                 (comp['options'] as List<Map<String, dynamic>>?) ??
                 <Map<String, dynamic>>[];
