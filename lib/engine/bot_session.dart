@@ -7,6 +7,7 @@ import 'package:bot_creator_shared/engine/presence_manager.dart';
 import 'package:bot_creator_shared/engine/event_dispatcher.dart';
 import 'package:bot_creator_shared/engine/command_executor.dart';
 import 'package:bot_creator_shared/engine/workflow_executor.dart';
+import 'package:bot_creator_shared/services/lavalink_service.dart';
 import 'package:bot_creator_shared/utils/interaction_listener_registry.dart';
 import 'package:bot_creator_shared/utils/template_resolver.dart';
 import 'package:bot_creator_shared/utils/global.dart';
@@ -18,6 +19,7 @@ class BotSession {
     required this.token,
     required this.store,
     required this.callbacks,
+    this.lavalinkConfig,
   }) {
     _workflowExecutor = WorkflowExecutor(store: store, callbacks: callbacks);
     _commandExecutor = CommandExecutor(
@@ -39,6 +41,7 @@ class BotSession {
   final String token;
   final BotDataStore store;
   final BotEngineCallbacks callbacks;
+  final LavalinkConfig? lavalinkConfig;
 
   late final WorkflowExecutor _workflowExecutor;
   late final CommandExecutor _commandExecutor;
@@ -46,10 +49,12 @@ class BotSession {
 
   WorkflowExecutor get workflowExecutor => _workflowExecutor;
   NyxxGateway? get gateway => _gateway;
+  LavalinkService? get lavalinkService => _lavalinkService;
   String get ownerId => _ownerId;
   int get commandCount => _commandCount;
 
   NyxxGateway? _gateway;
+  LavalinkService? _lavalinkService;
   PresenceManager? _presenceManager;
   final List<StreamSubscription<dynamic>> _subscriptions = [];
   DateTime? _startedAt;
@@ -67,16 +72,72 @@ class BotSession {
 
     final appData = await store.getApp(botId);
     final intentsMap = Map<String, bool>.from(appData['intents'] as Map? ?? {});
+
+    // Lavalink requires voice state intents — force-enable them
+    if (lavalinkConfig != null) {
+      intentsMap['Voice States'] = true;
+    }
+
     final intents = _buildGatewayIntents(intentsMap);
 
     callbacks.onLog?.call('Starting bot gateway...', botId: botId);
 
+    // Build plugins list, optionally including Lavalink
+    final localConfig = lavalinkConfig;
+    final lavalinkPlugin = LavalinkService.createPlugin(localConfig);
+    final plugins = <NyxxPlugin>[logging, cliIntegration];
+    if (lavalinkPlugin != null && localConfig != null) {
+      plugins.add(lavalinkPlugin);
+      callbacks.onLog
+          ?.call('Lavalink plugin queued (${localConfig.host}:${localConfig.port})', botId: botId);
+
+      _lavalinkService = LavalinkService(
+        plugin: lavalinkPlugin,
+        config: localConfig,
+        onLog: (msg) => callbacks.onLog?.call(msg, botId: botId),
+      );
+    }
+
     try {
+      // Start waiting for ready before connectGateway triggers afterConnect
+      Future<void>? lavalinkReadyFuture;
+      if (_lavalinkService != null) {
+        lavalinkReadyFuture = _lavalinkService!.waitForReady();
+      }
+
       _gateway = await Nyxx.connectGateway(
         token,
         intents,
-        options: GatewayClientOptions(plugins: [logging, cliIntegration]),
+        options: GatewayClientOptions(plugins: plugins),
       );
+
+      // Debug voice events
+      _gateway!.onVoiceStateUpdate.listen((event) {
+        callbacks.onLog?.call(
+          'DEBUG VOICE STATE: userId=${event.state.userId}, botId=${_gateway!.user.id}, guildId=${event.state.guildId}, channelId=${event.state.channelId}, sessionId=${event.state.sessionId}',
+          botId: botId,
+        );
+      });
+      _gateway!.onVoiceServerUpdate.listen((event) {
+        final tokenSnippet = event.token.length > 5 ? event.token.substring(0, 5) : event.token;
+        callbacks.onLog?.call(
+          'DEBUG VOICE SERVER: guildId=${event.guildId}, endpoint=${event.endpoint}, token=${tokenSnippet}...',
+          botId: botId,
+        );
+      });
+
+      // Initialize/enable Lavalink if plugin ready
+      if (lavalinkReadyFuture != null && _lavalinkService != null) {
+        // Don't block startup — Lavalink connects in background with timeout
+        unawaited(lavalinkReadyFuture.then((_) {
+          callbacks.onLog?.call('Lavalink ready — music features enabled', botId: botId);
+          _workflowExecutor.lavalinkService = _lavalinkService;
+          _lavalinkService!.monitorHealth();
+        }).catchError((e) {
+          callbacks.onLog?.call('Lavalink connection failed: $e — music disabled', botId: botId);
+          _lavalinkService = null;
+        }));
+      }
 
       _startedAt = DateTime.now();
       botStartTimes[botId] = _startedAt!;
@@ -270,6 +331,9 @@ class BotSession {
     }
     if (intentsMap['Guild Members'] == true) {
       intents |= GatewayIntents.guildMembers;
+    }
+    if (intentsMap['Voice States'] == true) {
+      intents |= GatewayIntents.guildVoiceStates;
     }
     if (intentsMap['Message Content'] == true) {
       intents |= GatewayIntents.messageContent;

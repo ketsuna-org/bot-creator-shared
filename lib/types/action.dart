@@ -78,6 +78,19 @@ enum BotCreatorActionType {
   disconnectFromVoice,
   serverMuteMember,
   serverDeafenMember,
+  // Lavalink music controls
+  playMusic,
+  pauseMusic,
+  resumeMusic,
+  skipMusic,
+  stopMusic,
+  setMusicVolume,
+  setMusicLoop,
+  seekMusic,
+  getMusicInfo,
+  // Voice channel join/leave (Lavalink)
+  joinVoice,
+  leaveVoice,
   // Emoji management
   createEmoji,
   updateEmoji,

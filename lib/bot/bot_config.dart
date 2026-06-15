@@ -89,6 +89,50 @@ class BotStatusConfig {
   }
 }
 
+class LavalinkConfig {
+  final String host;
+  final int port;
+  final String password;
+  final bool useSsl;
+
+  const LavalinkConfig({
+    this.host = 'localhost',
+    this.port = 2333,
+    this.password = 'youshallnotpass',
+    this.useSsl = false,
+  });
+
+  factory LavalinkConfig.fromJson(Map<String, dynamic> json) {
+    return LavalinkConfig(
+      host: (json['host'] ?? 'localhost').toString(),
+      port: int.tryParse((json['port'] ?? 2333).toString()) ?? 2333,
+      password: (json['password'] ?? 'youshallnotpass').toString(),
+      useSsl: json['useSsl'] == true,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'host': host,
+    'port': port,
+    'password': password,
+    'useSsl': useSsl,
+  };
+
+  void validate() {
+    if (host.trim().isEmpty) {
+      throw ArgumentError('LavalinkConfig: host cannot be empty');
+    }
+    if (password.trim().isEmpty) {
+      throw ArgumentError('LavalinkConfig: password cannot be empty');
+    }
+    if (port <= 0 || port >= 65536) {
+      throw ArgumentError(
+        'LavalinkConfig: port must be between 1 and 65535',
+      );
+    }
+  }
+}
+
 /// Immutable configuration loaded from a bot ZIP export.
 /// This is the single source of truth for the runner.
 class BotConfig {
@@ -121,6 +165,7 @@ class BotConfig {
   /// List of commands. Each entry looks like:
   /// { "id": "123456789", "name": "hello", "data": { "response": {...}, "actions": [...] } }
   final List<Map<String, dynamic>> commands;
+  final LavalinkConfig? lavalinkConfig;
 
   const BotConfig({
     required this.token,
@@ -141,6 +186,7 @@ class BotConfig {
     this.statuses = const [],
     this.presenceStatus = 'online',
     this.commands = const [],
+    this.lavalinkConfig,
   });
 
   BotConfig copyWith({
@@ -162,6 +208,7 @@ class BotConfig {
     List<BotStatusConfig>? statuses,
     String? presenceStatus,
     List<Map<String, dynamic>>? commands,
+    LavalinkConfig? lavalinkConfig,
   }) {
     return BotConfig(
       token: token ?? this.token,
@@ -185,6 +232,7 @@ class BotConfig {
       statuses: statuses ?? this.statuses,
       presenceStatus: presenceStatus ?? this.presenceStatus,
       commands: commands ?? this.commands,
+      lavalinkConfig: lavalinkConfig ?? this.lavalinkConfig,
     );
   }
 
@@ -249,6 +297,11 @@ class BotConfig {
             ) ??
             const [],
       ),
+      lavalinkConfig: json['lavalinkConfig'] != null
+          ? LavalinkConfig.fromJson(
+              Map<String, dynamic>.from(json['lavalinkConfig'] as Map),
+            )
+          : null,
     );
   }
 
@@ -271,6 +324,7 @@ class BotConfig {
     'statuses': statuses.map((s) => s.toJson()).toList(growable: false),
     'presenceStatus': presenceStatus,
     'commands': commands,
+    if (lavalinkConfig != null) 'lavalinkConfig': lavalinkConfig!.toJson(),
   };
 
   /// Validates the minimal required fields.
@@ -290,6 +344,7 @@ class BotConfig {
     for (final status in statuses) {
       status.validate();
     }
+    lavalinkConfig?.validate();
   }
 
   @override

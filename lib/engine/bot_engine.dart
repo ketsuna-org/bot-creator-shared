@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:bot_creator_shared/bot/bot_data_store.dart';
+import 'package:bot_creator_shared/bot/bot_config.dart';
 import 'package:bot_creator_shared/engine/bot_engine_callbacks.dart';
 import 'package:bot_creator_shared/engine/bot_session.dart';
 
@@ -35,11 +36,28 @@ class BotEngine {
       return;
     }
 
+    // Resolve Lavalink config from app data
+    final appData = await store.getApp(botId);
+    LavalinkConfig? lavalinkConfig;
+    if (appData['lavalinkConfig'] is Map) {
+      final raw = Map<String, dynamic>.from(appData['lavalinkConfig'] as Map);
+      if ((raw['host'] ?? '').toString().trim().isNotEmpty) {
+        lavalinkConfig = LavalinkConfig.fromJson(raw);
+        callbacks.onLog?.call(
+          'Lavalink config resolved: ${lavalinkConfig.host}:${lavalinkConfig.port} (SSL: ${lavalinkConfig.useSsl})',
+          botId: botId,
+        );
+      }
+    } else {
+      callbacks.onLog?.call('No Lavalink config found in app data — music features disabled', botId: botId);
+    }
+
     final session = BotSession(
       botId: botId,
       token: token,
       store: store,
       callbacks: callbacks,
+      lavalinkConfig: lavalinkConfig,
     );
 
     _sessions[botId] = session;

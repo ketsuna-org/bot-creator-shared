@@ -1235,6 +1235,71 @@ extension _BdfdAstTranspilationScopeDispatch on _BdfdAstTranspilationScope {
         _canvasAttachImage(node);
         return null;
 
+      // ── Lavalink Music Controls ──────────────────────────────────────────
+      case 'playmusic':
+        return Action(
+          type: BotCreatorActionType.playMusic,
+          payload: <String, dynamic>{
+            'query': _stringifyArgument(node, 0),
+            if (node.arguments.length > 1)
+              'channelId': _stringifyArgument(node, 1),
+          },
+        );
+      case 'pausemusic':
+        return Action(
+          type: BotCreatorActionType.pauseMusic,
+          payload: <String, dynamic>{},
+        );
+      case 'resumemusic':
+        return Action(
+          type: BotCreatorActionType.resumeMusic,
+          payload: <String, dynamic>{},
+        );
+      case 'skipmusic':
+        return Action(
+          type: BotCreatorActionType.skipMusic,
+          payload: <String, dynamic>{},
+        );
+      case 'stopmusic':
+        return Action(
+          type: BotCreatorActionType.stopMusic,
+          payload: <String, dynamic>{},
+        );
+      case 'setmusicvolume':
+        return Action(
+          type: BotCreatorActionType.setMusicVolume,
+          payload: <String, dynamic>{
+            'volume': _stringifyArgument(node, 0),
+          },
+        );
+      case 'setmusicloop':
+        return Action(
+          type: BotCreatorActionType.setMusicLoop,
+          payload: <String, dynamic>{
+            'loop': _stringifyArgument(node, 0),
+          },
+        );
+      case 'seekmusic':
+        return Action(
+          type: BotCreatorActionType.seekMusic,
+          payload: <String, dynamic>{
+            'position': _stringifyArgument(node, 0),
+          },
+        );
+      case 'joinvoice':
+        return Action(
+          type: BotCreatorActionType.joinVoice,
+          payload: <String, dynamic>{
+            if (node.arguments.isNotEmpty)
+              'channelId': _stringifyArgument(node, 0),
+          },
+        );
+      case 'leavevoice':
+        return Action(
+          type: BotCreatorActionType.leaveVoice,
+          payload: <String, dynamic>{},
+        );
+
       default:
         if (pendingResponse != null && node.arguments.isEmpty) {
           // Unknown no-arg tokens (for example `$test`) are treated as

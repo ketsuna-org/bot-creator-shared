@@ -810,6 +810,23 @@ extension _BdfdAstTranspilationScopeInlineRuntime
         return '((getTimestamp))';
       case 'gettimestampms':
         return '((getTimestampMs))';
+      // Music info (inline — return text)
+      case 'lavalinkplaying':
+        return '((lavalink.title))';
+      case 'lavalinkauthor':
+        return '((lavalink.author))';
+      case 'lavalinkduration':
+        return '((lavalink.duration))';
+      case 'lavalinkposition':
+        return '((lavalink.position))';
+      case 'lavalinkqueuesize':
+        return '((lavalink.queueSize))';
+      case 'lavalinkvolume':
+        return '((lavalink.volume))';
+      case 'lavalinkispaused':
+        return '((lavalink.isPaused))';
+      case 'lavalinkislooping':
+        return '((lavalink.isLooping))';
       // Misc inline
       case 'getserverinvite':
         if (node.arguments.isNotEmpty) {

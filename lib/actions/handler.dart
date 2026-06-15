@@ -27,6 +27,8 @@ import 'package:bot_creator_shared/actions/executors/control_flow_executor.dart'
 import 'package:bot_creator_shared/actions/executors/http_executor.dart';
 import 'package:bot_creator_shared/actions/executors/variables_executor.dart';
 import 'package:bot_creator_shared/actions/executors/webhooks_executor.dart';
+import 'package:bot_creator_shared/actions/executors/lavalink_executor.dart';
+import 'package:bot_creator_shared/services/lavalink_service.dart';
 import 'package:bot_creator_shared/bot/bot_data_store.dart';
 import 'package:bot_creator_shared/utils/runtime_variables.dart';
 import 'package:bot_creator_shared/engine/discord_entity_fetcher.dart';
@@ -73,6 +75,9 @@ Future<Map<String, String>> handleActions(
   /// When provided, tracks which Action objects have already been scanned for
   /// placeholders in this session to avoid redundant regex processing.
   Set<dynamic>? hydratedActions,
+
+  /// When provided, enables Lavalink music actions (playMusic, pauseMusic, etc).
+  LavalinkService? lavalinkService,
 }) async {
   final results = <String, String>{};
   final resolvedFallbackChannelId =
@@ -303,6 +308,51 @@ Future<Map<String, String>> handleActions(
       continue;
     }
 
+    // Lavalink music actions
+    if (lavalinkService != null &&
+        (action.type == BotCreatorActionType.playMusic || action.type == BotCreatorActionType.joinVoice)) {
+      // Auto-inject userId for voice channel resolution if both fields are missing or empty
+      final payloadUserId = action.payload['userId']?.toString().trim();
+      final payloadChannelId = action.payload['channelId']?.toString().trim();
+      if ((payloadUserId == null || payloadUserId.isEmpty) &&
+          (payloadChannelId == null || payloadChannelId.isEmpty)) {
+        final userId = interaction?.user?.id.toString() ?? variables['userId'];
+        if (userId != null && userId.isNotEmpty) {
+          action.payload['userId'] = userId;
+          onLog?.call('Lavalink: auto-injected userId=$userId for action ${action.type.name}');
+        } else {
+          onLog?.call('Lavalink: could not resolve userId — interaction=${interaction != null}, userId=${variables['userId']}');
+        }
+      }
+    }
+
+    if (lavalinkService != null) {
+      // Resolve templates in action payload before execution
+      final resolvedPayload = <String, dynamic>{};
+      for (final entry in action.payload.entries) {
+        if (entry.value is String) {
+          resolvedPayload[entry.key] = resolveValue(entry.value as String);
+        } else {
+          resolvedPayload[entry.key] = entry.value;
+        }
+      }
+
+      final lavalinkHandled = await executeLavalinkAction(
+        type: action.type,
+        client: client,
+        guildId: guildId!,
+        payload: resolvedPayload,
+        results: results,
+        resultKey: resultKey,
+        lavalinkService: lavalinkService,
+      );
+      if (lavalinkHandled) {
+        results[resultKey] = results[resultKey] ?? '';
+        recordTrace();
+        continue;
+      }
+    }
+
     final handledByComponentsInteractionsExecutor =
         await executeComponentsInteractionsAction(
           type: action.type,
@@ -505,6 +555,17 @@ Future<Map<String, String>> handleActions(
         case BotCreatorActionType.stop:
         case BotCreatorActionType.randomChoice:
         case BotCreatorActionType.deferInteraction:
+        case BotCreatorActionType.playMusic:
+        case BotCreatorActionType.pauseMusic:
+        case BotCreatorActionType.resumeMusic:
+        case BotCreatorActionType.skipMusic:
+        case BotCreatorActionType.stopMusic:
+        case BotCreatorActionType.setMusicVolume:
+        case BotCreatorActionType.setMusicLoop:
+        case BotCreatorActionType.seekMusic:
+        case BotCreatorActionType.getMusicInfo:
+        case BotCreatorActionType.joinVoice:
+        case BotCreatorActionType.leaveVoice:
           throw StateError(
             'Action ${action.type.name} should have been handled by an executor before switch dispatch.',
           );

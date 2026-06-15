@@ -3,6 +3,7 @@ import 'package:nyxx/nyxx.dart';
 import 'package:bot_creator_shared/bot/bot_data_store.dart';
 import 'package:bot_creator_shared/actions/handler.dart';
 import 'package:bot_creator_shared/actions/interaction_response.dart';
+import 'package:bot_creator_shared/services/lavalink_service.dart';
 import 'package:bot_creator_shared/types/action.dart';
 import 'package:bot_creator_shared/utils/template_resolver.dart';
 import 'package:bot_creator_shared/utils/bdfd_compiler.dart';
@@ -18,6 +19,9 @@ class WorkflowExecutor {
 
   final BotDataStore store;
   final BotEngineCallbacks callbacks;
+
+  /// Set by [BotSession] after Lavalink plugin is ready.
+  LavalinkService? lavalinkService;
 
   /// Executes a list of actions for a given context.
   Future<Map<String, String>> executeActions({
@@ -46,6 +50,8 @@ class WorkflowExecutor {
     try {
       final isCapturing = callbacks.isDebugReplayCapturing?.call(botId) ?? false;
 
+      _populateLavalinkVariables(runtimeVariables, context, fallbackGuildId);
+
       final results = await handleActions(
         gateway,
         context is Interaction ? context : null,
@@ -53,8 +59,11 @@ class WorkflowExecutor {
         store: store,
         botId: botId,
         variables: runtimeVariables,
-        resolveTemplate: (input) =>
-            resolveTemplatePlaceholders(input, runtimeVariables),
+        lavalinkService: lavalinkService,
+        resolveTemplate: (input) {
+          _populateLavalinkVariables(runtimeVariables, context, fallbackGuildId);
+          return resolveTemplatePlaceholders(input, runtimeVariables);
+        },
         onLog: (msg) => callbacks.onLog?.call(msg, botId: botId),
         fallbackChannelId: fallbackChannelId,
         fallbackGuildId: fallbackGuildId,
@@ -353,5 +362,79 @@ class WorkflowExecutor {
         ..dependOn.addAll(action.dependOn)
         ..error.addAll(action.error);
     }).toList();
+  }
+
+  void _populateLavalinkVariables(
+    Map<String, String> variables,
+    dynamic context,
+    Snowflake? fallbackGuildId,
+  ) {
+    Snowflake? guildId = fallbackGuildId;
+    if (guildId == null && context != null) {
+      try {
+        guildId = (context as dynamic).guildId as Snowflake?;
+      } catch (_) {}
+      if (guildId == null) {
+        try {
+          guildId = (context as dynamic).message?.guildId as Snowflake?;
+        } catch (_) {}
+      }
+      if (guildId == null) {
+        try {
+          guildId = (context as dynamic).message?.guild?.id as Snowflake?;
+        } catch (_) {}
+      }
+      if (guildId == null) {
+        try {
+          guildId = (context as dynamic).guild?.id as Snowflake?;
+        } catch (_) {}
+      }
+    }
+
+    final service = lavalinkService;
+    if (guildId != null && service != null) {
+      final session = service.session(guildId);
+      if (session != null) {
+        final current = session.currentTrack;
+        variables['lavalink.title'] = current?.info.title ?? '';
+        variables['lavalink.author'] = current?.info.author ?? '';
+
+        final duration = current?.info.length ?? Duration.zero;
+        variables['lavalink.duration'] = _formatDuration(duration);
+
+        final position = session.position;
+        variables['lavalink.position'] = _formatDuration(position);
+
+        variables['lavalink.queueSize'] = session.queueSize.toString();
+        variables['lavalink.volume'] = session.volume.toString();
+        variables['lavalink.isPaused'] = session.isPaused.toString();
+        variables['lavalink.isLooping'] = session.loop.toString();
+        return;
+      }
+    }
+
+    variables['lavalink.title'] = '';
+    variables['lavalink.author'] = '';
+    variables['lavalink.duration'] = '0:00';
+    variables['lavalink.position'] = '0:00';
+    variables['lavalink.queueSize'] = '0';
+    variables['lavalink.volume'] = '100';
+    variables['lavalink.isPaused'] = 'false';
+    variables['lavalink.isLooping'] = 'false';
+  }
+
+  String _formatDuration(Duration duration) {
+    if (duration == Duration.zero) return '0:00';
+    final hours = duration.inHours;
+    final minutes = duration.inMinutes.remainder(60);
+    final seconds = duration.inSeconds.remainder(60);
+
+    final secondsStr = seconds.toString().padLeft(2, '0');
+    if (hours > 0) {
+      final minutesStr = minutes.toString().padLeft(2, '0');
+      return '$hours:$minutesStr:$secondsStr';
+    } else {
+      return '$minutes:$secondsStr';
+    }
   }
 }
