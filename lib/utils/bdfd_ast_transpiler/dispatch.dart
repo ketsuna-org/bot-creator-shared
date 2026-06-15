@@ -931,6 +931,21 @@ extension _BdfdAstTranspilationScopeDispatch on _BdfdAstTranspilationScope {
       case 'canvascompositeimage':
         _canvasCompositeImage(node);
         return null;
+      case 'canvasprogressbar':
+        _canvasProgressBar(node);
+        return null;
+      case 'canvassetpixel':
+        _canvasSetPixel(node);
+        return null;
+      case 'canvasinvert':
+        _canvasInvert(node);
+        return null;
+      case 'canvasgrayscale':
+        _canvasGrayscale(node);
+        return null;
+      case 'canvasrotate':
+        _canvasRotate(node);
+        return null;
       case 'attachimage':
         _canvasAttachImage(node);
         return null;

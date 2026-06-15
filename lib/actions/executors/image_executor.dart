@@ -87,6 +87,12 @@ class LruCache<V> {
 /// - `drawText` — draws text
 /// - `drawCircle` — draws a circle (filled or outlined)
 /// - `drawRect` — draws a rectangle (filled or outlined)
+/// - `drawLine` — draws a line between two points
+/// - `progressBar` — draws a labeled progress bar
+/// - `setPixel` — sets a single pixel
+/// - `invert` — inverts the colors of the whole canvas
+/// - `grayscale` — converts the whole canvas to grayscale
+/// - `rotate` — rotates the whole canvas by an angle in degrees
 Future<void> executeRuntimeImageBlock({
   required Map<String, dynamic> payload,
   required String resultKey,
@@ -201,6 +207,21 @@ Future<({String base64Png, String imageName})> _executeImageBlockInIsolate(
           break;
         case 'drawLine':
           canvas = _opDrawLine(adjustedOp, resolveValue, canvas);
+          break;
+        case 'progressBar':
+          canvas = _opProgressBar(adjustedOp, resolveValue, canvas);
+          break;
+        case 'setPixel':
+          canvas = _opSetPixel(adjustedOp, resolveValue, canvas);
+          break;
+        case 'invert':
+          canvas = _opInvert(adjustedOp, resolveValue, canvas);
+          break;
+        case 'grayscale':
+          canvas = _opGrayscale(adjustedOp, resolveValue, canvas);
+          break;
+        case 'rotate':
+          canvas = _opRotate(adjustedOp, resolveValue, canvas);
           break;
         case 'container':
           _registerContainer(rawOp, resolveValue, containers);
@@ -1003,6 +1024,141 @@ img.Image? _opDrawLine(
   return current;
 }
 
+/// Draws a progress bar.
+///
+/// Parameters (from $canvasProgressBar):
+/// - `x`, `y` — top-left position
+/// - `width`, `height` — bar dimensions
+/// - `percentage` (0–100) — fill level
+/// - `barColor` — filled portion color
+/// - `trackColor` — background (unfilled) color
+/// - `textColor` — percentage label color
+/// - `borderWidth` (default 0) — frame thickness, drawn in barColor
+///   (BDFD has no separate border-color argument)
+/// - `orientation` — `horizontal` (default) or `vertical`
+/// - `fontSize` (default 14) — percentage label size
+img.Image? _opProgressBar(
+    Map rawOp, String Function(String) resolveValue, img.Image? current) {
+  if (current == null) return null;
+
+  final x = _parseInt(rawOp['x'], resolveValue);
+  final y = _parseInt(rawOp['y'], resolveValue);
+  final width = _parseInt(rawOp['width'], resolveValue, defaultValue: 100);
+  final height = _parseInt(rawOp['height'], resolveValue, defaultValue: 20);
+  var percentage =
+      _parseInt(rawOp['percentage'], resolveValue, defaultValue: 0);
+  if (percentage < 0) percentage = 0;
+  if (percentage > 100) percentage = 100;
+  final barColor = _parseColor(rawOp['barColor'], resolveValue);
+  final trackColor = _parseColor(rawOp['trackColor'], resolveValue);
+  final textColor = _parseColor(rawOp['textColor'], resolveValue);
+  final borderWidth =
+      _parseInt(rawOp['borderWidth'], resolveValue, defaultValue: 0)
+          .clamp(0, 50);
+  final vertical =
+      _resolve(rawOp['orientation'], resolveValue).toLowerCase().trim() ==
+          'vertical';
+  final fontSize =
+      _parseInt(rawOp['fontSize'], resolveValue, defaultValue: 14);
+
+  // Track (full bar area).
+  img.fillRect(current,
+      x1: x, y1: y, x2: x + width, y2: y + height, color: trackColor);
+
+  // Filled portion.
+  final fill = percentage / 100.0;
+  if (vertical) {
+    final fillH = (height * fill).round();
+    if (fillH > 0) {
+      img.fillRect(current,
+          x1: x,
+          y1: y + height - fillH,
+          x2: x + width,
+          y2: y + height,
+          color: barColor);
+    }
+  } else {
+    final fillW = (width * fill).round();
+    if (fillW > 0) {
+      img.fillRect(current,
+          x1: x, y1: y, x2: x + fillW, y2: y + height, color: barColor);
+    }
+  }
+
+  // Border frame (in barColor by default — BDFD has no separate border color arg).
+  if (borderWidth > 0) {
+    final bw = borderWidth;
+    img.fillRect(current,
+        x1: x, y1: y, x2: x + width, y2: y + bw, color: barColor);
+    img.fillRect(current,
+        x1: x,
+        y1: y + height - bw,
+        x2: x + width,
+        y2: y + height,
+        color: barColor);
+    img.fillRect(current,
+        x1: x, y1: y, x2: x + bw, y2: y + height, color: barColor);
+    img.fillRect(current,
+        x1: x + width - bw,
+        y1: y,
+        x2: x + width,
+        y2: y + height,
+        color: barColor);
+  }
+
+  // Percentage label, centered.
+  final font = _selectFont(fontSize);
+  final label = '$percentage%';
+  final tw = _measureTextWidth(label, font);
+  final th = font.lineHeight;
+  final tx = x + ((width - tw) / 2).round();
+  var ty = y + ((height - th) / 2).round();
+  if (ty < y) ty = y;
+  img.drawString(current, label, font: font, x: tx, y: ty, color: textColor);
+
+  return current;
+}
+
+/// Sets a single pixel to [color].
+/// Signature: $canvasSetPixel[x;y;color]
+img.Image? _opSetPixel(
+    Map rawOp, String Function(String) resolveValue, img.Image? current) {
+  if (current == null) return null;
+  final x = _parseInt(rawOp['x'], resolveValue);
+  final y = _parseInt(rawOp['y'], resolveValue);
+  final color = _parseColor(rawOp['color'], resolveValue);
+  if (x >= 0 && x < current.width && y >= 0 && y < current.height) {
+    current.setPixelRgba(x, y, color.r, color.g, color.b, color.a);
+  }
+  return current;
+}
+
+/// Inverts the colors of the whole canvas (RGB channels).
+img.Image? _opInvert(
+    Map rawOp, String Function(String) resolveValue, img.Image? current) {
+  if (current == null) return null;
+  img.invert(current);
+  return current;
+}
+
+/// Converts the whole canvas to grayscale.
+img.Image? _opGrayscale(
+    Map rawOp, String Function(String) resolveValue, img.Image? current) {
+  if (current == null) return null;
+  img.grayscale(current);
+  return current;
+}
+
+/// Rotates the whole canvas by [angle] degrees (returns a new image).
+/// Signature: $canvasRotate[degrees]
+img.Image? _opRotate(
+    Map rawOp, String Function(String) resolveValue, img.Image? current) {
+  if (current == null) return null;
+  final angle = double.tryParse(_resolve(rawOp['angle'], resolveValue)) ?? 0;
+  if (angle == 0) return current;
+  return img.copyRotate(current, angle: angle);
+}
+
 /// Blends a source color onto the destination pixel at ([dx], [dy]) using
 /// the named [blendMode] (multiply, screen, overlay, darken, lighten,
 /// difference, hardLight, softLight). Alpha is applied from the source
@@ -1111,6 +1267,8 @@ void _adjustPositionKeys(Map<String, dynamic> op, int dx, int dy) {
     case 'drawCircle':
     case 'loadImage':
     case 'compositeImage':
+    case 'progressBar':
+    case 'setPixel':
       _shiftKey(op, 'x', dx);
       _shiftKey(op, 'y', dy);
       break;

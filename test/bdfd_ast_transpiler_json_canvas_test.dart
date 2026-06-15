@@ -258,6 +258,112 @@ void main() {
             (result.actions[1].payload['operations'] as List?) ?? [];
         expect(ops2[0]['width'], '100');
       });
+
+      test(
+          r'$canvasProgressBar transpiles to progressBar op with all fields',
+          () {
+        final result = BdfdAstTranspiler().transpile(
+          const BdfdScriptAst(nodes: [
+            BdfdFunctionCallAst(
+              name: r'$canvasCreate',
+              arguments: [
+                <BdfdAstNode>[BdfdTextAst('bar')],
+                <BdfdAstNode>[BdfdTextAst('800')],
+                <BdfdAstNode>[BdfdTextAst('200')],
+                <BdfdAstNode>[BdfdTextAst('#2b2d31')],
+              ],
+            ),
+            // The user's exact example:
+            // $canvasProgressBar[100;130;800;60;75;#00FFAA;#2b2d31;#ffffff;3;horizontal;30]
+            BdfdFunctionCallAst(
+              name: r'$canvasProgressBar',
+              arguments: [
+                <BdfdAstNode>[BdfdTextAst('100')],
+                <BdfdAstNode>[BdfdTextAst('130')],
+                <BdfdAstNode>[BdfdTextAst('800')],
+                <BdfdAstNode>[BdfdTextAst('60')],
+                <BdfdAstNode>[BdfdTextAst('75')],
+                <BdfdAstNode>[BdfdTextAst('#00FFAA')],
+                <BdfdAstNode>[BdfdTextAst('#2b2d31')],
+                <BdfdAstNode>[BdfdTextAst('#ffffff')],
+                <BdfdAstNode>[BdfdTextAst('3')],
+                <BdfdAstNode>[BdfdTextAst('horizontal')],
+                <BdfdAstNode>[BdfdTextAst('30')],
+              ],
+            ),
+          ]),
+        );
+
+        expect(result.diagnostics, isEmpty);
+        expect(result.actions, hasLength(1));
+        expect(result.actions.single.type,
+            BotCreatorActionType.runtimeImageBlock);
+
+        final operations =
+            (result.actions.single.payload['operations'] as List?) ?? [];
+        expect(operations, hasLength(2));
+        expect(operations[0]['op'], 'create');
+        final pb = operations[1];
+        expect(pb['op'], 'progressBar');
+        expect(pb['x'], '100');
+        expect(pb['y'], '130');
+        expect(pb['width'], '800');
+        expect(pb['height'], '60');
+        expect(pb['percentage'], '75');
+        expect(pb['barColor'], '#00FFAA');
+        expect(pb['trackColor'], '#2b2d31');
+        expect(pb['textColor'], '#ffffff');
+        expect(pb['borderWidth'], '3');
+        expect(pb['orientation'], 'horizontal');
+        expect(pb['fontSize'], '30');
+      });
+
+      test(
+          'setPixel, invert, grayscale, rotate transpile without diagnostics',
+          () {
+        final result = BdfdAstTranspiler().transpile(
+          const BdfdScriptAst(nodes: [
+            BdfdFunctionCallAst(
+              name: r'$canvasCreate',
+              arguments: [
+                <BdfdAstNode>[BdfdTextAst('c')],
+                <BdfdAstNode>[BdfdTextAst('10')],
+                <BdfdAstNode>[BdfdTextAst('10')],
+                <BdfdAstNode>[BdfdTextAst('white')],
+              ],
+            ),
+            BdfdFunctionCallAst(
+              name: r'$canvasSetPixel',
+              arguments: [
+                <BdfdAstNode>[BdfdTextAst('1')],
+                <BdfdAstNode>[BdfdTextAst('2')],
+                <BdfdAstNode>[BdfdTextAst('red')],
+              ],
+            ),
+            BdfdFunctionCallAst(name: r'$canvasInvert', arguments: []),
+            BdfdFunctionCallAst(name: r'$canvasGrayscale', arguments: []),
+            BdfdFunctionCallAst(
+              name: r'$canvasRotate',
+              arguments: [
+                <BdfdAstNode>[BdfdTextAst('90')],
+              ],
+            ),
+          ]),
+        );
+
+        expect(result.diagnostics, isEmpty);
+        expect(result.actions, hasLength(1));
+        expect(
+            result.actions.single.type, BotCreatorActionType.runtimeImageBlock);
+
+        final operations =
+            (result.actions.single.payload['operations'] as List?) ?? [];
+        expect(operations.map((o) => o['op']).toList(),
+            ['create', 'setPixel', 'invert', 'grayscale', 'rotate']);
+        expect(operations[1]['x'], '1');
+        expect(operations[1]['color'], 'red');
+        expect(operations[4]['angle'], '90');
+      });
     });
   });
 }

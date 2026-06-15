@@ -19,6 +19,11 @@ extension _BdfdAstTranspilationScopeImageCanvas on _BdfdAstTranspilationScope {
       case 'canvasdrawrect':
       case 'canvasdrawline':
       case 'canvascompositeimage':
+      case 'canvasprogressbar':
+      case 'canvassetpixel':
+      case 'canvasinvert':
+      case 'canvasgrayscale':
+      case 'canvasrotate':
       case 'attachimage':
         return true;
       default:
@@ -215,6 +220,64 @@ extension _BdfdAstTranspilationScopeImageCanvas on _BdfdAstTranspilationScope {
       'width': _stringifyArgument(node, 3),
       'height': _stringifyArgument(node, 4),
       if (node.arguments.length > 5) 'color': _stringifyArgument(node, 5),
+    });
+  }
+
+  /// Adds a progressBar operation to the deferred image block.
+  /// Signature: $canvasProgressBar[x;y;width;height;percentage;barColor;trackColor;textColor;borderWidth?;orientation?;fontSize?;container?]
+  void _canvasProgressBar(BdfdFunctionCallAst node) {
+    if (!_deferredImageMode) return;
+    _deferredImageOps.add(<String, dynamic>{
+      'op': 'progressBar',
+      'x': _stringifyArgument(node, 0),
+      'y': _stringifyArgument(node, 1),
+      'width': _stringifyArgument(node, 2),
+      'height': _stringifyArgument(node, 3),
+      'percentage': _stringifyArgument(node, 4),
+      'barColor': _stringifyArgument(node, 5),
+      'trackColor': _stringifyArgument(node, 6),
+      'textColor': _stringifyArgument(node, 7),
+      if (node.arguments.length > 8) 'borderWidth': _stringifyArgument(node, 8),
+      if (node.arguments.length > 9) 'orientation': _stringifyArgument(node, 9),
+      if (node.arguments.length > 10) 'fontSize': _stringifyArgument(node, 10),
+      if (node.arguments.length > 11) 'container': _stringifyArgument(node, 11),
+    });
+  }
+
+  /// Adds a setPixel operation to the deferred image block.
+  /// Signature: $canvasSetPixel[x;y;color;container?]
+  void _canvasSetPixel(BdfdFunctionCallAst node) {
+    if (!_deferredImageMode) return;
+    _deferredImageOps.add(<String, dynamic>{
+      'op': 'setPixel',
+      'x': _stringifyArgument(node, 0),
+      'y': _stringifyArgument(node, 1),
+      'color': _stringifyArgument(node, 2),
+      if (node.arguments.length > 3) 'container': _stringifyArgument(node, 3),
+    });
+  }
+
+  /// Adds an invert operation (inverts the whole canvas) to the deferred image block.
+  /// Signature: $canvasInvert[]
+  void _canvasInvert(BdfdFunctionCallAst node) {
+    if (!_deferredImageMode) return;
+    _deferredImageOps.add(<String, dynamic>{'op': 'invert'});
+  }
+
+  /// Adds a grayscale operation (whole canvas) to the deferred image block.
+  /// Signature: $canvasGrayscale[]
+  void _canvasGrayscale(BdfdFunctionCallAst node) {
+    if (!_deferredImageMode) return;
+    _deferredImageOps.add(<String, dynamic>{'op': 'grayscale'});
+  }
+
+  /// Adds a rotate operation (whole canvas) to the deferred image block.
+  /// Signature: $canvasRotate[degrees]
+  void _canvasRotate(BdfdFunctionCallAst node) {
+    if (!_deferredImageMode) return;
+    _deferredImageOps.add(<String, dynamic>{
+      'op': 'rotate',
+      'angle': _stringifyArgument(node, 0),
     });
   }
 
