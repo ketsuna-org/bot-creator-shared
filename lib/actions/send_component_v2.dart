@@ -274,6 +274,21 @@ ComponentBuilder buildComponentNode(
               ? buildComponentNode(node.component!, resolve)
               : TextDisplayComponentBuilder(content: ''),
     );
+  } else if (node is ModalTextInputNode) {
+    return TextInputBuilder(
+      customId: resolve(node.customId),
+      label: resolve(node.label),
+      style:
+          node.style == BcTextInputStyle.paragraph
+              ? TextInputStyle.paragraph
+              : TextInputStyle.short,
+      placeholder:
+          node.placeholder.isNotEmpty ? resolve(node.placeholder) : null,
+      value: node.value.isNotEmpty ? resolve(node.value) : null,
+      isRequired: node.required ? true : null,
+      minLength: node.minLength,
+      maxLength: node.maxLength,
+    );
   } else if (node is FileUploadNode) {
     return FileUploadComponentBuilder(
       customId: resolve(node.customId),
@@ -349,15 +364,12 @@ List<ComponentBuilder> buildComponentNodes({
       if (node.components.isNotEmpty) {
         result.add(buildComponentNode(node, resolve));
       }
-    } else if (node is ButtonNode || node is CheckboxNode) {
+    } else if (node is ButtonNode) {
       currentRowComponents.add(buildComponentNode(node, resolve));
       if (currentRowComponents.length >= 5) {
         flushActionRow();
       }
-    } else if (node is SelectMenuNode ||
-        node is RadioGroupNode ||
-        node is CheckboxGroupNode ||
-        node is FileUploadNode) {
+    } else if (node is SelectMenuNode) {
       flushActionRow();
       result.add(
         ActionRowBuilder(components: [buildComponentNode(node, resolve)]),

@@ -95,8 +95,12 @@ class _BdfdAstTranspilationScope {
   int _loopDepth = 0;
   Map<String, int> _loopVariables = <String, int>{};
   Set<String>? _runtimeLoopVarNames;
-  final List<Map<String, dynamic>> _pendingModalInputs =
+  final List<Map<String, dynamic>> _pendingModalComponents =
       <Map<String, dynamic>>[];
+  /// Tracks the custom ID of the most recently added modal radio/checkbox
+  /// group so that subsequent `addradiogroupoption` /
+  /// `addcheckboxgroupoption` calls know where to append options.
+  String? _pendingModalGroupId;
 
   List<Action> transpileScript(BdfdScriptAst script) {
     return _transpileNodes(script.nodes);

@@ -423,6 +423,71 @@ extension _BdfdAstTranspilationScopeDispatch on _BdfdAstTranspilationScope {
           'content': _stringifyArgument(node, 0),
         });
         return true;
+      // ── New message component functions ────────────────────────
+      case 'addfile':
+        final fileUrl = _stringifyArgument(node, 0);
+        final fileSpoiler = _parseBooleanLike(_stringifyArgument(node, 1));
+        response.addComponent(<String, dynamic>{
+          'type': 'file',
+          'url': fileUrl,
+          if (fileSpoiler) 'spoiler': true,
+        });
+        return true;
+      case 'addradiogroupoption':
+        final rgoMenuId = _stringifyArgument(node, 0);
+        final rgoLabel = _stringifyArgument(node, 1);
+        final rgoValue = _stringifyArgument(node, 2);
+        final rgoDesc = _stringifyArgument(node, 3);
+        final rgoDefault =
+            _parseBooleanLike(_stringifyArgument(node, 4));
+        final resolvedGroupId =
+            rgoMenuId.isNotEmpty
+                ? rgoMenuId
+                : (_pendingModalGroupId ?? '');
+        // Try modal components first, then fall back to message components.
+        var appended = false;
+        for (var i = _pendingModalComponents.length - 1;
+            i >= 0 && !appended;
+            i--) {
+          final wrapper = _pendingModalComponents[i];
+          if (wrapper['type'] != 'label') continue;
+          final child = wrapper['component'];
+          if (child is! Map) continue;
+          if (child['type'] != 'radioGroup') continue;
+          if (resolvedGroupId.isNotEmpty &&
+              child['customId'] != resolvedGroupId) continue;
+          final options =
+              (child['options'] as List<Map<String, dynamic>>?) ??
+              <Map<String, dynamic>>[];
+          options.add(<String, dynamic>{
+            'label': rgoLabel,
+            'value': rgoValue,
+            if (rgoDesc.isNotEmpty) 'description': rgoDesc,
+            'default': rgoDefault,
+          });
+          child['options'] = options;
+          appended = true;
+        }
+        if (!appended) {
+          for (var i = response._components.length - 1; i >= 0; i--) {
+            final comp = response._components[i];
+            if (comp['type'] != 'radioGroup') continue;
+            if (resolvedGroupId.isNotEmpty &&
+                comp['customId'] != resolvedGroupId) continue;
+            final options =
+                (comp['options'] as List<Map<String, dynamic>>?) ??
+                <Map<String, dynamic>>[];
+            options.add(<String, dynamic>{
+              'label': rgoLabel,
+              'value': rgoValue,
+              if (rgoDesc.isNotEmpty) 'description': rgoDesc,
+              'default': rgoDefault,
+            });
+            comp['options'] = options;
+            break;
+          }
+        }
+        return true;
       case 'reply':
         if (node.arguments.isEmpty) {
           // $reply (0 args) -> reply to the author's message.
@@ -439,6 +504,60 @@ extension _BdfdAstTranspilationScopeDispatch on _BdfdAstTranspilationScope {
           }
         }
         return false;
+      case 'addcheckboxgroupoption':
+        final cgoMenuId = _stringifyArgument(node, 0);
+        final cgoLabel = _stringifyArgument(node, 1);
+        final cgoValue = _stringifyArgument(node, 2);
+        final cgoDesc = _stringifyArgument(node, 3);
+        final cgoDefault =
+            _parseBooleanLike(_stringifyArgument(node, 4));
+        final resolvedGroupIdC =
+            cgoMenuId.isNotEmpty
+                ? cgoMenuId
+                : (_pendingModalGroupId ?? '');
+        var appended = false;
+        for (var i = _pendingModalComponents.length - 1;
+            i >= 0 && !appended;
+            i--) {
+          final wrapper = _pendingModalComponents[i];
+          if (wrapper['type'] != 'label') continue;
+          final child = wrapper['component'];
+          if (child is! Map) continue;
+          if (child['type'] != 'checkboxGroup') continue;
+          if (resolvedGroupIdC.isNotEmpty &&
+              child['customId'] != resolvedGroupIdC) continue;
+          final options =
+              (child['options'] as List<Map<String, dynamic>>?) ??
+              <Map<String, dynamic>>[];
+          options.add(<String, dynamic>{
+            'label': cgoLabel,
+            'value': cgoValue,
+            if (cgoDesc.isNotEmpty) 'description': cgoDesc,
+            'default': cgoDefault,
+          });
+          child['options'] = options;
+          appended = true;
+        }
+        if (!appended) {
+          for (var i = response._components.length - 1; i >= 0; i--) {
+            final comp = response._components[i];
+            if (comp['type'] != 'checkboxGroup') continue;
+            if (resolvedGroupIdC.isNotEmpty &&
+                comp['customId'] != resolvedGroupIdC) continue;
+            final options =
+                (comp['options'] as List<Map<String, dynamic>>?) ??
+                <Map<String, dynamic>>[];
+            options.add(<String, dynamic>{
+              'label': cgoLabel,
+              'value': cgoValue,
+              if (cgoDesc.isNotEmpty) 'description': cgoDesc,
+              'default': cgoDefault,
+            });
+            comp['options'] = options;
+            break;
+          }
+        }
+        return true;
       case 'ephemeral':
         response._ephemeral = true;
         return true;
@@ -781,7 +900,7 @@ extension _BdfdAstTranspilationScopeDispatch on _BdfdAstTranspilationScope {
       case 'newmodal':
         return _buildNewModalAction(node);
       case 'addtextinput':
-        _pendingModalInputs.add(<String, dynamic>{
+        _pendingModalComponents.add(<String, dynamic>{
           'customId': _stringifyArgument(node, 0),
           'style': _stringifyArgument(node, 1),
           'label': _stringifyArgument(node, 2),
@@ -798,6 +917,164 @@ extension _BdfdAstTranspilationScopeDispatch on _BdfdAstTranspilationScope {
             'value': _stringifyArgument(node, 6),
           if (_stringifyArgument(node, 7).isNotEmpty)
             'placeholder': _stringifyArgument(node, 7),
+        });
+        return null;
+      // ── New modal component functions (Label-wrapped) ─────────
+      case 'addmodaltextdisplay':
+        final mtdLabel = _stringifyArgument(node, 0);
+        final mtdDesc = _stringifyArgument(node, 1);
+        final mtdContent = _stringifyArgument(node, 2);
+        _pendingModalComponents.add(<String, dynamic>{
+          'type': 'label',
+          'label': mtdLabel,
+          if (mtdDesc.isNotEmpty) 'description': mtdDesc,
+          'component': <String, dynamic>{
+            'type': 'textDisplay',
+            'content': mtdContent,
+          },
+        });
+        return null;
+      case 'addmodaltextinput':
+        final mtiLabel = _stringifyArgument(node, 0);
+        final mtiDesc = _stringifyArgument(node, 1);
+        final mtiCustomId = _stringifyArgument(node, 2);
+        final mtiStyle = _stringifyArgument(node, 3);
+        final mtiMinStr = _stringifyArgument(node, 4);
+        final mtiMaxStr = _stringifyArgument(node, 5);
+        final mtiRequired = _parseBooleanLike(
+          _stringifyArgument(node, 6).isEmpty
+              ? 'yes'
+              : _stringifyArgument(node, 6),
+        );
+        final mtiValue = _stringifyArgument(node, 7);
+        final mtiPlaceholder = _stringifyArgument(node, 8);
+        _pendingModalComponents.add(<String, dynamic>{
+          'type': 'label',
+          'label': mtiLabel,
+          if (mtiDesc.isNotEmpty) 'description': mtiDesc,
+          'component': <String, dynamic>{
+            'type': 'textInput',
+            'customId': mtiCustomId,
+            'style': mtiStyle.isNotEmpty ? mtiStyle : 'short',
+            if (mtiMinStr.isNotEmpty)
+              'minLength': int.tryParse(mtiMinStr) ?? 0,
+            if (mtiMaxStr.isNotEmpty)
+              'maxLength': int.tryParse(mtiMaxStr) ?? 4000,
+            'required': mtiRequired,
+            if (mtiValue.isNotEmpty) 'value': mtiValue,
+            if (mtiPlaceholder.isNotEmpty) 'placeholder': mtiPlaceholder,
+          },
+        });
+        return null;
+      case 'addmodalselect':
+        final msType = _stringifyArgument(node, 0).trim().toLowerCase();
+        final msLabel = _stringifyArgument(node, 1);
+        final msDesc = _stringifyArgument(node, 2);
+        final msCustomId = _stringifyArgument(node, 3);
+        final msPlaceholder = _stringifyArgument(node, 4);
+        final msMinStr = _stringifyArgument(node, 5);
+        final msMaxStr = _stringifyArgument(node, 6);
+        final msRequired = _parseBooleanLike(
+          _stringifyArgument(node, 7).isEmpty
+              ? 'yes'
+              : _stringifyArgument(node, 7),
+        );
+        final msDisabled = _parseBooleanLike(_stringifyArgument(node, 8));
+        _pendingModalGroupId = msCustomId;
+        _pendingModalComponents.add(<String, dynamic>{
+          'type': 'label',
+          'label': msLabel,
+          if (msDesc.isNotEmpty) 'description': msDesc,
+          'component': <String, dynamic>{
+            'type': 'selectMenu',
+            'menuType': msType.isNotEmpty ? msType : 'string',
+            'customId': msCustomId,
+            if (msPlaceholder.isNotEmpty) 'placeholder': msPlaceholder,
+            if (msMinStr.isNotEmpty)
+              'minValues': int.tryParse(msMinStr) ?? 1,
+            if (msMaxStr.isNotEmpty)
+              'maxValues': int.tryParse(msMaxStr) ?? 1,
+            'required': msRequired,
+            'disabled': msDisabled,
+          },
+        });
+        return null;
+      case 'addmodalfileupload':
+        final mfuLabel = _stringifyArgument(node, 0);
+        final mfuDesc = _stringifyArgument(node, 1);
+        final mfuCustomId = _stringifyArgument(node, 2);
+        final mfuMinStr = _stringifyArgument(node, 3);
+        final mfuMaxStr = _stringifyArgument(node, 4);
+        final mfuRequired = _parseBooleanLike(_stringifyArgument(node, 5));
+        _pendingModalComponents.add(<String, dynamic>{
+          'type': 'label',
+          'label': mfuLabel,
+          if (mfuDesc.isNotEmpty) 'description': mfuDesc,
+          'component': <String, dynamic>{
+            'type': 'fileUpload',
+            'customId': mfuCustomId,
+            if (mfuMinStr.isNotEmpty)
+              'minValues': int.tryParse(mfuMinStr) ?? 1,
+            if (mfuMaxStr.isNotEmpty)
+              'maxValues': int.tryParse(mfuMaxStr) ?? 1,
+            'required': mfuRequired,
+          },
+        });
+        return null;
+      case 'addmodalradiogroup':
+        final mrgLabel = _stringifyArgument(node, 0);
+        final mrgDesc = _stringifyArgument(node, 1);
+        final mrgCustomId = _stringifyArgument(node, 2);
+        final mrgRequired = _parseBooleanLike(_stringifyArgument(node, 3));
+        _pendingModalGroupId = mrgCustomId;
+        _pendingModalComponents.add(<String, dynamic>{
+          'type': 'label',
+          'label': mrgLabel,
+          if (mrgDesc.isNotEmpty) 'description': mrgDesc,
+          'component': <String, dynamic>{
+            'type': 'radioGroup',
+            'customId': mrgCustomId,
+            'required': mrgRequired,
+          },
+        });
+        return null;
+      case 'addmodalcheckboxgroup':
+        final mcgLabel = _stringifyArgument(node, 0);
+        final mcgDesc = _stringifyArgument(node, 1);
+        final mcgCustomId = _stringifyArgument(node, 2);
+        final mcgMinStr = _stringifyArgument(node, 3);
+        final mcgMaxStr = _stringifyArgument(node, 4);
+        final mcgRequired = _parseBooleanLike(_stringifyArgument(node, 5));
+        _pendingModalGroupId = mcgCustomId;
+        _pendingModalComponents.add(<String, dynamic>{
+          'type': 'label',
+          'label': mcgLabel,
+          if (mcgDesc.isNotEmpty) 'description': mcgDesc,
+          'component': <String, dynamic>{
+            'type': 'checkboxGroup',
+            'customId': mcgCustomId,
+            if (mcgMinStr.isNotEmpty)
+              'minValues': int.tryParse(mcgMinStr) ?? 1,
+            if (mcgMaxStr.isNotEmpty)
+              'maxValues': int.tryParse(mcgMaxStr) ?? 1,
+            'required': mcgRequired,
+          },
+        });
+        return null;
+      case 'addmodalcheckbox':
+        final mcLabel = _stringifyArgument(node, 0);
+        final mcDesc = _stringifyArgument(node, 1);
+        final mcCustomId = _stringifyArgument(node, 2);
+        final mcDefault = _parseBooleanLike(_stringifyArgument(node, 3));
+        _pendingModalComponents.add(<String, dynamic>{
+          'type': 'label',
+          'label': mcLabel,
+          if (mcDesc.isNotEmpty) 'description': mcDesc,
+          'component': <String, dynamic>{
+            'type': 'checkbox',
+            'customId': mcCustomId,
+            'default': mcDefault,
+          },
         });
         return null;
       // Defer action

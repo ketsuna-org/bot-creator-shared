@@ -5,6 +5,7 @@ extension _BdfdAstTranspilationScopeActionBuilders
   Action? _buildChannelSendMessageAction(BdfdFunctionCallAst node) {
     final channelId = _stringifyArgument(node, 0).trim();
     final content = _stringifyArgument(node, 1);
+    final replyToMessageId = _stringifyArgument(node, 2).trim();
 
     if (channelId.isEmpty) {
       _diagnostics.add(
@@ -30,12 +31,18 @@ extension _BdfdAstTranspilationScopeActionBuilders
       return null;
     }
 
+    final hasReply = replyToMessageId.isNotEmpty;
+
     return Action(
       type: BotCreatorActionType.sendMessage,
       payload: <String, dynamic>{
-        'targetType': 'channel',
+        if (hasReply)
+          'targetType': 'reply'
+        else
+          'targetType': 'channel',
         'channelId': channelId,
         'content': content,
+        if (hasReply) 'messageId': replyToMessageId,
       },
     );
   }
@@ -1024,14 +1031,58 @@ extension _BdfdAstTranspilationScopeActionBuilders
   Action _buildNewModalAction(BdfdFunctionCallAst node) {
     final customId = _stringifyArgument(node, 0).trim();
     final title = _stringifyArgument(node, 1).trim();
-    final inputs = List<Map<String, dynamic>>.from(_pendingModalInputs);
-    _pendingModalInputs.clear();
+    final rawItems = List<Map<String, dynamic>>.from(_pendingModalComponents);
+    _pendingModalComponents.clear();
+    _pendingModalGroupId = null;
+
+    // Convert raw items into modal component format.
+    // Legacy text inputs (have 'style' key) get wrapped in Label nodes.
+    // New format items (have 'type' = 'label') pass through as-is.
+    final modalComponents = <Map<String, dynamic>>[];
+    for (final item in rawItems) {
+      if (item['type'] == 'label') {
+        // Already a label wrapper – use directly.
+        modalComponents.add(item);
+      } else if (item.containsKey('style')) {
+        // Legacy text input – wrap in a Label.
+        final inputLabel =
+            (item['label'] ?? '').toString();
+        modalComponents.add(<String, dynamic>{
+          'type': 'label',
+          'label': inputLabel,
+          'component': <String, dynamic>{
+            'type': 'textInput',
+            'customId': (item['customId'] ?? '').toString(),
+            'style': (item['style'] ?? 'short').toString(),
+            if (inputLabel.isNotEmpty) 'label': inputLabel,
+            if (item['minLength'] != null) 'minLength': item['minLength'],
+            if (item['maxLength'] != null) 'maxLength': item['maxLength'],
+            'required': item['required'] == true,
+            if (item['value'] != null && (item['value'] as String).isNotEmpty)
+              'value': item['value'],
+            if (item['placeholder'] != null &&
+                (item['placeholder'] as String).isNotEmpty)
+              'placeholder': item['placeholder'],
+          },
+        });
+      } else {
+        // Unknown format — wrap generically.
+        modalComponents.add(<String, dynamic>{
+          'type': 'label',
+          'label': (item['customId'] ?? '').toString(),
+          'component': item,
+        });
+      }
+    }
+
     return Action(
       type: BotCreatorActionType.respondWithModal,
       payload: <String, dynamic>{
-        'customId': customId,
-        'title': title,
-        'components': inputs,
+        'modal': <String, dynamic>{
+          'customId': customId,
+          'title': title,
+          'components': modalComponents,
+        },
       },
     );
   }

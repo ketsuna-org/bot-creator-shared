@@ -10,6 +10,7 @@ enum ComponentV2Type {
   actionRow,
   button,
   stringSelect,
+  textInput,
   userSelect,
   roleSelect,
   mentionableSelect,
@@ -52,6 +53,9 @@ abstract class ComponentNode {
       case ComponentV2Type.button:
         return ButtonNode.fromJson(json);
       case ComponentV2Type.stringSelect:
+        return SelectMenuNode.fromJson(json);
+      case ComponentV2Type.textInput:
+        return ModalTextInputNode.fromJson(json);
       case ComponentV2Type.userSelect:
       case ComponentV2Type.roleSelect:
       case ComponentV2Type.mentionableSelect:
@@ -942,6 +946,16 @@ class ComponentV2Definition {
                 )
                 .toList(growable: true);
             extractedComponents.add(MediaGalleryNode(items: galleryItems));
+          case 'file':
+            currentRow = null;
+            extractedComponents.add(
+              FileNode(
+                file: UnfurledMediaItemNode(
+                  url: (item['url'] ?? '').toString(),
+                ),
+                isSpoiler: item['spoiler'] == true,
+              ),
+            );
           default:
             // Unknown item type — skip.
             break;
@@ -988,6 +1002,62 @@ class ComponentV2Definition {
   };
 }
 
+class ModalTextInputNode extends ComponentNode {
+  @override
+  ComponentV2Type get type => ComponentV2Type.textInput;
+
+  String customId;
+  BcTextInputStyle style;
+  String label;
+  String placeholder;
+  String value;
+  bool required;
+  int? minLength;
+  int? maxLength;
+
+  ModalTextInputNode({
+    String? customId,
+    this.style = BcTextInputStyle.short,
+    this.label = '',
+    this.placeholder = '',
+    this.value = '',
+    this.required = false,
+    this.minLength,
+    this.maxLength,
+  }) : customId = customId ?? ComponentNode.generateId('input');
+
+  factory ModalTextInputNode.fromJson(Map<String, dynamic> json) {
+    return ModalTextInputNode(
+      customId: (json['customId'] ?? '').toString(),
+      style: BcTextInputStyle.values.firstWhere(
+        (s) => s.name == json['style'],
+        orElse: () => BcTextInputStyle.short,
+      ),
+      label: (json['label'] ?? '').toString(),
+      placeholder: (json['placeholder'] ?? '').toString(),
+      value: (json['value'] ?? '').toString(),
+      required: json['required'] == true,
+      minLength: json['minLength'] as int?,
+      maxLength: json['maxLength'] as int?,
+    );
+  }
+
+  @override
+  Map<String, dynamic> toJson() => {
+    'type': type.name,
+    'customId': customId,
+    'style': style.name,
+    'label': label,
+    'placeholder': placeholder,
+    'value': value,
+    'required': required,
+    if (minLength != null) 'minLength': minLength,
+    if (maxLength != null) 'maxLength': maxLength,
+  };
+}
+
+/// Legacy text-input definition used only by the legacy [ModalDefinition.inputs]
+/// format.  Prefer [ModalTextInputNode] (wrapped in a [LabelNode]) for new code.
 class ModalTextInputDefinition {
   String customId;
   String label;
@@ -1040,7 +1110,16 @@ class ModalTextInputDefinition {
 class ModalDefinition {
   String title;
   String customId;
+  /// Legacy text-input-only modal inputs.  Still supported for backward
+  /// compatibility but `components` is the preferred format going forward.
   List<ModalTextInputDefinition> inputs;
+  /// Generic modal components.  Each entry is a [LabelNode] wrapping a
+  /// modal-eligible component: TextInput placeholder, SelectMenuNode (any
+  /// select type), FileUploadNode, RadioGroupNode, CheckboxGroupNode, or
+  /// CheckboxNode.
+  ///
+  /// When non-empty this takes priority over [inputs] at send time.
+  List<ComponentNode> components;
   /// Inline actions that execute when the modal is submitted.
   /// Replaces the legacy onSubmitWorkflow/onSubmitEntryPoint/onSubmitArguments.
   List<Map<String, dynamic>> actions;
@@ -1049,8 +1128,14 @@ class ModalDefinition {
     this.title = '',
     String? customId,
     this.inputs = const [],
+    this.components = const [],
     this.actions = const [],
   }) : customId = customId ?? ComponentNode.generateId('modal');
+
+  /// Returns true when this modal uses the new [components]-based format
+  /// (Label wrappers around any modal-eligible component) rather than the
+  /// legacy [inputs]-only format.
+  bool get hasComponentsV2 => components.isNotEmpty;
 
   factory ModalDefinition.fromJson(Map<String, dynamic> json) {
     // Prefer inline actions; fall back to legacy workflow for backward compat.
@@ -1082,26 +1167,46 @@ class ModalDefinition {
       actions = const [];
     }
 
-    return ModalDefinition(
-      title: (json['title'] ?? '').toString(),
-      customId: (json['customId'] ?? '').toString(),
-      actions: actions,
-      inputs:
-          (json['inputs'] as List? ?? [])
+    // Parse new-style generic components (Label wrappers).
+    List<ComponentNode> parsedComponents = [];
+    if (json['components'] is List) {
+      parsedComponents =
+          (json['components'] as List)
+              .whereType<Map>()
+              .map((c) => ComponentNode.fromJson(Map<String, dynamic>.from(c)))
+              .toList();
+    }
+
+    // Parse legacy text inputs.
+    List<ModalTextInputDefinition> parsedInputs = [];
+    if (json['inputs'] is List) {
+      parsedInputs =
+          (json['inputs'] as List)
               .whereType<Map>()
               .map(
                 (i) => ModalTextInputDefinition.fromJson(
                   Map<String, dynamic>.from(i),
                 ),
               )
-              .toList(),
+              .toList();
+    }
+
+    return ModalDefinition(
+      title: (json['title'] ?? '').toString(),
+      customId: (json['customId'] ?? '').toString(),
+      actions: actions,
+      inputs: parsedInputs,
+      components: parsedComponents,
     );
   }
 
   Map<String, dynamic> toJson() => {
     'title': title,
     'customId': customId,
-    'inputs': inputs.map((i) => i.toJson()).toList(),
+    if (components.isNotEmpty)
+      'components': components.map((c) => c.toJson()).toList(),
+    if (components.isEmpty)
+      'inputs': inputs.map((i) => i.toJson()).toList(),
     if (actions.isNotEmpty) 'actions': actions,
   };
 }
