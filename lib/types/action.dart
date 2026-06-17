@@ -138,6 +138,9 @@ enum BotCreatorActionType {
   leaveGuild,
   // Image attachments
   attachImage,
+  // Control flow — unconditional navigation
+  skipActions,
+  jumpToAction,
 }
 
 enum ActionOnErrorMode { stop, continueMode, jump, skip }

@@ -449,6 +449,32 @@ Future<Map<String, String>> handleActions(
       if (results.containsKey('__stopped__')) {
         return results;
       }
+      if (results.containsKey('__skipCount__')) {
+        final count =
+            int.tryParse(results.remove('__skipCount__')!) ?? 0;
+        if (count > 0) {
+          i += count;
+        }
+        continue;
+      }
+      if (results.containsKey('__jumpToTargetKey__')) {
+        final targetKey = results.remove('__jumpToTargetKey__')!;
+        // Match by action key, action ID, or 1-indexed position
+        final targetIndex = actions.indexWhere(
+          (a) =>
+              (a.key != null && a.key == targetKey) ||
+              a.payload['_actionId'] == targetKey,
+        );
+        if (targetIndex < 0) {
+          final indexNum = int.tryParse(targetKey);
+          if (indexNum != null && indexNum >= 1 && indexNum <= actions.length) {
+            i = indexNum - 2; // -1 for 0-based, -1 because loop increments
+          }
+        } else if (targetIndex > i) {
+          i = targetIndex - 1; // -1 because loop increments
+        }
+        continue;
+      }
       continue;
     }
 
@@ -554,6 +580,8 @@ Future<Map<String, String>> handleActions(
         case BotCreatorActionType.setNickname:
         case BotCreatorActionType.slowmode:
         case BotCreatorActionType.stop:
+        case BotCreatorActionType.skipActions:
+        case BotCreatorActionType.jumpToAction:
         case BotCreatorActionType.randomChoice:
         case BotCreatorActionType.deferInteraction:
         case BotCreatorActionType.playMusic:

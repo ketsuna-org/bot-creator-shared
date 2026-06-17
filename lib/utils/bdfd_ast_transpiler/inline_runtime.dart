@@ -1186,6 +1186,8 @@ extension _BdfdAstTranspilationScopeInlineRuntime
       case 'if':
       case 'stop':
       case 'enabled':
+      case 'skipactions':
+      case 'jumptoaction':
       // ── Threads (change message target) ──
       case 'startthread':
       case 'editthread':

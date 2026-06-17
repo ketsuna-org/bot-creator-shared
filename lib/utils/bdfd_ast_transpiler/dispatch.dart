@@ -496,6 +496,8 @@ extension _BdfdAstTranspilationScopeDispatch on _BdfdAstTranspilationScope {
         if (node.arguments.isEmpty) {
           // $reply (0 args) -> reply to the author's message.
           response.markAsReply();
+          _stickyReplyMessageId = response._replyMessageId;
+          _stickyReplyChannelId = response._replyChannelId;
           return true;
         }
         if (node.arguments.length == 2) {
@@ -504,6 +506,8 @@ extension _BdfdAstTranspilationScopeDispatch on _BdfdAstTranspilationScope {
           final messageId = _stringifyArgument(node, 1).trim();
           if (channelId.isNotEmpty && messageId.isNotEmpty) {
             response.markAsReply(channelId: channelId, messageId: messageId);
+            _stickyReplyMessageId = response._replyMessageId;
+            _stickyReplyChannelId = response._replyChannelId;
             return true;
           }
         }
@@ -568,6 +572,7 @@ extension _BdfdAstTranspilationScopeDispatch on _BdfdAstTranspilationScope {
         return true;
       case 'ephemeral':
         response._ephemeral = true;
+        _stickyEphemeral = true;
         return true;
       case 'allowmention':
         response._allowMentions = true;
@@ -679,9 +684,53 @@ extension _BdfdAstTranspilationScopeDispatch on _BdfdAstTranspilationScope {
         return _transpileOnlyIfMessageContains(node);
       case 'stop':
         return _buildForcedStopAction();
+      case 'skipactions':
+        return _transpileSkipActions(node);
+      case 'jumptoaction':
+        return _transpileJumpToAction(node);
       case 'sendmessage':
         final content = _stringifyArgument(node, 0);
-        return _buildRespondWithMessageAction(content: content);
+        // Consume pending response flags so that $ephemeral / $reply
+        // applied before $sendMessage are honored.
+        final ephemeral = pendingResponse?._ephemeral ?? _stickyEphemeral;
+        final replyMessageId =
+            pendingResponse?._replyMessageId ?? _stickyReplyMessageId;
+        final replyChannelId =
+            pendingResponse?._replyChannelId ?? _stickyReplyChannelId;
+        final tts = pendingResponse?._tts ?? _stickyTts;
+        // Reset the pending response fields directly
+        if (pendingResponse != null) {
+          pendingResponse._ephemeral = false;
+          pendingResponse._replyMessageId = null;
+          pendingResponse._replyChannelId = null;
+          pendingResponse._tts = false;
+        }
+        _consumeStickyFlags();
+
+        if (replyMessageId != null) {
+          return Action(
+            type: BotCreatorActionType.sendMessage,
+            payload: <String, dynamic>{
+              'targetType': 'reply',
+              'channelId': replyChannelId,
+              'messageId': replyMessageId,
+              'content': content,
+              'ephemeral': ephemeral,
+              if (tts) 'tts': true,
+            },
+          );
+        }
+
+        return Action(
+          type: BotCreatorActionType.respondWithMessage,
+          payload: <String, dynamic>{
+            'content': content,
+            'embeds': const <Map<String, dynamic>>[],
+            'components': const <String, dynamic>{},
+            'ephemeral': ephemeral,
+            if (tts) 'tts': true,
+          },
+        );
 
       case 'channelsendmessage':
         return _buildChannelSendMessageAction(node);
@@ -2031,6 +2080,22 @@ extension _BdfdAstTranspilationScopeDispatch on _BdfdAstTranspilationScope {
     return Action(
       type: BotCreatorActionType.stop,
       payload: const <String, dynamic>{},
+    );
+  }
+
+  Action _transpileSkipActions(BdfdFunctionCallAst node) {
+    final count = _stringifyArgument(node, 0);
+    return Action(
+      type: BotCreatorActionType.skipActions,
+      payload: <String, dynamic>{'count': count},
+    );
+  }
+
+  Action _transpileJumpToAction(BdfdFunctionCallAst node) {
+    final targetKey = _stringifyArgument(node, 0);
+    return Action(
+      type: BotCreatorActionType.jumpToAction,
+      payload: <String, dynamic>{'targetKey': targetKey},
     );
   }
 

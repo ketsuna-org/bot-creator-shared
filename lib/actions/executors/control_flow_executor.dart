@@ -745,6 +745,21 @@ Future<bool> executeControlFlowAction({
       results[resultKey] = 'STOPPED';
       results['__stopped__'] = 'true';
       return true;
+    case BotCreatorActionType.skipActions:
+      final rawCount = resolveValue((payload['count'] ?? '0').toString());
+      final count = int.tryParse(rawCount.trim()) ?? 0;
+      results[resultKey] = 'SKIPPED_$count';
+      if (count > 0) {
+        results['__skipCount__'] = count.toString();
+      }
+      return true;
+    case BotCreatorActionType.jumpToAction:
+      final targetKey = resolveValue((payload['targetKey'] ?? '').toString());
+      results[resultKey] = 'JUMP_TO_$targetKey';
+      if (targetKey.isNotEmpty) {
+        results['__jumpToTargetKey__'] = targetKey;
+      }
+      return true;
     default:
       return false;
   }

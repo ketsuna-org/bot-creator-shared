@@ -102,6 +102,26 @@ class _BdfdAstTranspilationScope {
   /// `addcheckboxgroupoption` calls know where to append options.
   String? _pendingModalGroupId;
 
+  // ── Sticky response flags ─────────────────────────────────────────────────
+  /// Flags that survive across branch transpilation (IF/ELSE, loops).
+  /// When a new [_PendingResponse] is created inside a branch, it inherits
+  /// these flags so that `$ephemeral` / `$reply` / `$tts` applied before
+  /// the control-flow block are honored by message actions inside the block.
+  bool _stickyEphemeral = false;
+  bool _stickyTts = false;
+  String? _stickyReplyMessageId;
+  String? _stickyReplyChannelId;
+
+  /// Resets all sticky response flags — called after a message is produced
+  /// (either via $sendMessage or via buildAction flush) so that the next
+  /// message starts with fresh flags.
+  void _consumeStickyFlags() {
+    _stickyEphemeral = false;
+    _stickyTts = false;
+    _stickyReplyMessageId = null;
+    _stickyReplyChannelId = null;
+  }
+
   List<Action> transpileScript(BdfdScriptAst script) {
     return _transpileNodes(script.nodes);
   }
@@ -109,7 +129,13 @@ class _BdfdAstTranspilationScope {
   List<Action> _transpileNodes(List<BdfdAstNode> nodes) {
     _conditionActionStack.add(<Action>[]);
     final actions = <Action>[];
-    final pendingResponse = _PendingResponse();
+    final pendingResponse = _PendingResponse()
+      .._ephemeral = _stickyEphemeral
+      .._tts = _stickyTts;
+    if (_stickyReplyMessageId != null) {
+      pendingResponse._replyMessageId = _stickyReplyMessageId;
+      pendingResponse._replyChannelId = _stickyReplyChannelId;
+    }
 
     try {
       var index = 0;
@@ -139,9 +165,12 @@ class _BdfdAstTranspilationScope {
             actions.add(deferredJson);
           }
 
-          final flushed = pendingResponse.buildAction(channelId: _useChannelId);
-          if (flushed != null) {
-            actions.add(flushed);
+          if (pendingResponse.hasPendingContent) {
+            final flushed = pendingResponse.buildAction(channelId: _useChannelId);
+            if (flushed != null) {
+              actions.add(flushed);
+              _consumeStickyFlags();
+            }
           }
 
           final consumed = _consumeIfBlock(nodes: nodes, startIndex: index);
@@ -174,11 +203,14 @@ class _BdfdAstTranspilationScope {
             if (runtimeLoopDeferredJson != null) {
               actions.add(runtimeLoopDeferredJson);
             }
-            final flushed = pendingResponse.buildAction(
-              channelId: _useChannelId,
-            );
-            if (flushed != null) {
-              actions.add(flushed);
+            if (pendingResponse.hasPendingContent) {
+              final flushed = pendingResponse.buildAction(
+                channelId: _useChannelId,
+              );
+              if (flushed != null) {
+                actions.add(flushed);
+                _consumeStickyFlags();
+              }
             }
             actions.add(_buildRuntimeForLoopAction(consumed));
             index = consumed.nextIndex;
@@ -204,6 +236,7 @@ class _BdfdAstTranspilationScope {
               );
               if (flushed != null) {
                 actions.add(flushed);
+                _consumeStickyFlags();
               }
               actions.addAll(
                 _transpileCStyleLoop(
@@ -226,6 +259,7 @@ class _BdfdAstTranspilationScope {
             );
             if (flushed != null) {
               actions.add(flushed);
+              _consumeStickyFlags();
             }
             final loopActions =
                 consumed.precomputedActions ??
@@ -261,6 +295,7 @@ class _BdfdAstTranspilationScope {
           final flushed = pendingResponse.buildAction(channelId: _useChannelId);
           if (flushed != null) {
             actions.add(flushed);
+            _consumeStickyFlags();
           }
           actions.add(result.action);
           index = result.nextIndex;
@@ -276,6 +311,7 @@ class _BdfdAstTranspilationScope {
           final flushed = pendingResponse.buildAction(channelId: _useChannelId);
           if (flushed != null) {
             actions.add(flushed);
+            _consumeStickyFlags();
           }
 
           final consumed = _consumeTryCatchBlock(
@@ -388,6 +424,7 @@ class _BdfdAstTranspilationScope {
           final flushed = pendingResponse.buildAction(channelId: _useChannelId);
           if (flushed != null) {
             actions.add(flushed);
+            _consumeStickyFlags();
           }
         }
 
@@ -453,6 +490,7 @@ class _BdfdAstTranspilationScope {
       );
       if (trailingResponse != null) {
         actions.add(trailingResponse);
+        _consumeStickyFlags();
       }
 
       if (_suppressErrors && actions.isNotEmpty) {
