@@ -370,6 +370,7 @@ Future<Map<String, String>> handleActions(
           ),
           resolveValue: resolveValue,
           store: store,
+          lavalinkService: lavalinkService,
         );
     if (handledByComponentsInteractionsExecutor) {
       recordTrace();
@@ -1359,6 +1360,7 @@ Future<Map<String, String>> handleListenerWorkflowActions(
   required Map<String, String> variables,
   required String Function(String input) resolveTemplate,
   Interaction? interaction,
+  LavalinkService? lavalinkService,
 }) async {
   return handleActions(
     client,
@@ -1368,6 +1370,7 @@ Future<Map<String, String>> handleListenerWorkflowActions(
     botId: botId,
     variables: variables,
     resolveTemplate: resolveTemplate,
+    lavalinkService: lavalinkService,
   );
 }
 

@@ -9,6 +9,8 @@ import 'package:bot_creator_shared/utils/global.dart';
 import 'package:bot_creator_shared/types/action.dart';
 import 'package:bot_creator_shared/actions/handler.dart';
 import 'package:bot_creator_shared/actions/interaction_response.dart';
+import 'package:bot_creator_shared/services/lavalink_service.dart';
+
 
 Future<void> _safeInteractionRespond(
   Interaction interaction,
@@ -27,8 +29,9 @@ Future<void> handleComponentInteraction(
   NyxxGateway client,
   MessageComponentInteraction interaction,
   BotDataStore store,
-  String botId,
-) async {
+  String botId, {
+  LavalinkService? lavalinkService,
+}) async {
   final customId = interaction.data.customId;
   final userId =
       interaction.user?.id.toString() ??
@@ -84,6 +87,7 @@ Future<void> handleComponentInteraction(
       variables: variables,
       workflowArguments: entry.workflowArguments,
       interaction: interaction,
+      lavalinkService: lavalinkService,
     );
   } else {
     await runListenerWorkflow(
@@ -95,6 +99,7 @@ Future<void> handleComponentInteraction(
       workflowArguments: entry.workflowArguments,
       variables: variables,
       interaction: interaction,
+      lavalinkService: lavalinkService,
     );
   }
 
@@ -109,8 +114,9 @@ Future<void> handleModalSubmitInteraction(
   NyxxGateway client,
   ModalSubmitInteraction interaction,
   BotDataStore store,
-  String botId,
-) async {
+  String botId, {
+  LavalinkService? lavalinkService,
+}) async {
   final customId = interaction.data.customId;
   final userId =
       interaction.user?.id.toString() ??
@@ -149,6 +155,7 @@ Future<void> handleModalSubmitInteraction(
       variables: variables,
       workflowArguments: entry.workflowArguments,
       interaction: interaction,
+      lavalinkService: lavalinkService,
     );
   } else {
     await runListenerWorkflow(
@@ -160,6 +167,7 @@ Future<void> handleModalSubmitInteraction(
       workflowArguments: entry.workflowArguments,
       variables: variables,
       interaction: interaction,
+      lavalinkService: lavalinkService,
     );
   }
 
@@ -178,6 +186,7 @@ Future<void> runListenerInlineActions({
   required Map<String, String> variables,
   required Map<String, String> workflowArguments,
   Interaction? interaction,
+  LavalinkService? lavalinkService,
 }) async {
   try {
     variables.addAll(extractBotRuntimeDetails(client));
@@ -207,6 +216,7 @@ Future<void> runListenerInlineActions({
       variables: variables,
       resolveTemplate: resolveTemplate,
       interaction: interaction,
+      lavalinkService: lavalinkService,
     );
   } catch (e, st) {
     print('ERROR in runListenerInlineActions: $e\n$st');
@@ -229,6 +239,7 @@ Future<void> runListenerWorkflow({
   required Map<String, String> workflowArguments,
   required Map<String, String> variables,
   Interaction? interaction,
+  LavalinkService? lavalinkService,
 }) async {
   try {
     final workflow = await store.getWorkflowByName(botId, workflowName);
@@ -289,6 +300,7 @@ Future<void> runListenerWorkflow({
       variables: variables,
       resolveTemplate: resolveTemplate,
       interaction: interaction,
+      lavalinkService: lavalinkService,
     );
 
     // 3. Send final response (text, embeds, components, modal)

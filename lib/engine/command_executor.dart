@@ -71,6 +71,7 @@ class CommandExecutor {
         interaction,
         store,
         botId,
+        lavalinkService: _workflowExecutor.lavalinkService,
       );
     } else if (interaction is ModalSubmitInteraction) {
       callbacks.onDebugLog?.call('Modal submit: ${interaction.data.customId}', botId: botId);
@@ -79,6 +80,7 @@ class CommandExecutor {
         interaction,
         store,
         botId,
+        lavalinkService: _workflowExecutor.lavalinkService,
       );
     }
   }

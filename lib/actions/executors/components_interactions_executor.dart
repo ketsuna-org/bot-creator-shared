@@ -5,6 +5,7 @@ import '../../types/action.dart';
 import '../../utils/interaction_listener_registry.dart';
 import '../../utils/workflow_call.dart';
 import '../../bot/bot_data_store.dart';
+import '../../services/lavalink_service.dart';
 import '../edit_component_v2.dart';
 import '../edit_interaction_response.dart';
 import '../respond_modal.dart';
@@ -65,6 +66,7 @@ Future<bool> executeComponentsInteractionsAction({
   Snowflake? fallbackMessageId,
   required String Function(String input) resolveValue,
   BotDataStore? store,
+  LavalinkService? lavalinkService,
 }) async {
   switch (type) {
     case BotCreatorActionType.sendComponentV2:
@@ -298,6 +300,7 @@ Future<bool> executeComponentsInteractionsAction({
             workflowArguments: workflowArguments,
             variables: variables,
             interaction: interaction,
+            lavalinkService: lavalinkService,
           ),
         );
       }
@@ -419,6 +422,7 @@ Future<bool> executeComponentsInteractionsAction({
               variables: variables,
               workflowArguments: workflowArguments,
               interaction: interaction,
+              lavalinkService: lavalinkService,
             ),
           );
         } else if (workflowName.isNotEmpty) {
@@ -432,6 +436,7 @@ Future<bool> executeComponentsInteractionsAction({
               workflowArguments: workflowArguments,
               variables: variables,
               interaction: interaction,
+              lavalinkService: lavalinkService,
             ),
           );
         }
