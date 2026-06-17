@@ -82,34 +82,57 @@ class BotSession {
 
     callbacks.onLog?.call('Starting bot gateway...', botId: botId);
 
-    // Build plugins list, optionally including Lavalink
+    // Build plugins list — Lavalink is connected AFTER gateway to avoid blocking
     final localConfig = lavalinkConfig;
-    final lavalinkPlugin = LavalinkService.createPlugin(localConfig);
     final plugins = <NyxxPlugin>[logging, cliIntegration];
-    if (lavalinkPlugin != null && localConfig != null) {
-      plugins.add(lavalinkPlugin);
-      callbacks.onLog
-          ?.call('Lavalink plugin queued (${localConfig.host}:${localConfig.port})', botId: botId);
-
-      _lavalinkService = LavalinkService(
-        plugin: lavalinkPlugin,
-        config: localConfig,
-        onLog: (msg) => callbacks.onLog?.call(msg, botId: botId),
-      );
-    }
 
     try {
-      // Start waiting for ready before connectGateway triggers afterConnect
-      Future<void>? lavalinkReadyFuture;
-      if (_lavalinkService != null) {
-        lavalinkReadyFuture = _lavalinkService!.waitForReady();
-      }
-
       _gateway = await Nyxx.connectGateway(
         token,
         intents,
         options: GatewayClientOptions(plugins: plugins),
       );
+
+      // ── Lavalink: connect AFTER gateway to prevent gateway blocking ──
+      if (localConfig != null) {
+        callbacks.onLog
+            ?.call('Lavalink: pre-checking ${localConfig.host}:${localConfig.port}...', botId: botId);
+
+        // Quick REST health check before attempting WebSocket
+        final preCheckError = await LavalinkService.testConnection(
+          host: localConfig.host,
+          port: localConfig.port,
+          password: localConfig.password,
+          useSsl: localConfig.useSsl,
+        );
+
+        if (preCheckError != null) {
+          callbacks.onLog?.call(
+            'Lavalink pre-check failed: $preCheckError — music disabled',
+            botId: botId,
+          );
+        } else {
+          callbacks.onLog?.call('Lavalink pre-check OK, starting plugin...', botId: botId);
+          final lavalinkPlugin = LavalinkService.createPlugin(localConfig);
+          if (lavalinkPlugin != null) {
+            _lavalinkService = LavalinkService(
+              plugin: lavalinkPlugin,
+              config: localConfig,
+              onLog: (msg) => callbacks.onLog?.call(msg, botId: botId),
+            );
+
+            // Fire and forget: Lavalink connects in background, timeout 10s
+            unawaited(_lavalinkService!.waitForReady().then((_) {
+              callbacks.onLog?.call('Lavalink ready — music features enabled', botId: botId);
+              _workflowExecutor.lavalinkService = _lavalinkService;
+              _lavalinkService!.monitorHealth();
+            }).catchError((e) {
+              callbacks.onLog?.call('Lavalink connection failed: $e — music disabled', botId: botId);
+              _lavalinkService = null;
+            }));
+          }
+        }
+      }
 
       // Debug voice events
       _gateway!.onVoiceStateUpdate.listen((event) {
@@ -125,19 +148,6 @@ class BotSession {
           botId: botId,
         );
       });
-
-      // Initialize/enable Lavalink if plugin ready
-      if (lavalinkReadyFuture != null && _lavalinkService != null) {
-        // Don't block startup — Lavalink connects in background with timeout
-        unawaited(lavalinkReadyFuture.then((_) {
-          callbacks.onLog?.call('Lavalink ready — music features enabled', botId: botId);
-          _workflowExecutor.lavalinkService = _lavalinkService;
-          _lavalinkService!.monitorHealth();
-        }).catchError((e) {
-          callbacks.onLog?.call('Lavalink connection failed: $e — music disabled', botId: botId);
-          _lavalinkService = null;
-        }));
-      }
 
       _startedAt = DateTime.now();
       botStartTimes[botId] = _startedAt!;
