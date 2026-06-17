@@ -72,6 +72,8 @@ Future<void> handleComponentInteraction(
   final variables = <String, String>{
     ...await generateInteractionContextKeyValues(interaction),
     ...interactionVariables,
+    // Forward context from the original interaction (e.g. target.message.id from a message command)
+    ...entry.initialContext,
   };
 
   final values = interactionVariables['interaction.values'] ?? '';
@@ -144,6 +146,8 @@ Future<void> handleModalSubmitInteraction(
   final variables = <String, String>{
     ...await generateInteractionContextKeyValues(interaction),
     ...buildInteractionRuntimeVariables(interaction),
+    // Forward context from the original interaction (e.g. target.message.id from a message command)
+    ...entry.initialContext,
   };
 
   if (entry.inlineActions != null && entry.inlineActions!.isNotEmpty) {

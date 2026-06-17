@@ -18,6 +18,9 @@ class ListenerEntry {
   final String? channelId;
   final String? messageId;
   final String? userId; // if userId is set, only respond to that user
+  /// Context variables from the original interaction (e.g. target.message.id
+  /// from a message command) to forward into inline-action execution.
+  final Map<String, String> initialContext;
 
   const ListenerEntry({
     required this.botId,
@@ -33,6 +36,7 @@ class ListenerEntry {
     this.channelId,
     this.messageId,
     this.userId,
+    this.initialContext = const <String, String>{},
   });
 
   bool get isExpired => DateTime.now().isAfter(expiresAt);
@@ -158,4 +162,30 @@ class InteractionListenerRegistry {
     }
     return true;
   }
+}
+
+/// Extracts the subset of [variables] that should be forwarded as initial
+/// context when registering a ListenerEntry.  This allows inline actions
+/// executed later (e.g. on modal submit) to access the original command
+/// context such as target.message.id from a message command.
+Map<String, String> extractListenerContext(Map<String, String> variables) {
+  final context = <String, String>{};
+  for (final entry in variables.entries) {
+    final key = entry.key;
+    // Forward target.* (covers target.message.id, target.user.id, etc.)
+    // and a few well-known interaction-scoped keys.
+    if (key.startsWith('target.') ||
+        key == 'message.id' ||
+        key == 'messageId' ||
+        key == 'interaction.messageId' ||
+        key == 'channel.id' ||
+        key == 'channelId' ||
+        key == 'guild.id' ||
+        key == 'guildId') {
+      if (entry.value.isNotEmpty) {
+        context[key] = entry.value;
+      }
+    }
+  }
+  return context;
 }

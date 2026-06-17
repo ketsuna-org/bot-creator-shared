@@ -198,6 +198,7 @@ Future<bool> executeComponentsInteractionsAction({
               modalResult,
               resolveValue,
             ),
+            initialContext: extractListenerContext(variables),
           ),
         );
       }
@@ -272,6 +273,7 @@ Future<bool> executeComponentsInteractionsAction({
           oneShot: oneShot,
           guildId: guildId?.toString(),
           channelId: fallbackChannelId?.toString(),
+          initialContext: extractListenerContext(variables),
           messageId:
               type == BotCreatorActionType.listenForModalSubmit
                   ? _resolveExplicitListenerMessageId(payload, resolveValue)
@@ -353,6 +355,7 @@ Future<bool> executeComponentsInteractionsAction({
           oneShot: false,
           guildId: guildId?.toString(),
           channelId: fallbackChannelId?.toString(),
+          initialContext: extractListenerContext(variables),
           messageId: variables['workflow.type'] == workflowTypeEvent
               ? _resolveExplicitListenerMessageId(payload, resolveValue)
               : _resolveListenerMessageId(
@@ -378,6 +381,7 @@ Future<bool> executeComponentsInteractionsAction({
           oneShot: false,
           guildId: guildId?.toString(),
           channelId: fallbackChannelId?.toString(),
+          initialContext: extractListenerContext(variables),
           messageId: variables['workflow.type'] == workflowTypeEvent
               ? _resolveExplicitListenerMessageId(payload, resolveValue)
               : _resolveListenerMessageId(
@@ -403,6 +407,7 @@ Future<bool> executeComponentsInteractionsAction({
           oneShot: true,
           guildId: guildId?.toString(),
           channelId: fallbackChannelId?.toString(),
+          initialContext: extractListenerContext(variables),
           messageId: _resolveExplicitListenerMessageId(payload, resolveValue),
         ),
       );

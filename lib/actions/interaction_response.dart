@@ -284,6 +284,7 @@ Future<void> sendWorkflowResponse({
               oneShot: true,
               guildId: interaction.guildId?.toString(),
               channelId: interaction.channelId?.toString(),
+              initialContext: extractListenerContext(runtimeVariables),
             ),
           );
         }
