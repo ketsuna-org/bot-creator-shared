@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:nyxx/nyxx.dart';
+import 'package:nyxx_lavalink/nyxx_lavalink.dart';
 import 'package:bot_creator_shared/bot/bot_data_store.dart';
 import 'package:bot_creator_shared/actions/handler.dart';
 import 'package:bot_creator_shared/actions/interaction_response.dart';
@@ -409,6 +410,7 @@ class WorkflowExecutor {
         variables['lavalink.volume'] = session.volume.toString();
         variables['lavalink.isPaused'] = session.isPaused.toString();
         variables['lavalink.isLooping'] = session.loop.toString();
+        variables['lavalink.thumbnail'] = _getTrackThumbnail(current);
         return;
       }
     }
@@ -421,6 +423,31 @@ class WorkflowExecutor {
     variables['lavalink.volume'] = '100';
     variables['lavalink.isPaused'] = 'false';
     variables['lavalink.isLooping'] = 'false';
+    variables['lavalink.thumbnail'] = '';
+  }
+
+  String _getTrackThumbnail(Track? track) {
+    if (track == null) return '';
+    final info = track.info;
+
+    // 1. Try artworkUrl if populated by Lavalink
+    final artwork = info.artworkUrl?.toString() ?? '';
+    if (artwork.isNotEmpty) {
+      return artwork;
+    }
+
+    // 2. YouTube fallback using video identifier
+    final source = info.sourceName?.toLowerCase() ?? '';
+    final uriStr = info.uri?.toString() ?? '';
+    final isYoutube = source == 'youtube' ||
+        uriStr.contains('youtube.com') ||
+        uriStr.contains('youtu.be');
+
+    if (isYoutube && info.identifier.isNotEmpty) {
+      return 'https://img.youtube.com/vi/${info.identifier}/hqdefault.jpg';
+    }
+
+    return '';
   }
 
   String _formatDuration(Duration duration) {

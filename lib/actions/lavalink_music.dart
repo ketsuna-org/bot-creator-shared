@@ -4,6 +4,7 @@ import 'dart:async';
 
 import 'package:bot_creator_shared/services/lavalink_service.dart';
 import 'package:nyxx/nyxx.dart';
+import 'package:nyxx_lavalink/nyxx_lavalink.dart';
 
 /// Resolves the voice channel the user is currently in.
 /// Returns null if the user is not in a voice channel or not found.
@@ -76,6 +77,7 @@ Future<Map<String, String>> playMusicAction({
       'author': track.info.author,
       'duration': track.info.length.inMilliseconds.toString(),
       'uri': track.info.uri?.toString() ?? '',
+      'thumbnail': _getTrackThumbnail(track),
     };
   } catch (e) {
     return {'error': e.toString()};
@@ -297,8 +299,33 @@ Future<Map<String, String>> getMusicInfoAction({
       'volume': player.volume.toString(),
       'isPaused': player.isPaused.toString(),
       'isLooping': session.loop.toString(),
+      'thumbnail': _getTrackThumbnail(track),
     };
   } catch (e) {
     return {'error': e.toString()};
   }
+}
+
+String _getTrackThumbnail(Track? track) {
+  if (track == null) return '';
+  final info = track.info;
+
+  // 1. Try artworkUrl if populated by Lavalink
+  final artwork = info.artworkUrl?.toString() ?? '';
+  if (artwork.isNotEmpty) {
+    return artwork;
+  }
+
+  // 2. YouTube fallback using video identifier
+  final source = info.sourceName?.toLowerCase() ?? '';
+  final uriStr = info.uri?.toString() ?? '';
+  final isYoutube = source == 'youtube' ||
+      uriStr.contains('youtube.com') ||
+      uriStr.contains('youtu.be');
+
+  if (isYoutube && info.identifier.isNotEmpty) {
+    return 'https://img.youtube.com/vi/${info.identifier}/hqdefault.jpg';
+  }
+
+  return '';
 }
