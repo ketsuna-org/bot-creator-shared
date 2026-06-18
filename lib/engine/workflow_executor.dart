@@ -437,7 +437,7 @@ class WorkflowExecutor {
     }
 
     // 2. YouTube fallback using video identifier
-    final source = info.sourceName?.toLowerCase() ?? '';
+    final source = info.sourceName.toLowerCase();
     final uriStr = info.uri?.toString() ?? '';
     final isYoutube = source == 'youtube' ||
         uriStr.contains('youtube.com') ||
