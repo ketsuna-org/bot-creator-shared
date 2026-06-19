@@ -3,6 +3,7 @@ const Set<String> allBdfdFunctions = <String>{
   'addbutton',
   'addbuttoncv2',
   'addchannelselect',
+  'addcategoryselect',
   'addcmdreactions',
   'addcontainer',
   'addemoji',

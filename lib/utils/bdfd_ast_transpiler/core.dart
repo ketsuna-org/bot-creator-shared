@@ -43,9 +43,7 @@ class BdfdAstTranspiler {
 }
 
 class _BdfdAstTranspilationScope {
-  _BdfdAstTranspilationScope({
-    required this._diagnostics,
-  });
+  _BdfdAstTranspilationScope({required this._diagnostics});
 
   final List<BdfdTranspileDiagnostic> _diagnostics;
   final Map<String, String> _pendingHttpHeaders = <String, String>{};
@@ -53,6 +51,7 @@ class _BdfdAstTranspilationScope {
   int _threadActionCounter = 0;
   int _permissionCheckCounter = 0;
   int _callWorkflowCounter = 0;
+  int _createEmojiCounter = 0;
   String? _lastHttpRequestKey;
   String? _lastCallWorkflowKey;
   final List<Action> _deferredInlineActions = <Action>[];
@@ -77,8 +76,7 @@ class _BdfdAstTranspilationScope {
   /// [runtimeImageBlock] action. Started by `$canvasCreate` and flushed when
   /// any non-canvas function is encountered.
   bool _deferredImageMode = false;
-  final List<Map<String, dynamic>> _deferredImageOps =
-      <Map<String, dynamic>>[];
+  final List<Map<String, dynamic>> _deferredImageOps = <Map<String, dynamic>>[];
   int _deferredImageBlockCounter = 0;
   String? _deferredImageResultKeyPrefix;
 
@@ -87,6 +85,7 @@ class _BdfdAstTranspilationScope {
   bool _suppressErrors = false;
   String? _suppressErrorsMessage;
   Map<String, dynamic>? _suppressErrorsEmbed;
+
   /// Number of actions already emitted when [_suppressErrors] was first set.
   /// Used to avoid wrapping actions that precede $suppressErrors.
   int? _suppressErrorsActionCount;
@@ -97,6 +96,7 @@ class _BdfdAstTranspilationScope {
   Set<String>? _runtimeLoopVarNames;
   final List<Map<String, dynamic>> _pendingModalComponents =
       <Map<String, dynamic>>[];
+
   /// Tracks the custom ID of the most recently added modal radio/checkbox
   /// group so that subsequent `addradiogroupoption` /
   /// `addcheckboxgroupoption` calls know where to append options.
@@ -166,7 +166,9 @@ class _BdfdAstTranspilationScope {
           }
 
           if (pendingResponse.hasPendingContent) {
-            final flushed = pendingResponse.buildAction(channelId: _useChannelId);
+            final flushed = pendingResponse.buildAction(
+              channelId: _useChannelId,
+            );
             if (flushed != null) {
               actions.add(flushed);
               _consumeStickyFlags();
@@ -405,8 +407,9 @@ class _BdfdAstTranspilationScope {
             !isCheckUserPermsInlineCandidate ||
             pendingResponse.hasPendingContent ||
             hasTrailingTextNode;
-        final inlineReplacement =
-            allowsTopLevelInline ? _stringifyInlineFunction(node) : null;
+        final inlineReplacement = allowsTopLevelInline
+            ? _stringifyInlineFunction(node)
+            : null;
         if (inlineReplacement != null) {
           pendingResponse.appendContent(inlineReplacement);
           actions.addAll(_drainDeferredInlineActions());
@@ -507,7 +510,9 @@ class _BdfdAstTranspilationScope {
             'condition.variable': '__suppressErrors_guard__',
             'condition.operator': 'equals',
             'condition.value': '__suppressErrors_guard__',
-            'thenActions': postActions.map((action) => action.toJson()).toList(),
+            'thenActions': postActions
+                .map((action) => action.toJson())
+                .toList(),
             'elseIfConditions': const <Map<String, dynamic>>[],
             'elseActions': const <Map<String, dynamic>>[],
             'suppressErrors': true,

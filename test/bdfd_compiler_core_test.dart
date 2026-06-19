@@ -14,10 +14,7 @@ void main() {
       // Single response: setUserVar no longer flushes, so the text content from
       // before and after the variable set is merged into one respondWithMessage.
       expect(result.actions, hasLength(2));
-      expect(
-        result.actions.first.type,
-        BotCreatorActionType.setScopedVariable,
-      );
+      expect(result.actions.first.type, BotCreatorActionType.setScopedVariable);
       expect(result.actions.first.payload['scope'], 'user');
       expect(result.actions.first.payload['key'], 'lastAuthor');
       expect(result.actions.first.payload['value'], '((author.id))');
@@ -215,6 +212,44 @@ void main() {
         result.diagnostics.single.severity,
         BdfdCompileDiagnosticSeverity.warning,
       );
+    });
+
+    test('compiles addEmoji function (standalone & inline/nested)', () {
+      final result = BdfdCompiler().compile(
+        r'Added emoji: $addEmoji[myEmoji;https://example.com/image.png;yes]',
+      );
+
+      expect(result.hasErrors, isFalse);
+      expect(result.actions, hasLength(2));
+
+      expect(result.actions[0].type, BotCreatorActionType.createEmoji);
+      expect(result.actions[0].key, startsWith('_bdfd_createemoji_'));
+      expect(result.actions[0].payload['name'], 'myEmoji');
+      expect(
+        result.actions[0].payload['imageUrl'],
+        'https://example.com/image.png',
+      );
+
+      expect(result.actions[1].type, BotCreatorActionType.respondWithMessage);
+      final content = result.actions[1].payload['content'] as String;
+      expect(content, startsWith('Added emoji: (('));
+      expect(content, endsWith('))'));
+
+      // Test template resolution of the created emoji placeholder
+      final key = result.actions[0].key!;
+      final resolvedStatic = resolveTemplatePlaceholders(content, {
+        '$key.emojiId': '9876543210',
+        '$key.name': 'myEmoji',
+        '$key.animated': 'false',
+      });
+      expect(resolvedStatic, 'Added emoji: <:myEmoji:9876543210>');
+
+      final resolvedAnimated = resolveTemplatePlaceholders(content, {
+        '$key.emojiId': '9876543210',
+        '$key.name': 'myEmoji',
+        '$key.animated': 'true',
+      });
+      expect(resolvedAnimated, 'Added emoji: <a:myEmoji:9876543210>');
     });
   });
 }

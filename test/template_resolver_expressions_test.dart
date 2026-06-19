@@ -121,6 +121,25 @@ void main() {
         resolveTemplatePlaceholders('((split("a,b,c", ",")))', {}),
         '["a","b","c"]',
       );
+      // Semicolon delimiter support
+      expect(
+        resolveTemplateExpressionValue(
+          'split("a;b;c"; ";"; 1)',
+          <String, String>{},
+        ),
+        'b',
+      );
+      expect(
+        resolveTemplateExpressionValue(
+          'split["a;b;c"; ";"; 1]',
+          <String, String>{},
+        ),
+        'b',
+      );
+      expect(
+        resolveTemplatePlaceholders('((split["a;b;c"; ";"; 1]))', {}),
+        'b',
+      );
     });
 
     test('supports cropText helper', () {
@@ -134,6 +153,14 @@ void main() {
       expect(
         resolveTemplateExpressionValue(
           'cropText("hello world", 5, "~")',
+          <String, String>{},
+        ),
+        'hello~',
+      );
+      // Semicolon delimiter support
+      expect(
+        resolveTemplateExpressionValue(
+          'cropText("hello world"; 5; "~")',
           <String, String>{},
         ),
         'hello~',

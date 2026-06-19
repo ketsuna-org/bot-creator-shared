@@ -506,6 +506,14 @@ const Map<String, List<String>> bdfdSignatureHints = <String, List<String>>{
     'Action Row ID',
     'Channel Types (opt)',
   ],
+  'addcategoryselect': [
+    'Select Menu ID',
+    'Placeholder',
+    'Min Values',
+    'Max Values',
+    'Disabled',
+    'Action Row ID',
+  ],
   'addemoji': ['Name', 'Image URL', 'Return emoji (opt)'],
   'addstringselect': [
     'Select Menu ID',

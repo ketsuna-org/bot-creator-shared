@@ -29,8 +29,24 @@ Future<bool> executeReactionsAction({
   }
   if (payload.containsKey('emojis') && payload['emojis'] is List) {
     final emojisRaw = payload['emojis'] as List;
-    resolvedPayload['emojis'] =
+    final resolvedList =
         emojisRaw.map((e) => resolveValue(e.toString())).toList();
+    final joined = resolvedList.join(';');
+
+    // Clean up BDFD custom emoji escaping quirks: <;:name:id>; or <a;:name:id>;
+    final cleaned = joined
+        .replaceAll('<;:', '<:')
+        .replaceAll('<a;:', '<a:')
+        .replaceAll(';>', '>');
+
+    final resolvedEmojis = <String>[];
+    for (final part in cleaned.split(';')) {
+      final trimmed = part.trim();
+      if (trimmed.isNotEmpty) {
+        resolvedEmojis.add(trimmed);
+      }
+    }
+    resolvedPayload['emojis'] = resolvedEmojis;
   }
 
   switch (type) {

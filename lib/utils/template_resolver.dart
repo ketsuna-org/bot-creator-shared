@@ -164,6 +164,25 @@ String? _lookupVariableValue(String key, Map<String, String> updates) {
     }
   }
 
+  // Check if it's a dynamic createEmoji lookup
+  if (loweredKey.startsWith('_bdfd_createemoji_') &&
+      !loweredKey.contains('.')) {
+    final emojiId =
+        _lookupVariableValue('$key.emojiId', updates) ??
+        _lookupVariableValue('$loweredKey.emojiid', updates);
+    if (emojiId != null && emojiId.isNotEmpty) {
+      final name =
+          _lookupVariableValue('$key.name', updates) ??
+          _lookupVariableValue('$loweredKey.name', updates) ??
+          '';
+      final animated =
+          (_lookupVariableValue('$key.animated', updates) ??
+              _lookupVariableValue('$loweredKey.animated', updates)) ==
+          'true';
+      return '<${animated ? 'a' : ''}:$name:$emojiId>';
+    }
+  }
+
   // Dynamic time variables resolved at template evaluation time.
   if (loweredKey == 'gettimestamp') {
     return (DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000).toString();
@@ -600,15 +619,16 @@ _ResolvedExpression? _resolveBracketCollectionVariableValue(
   }
 
   final separatorIndex = spec.indexOf(';');
-  final separator =
-      separatorIndex == -1 ? spec : spec.substring(0, separatorIndex);
-  final limitRaw =
-      separatorIndex == -1 ? '' : spec.substring(separatorIndex + 1).trim();
+  final separator = separatorIndex == -1
+      ? spec
+      : spec.substring(0, separatorIndex);
+  final limitRaw = separatorIndex == -1
+      ? ''
+      : spec.substring(separatorIndex + 1).trim();
   final limit = int.tryParse(limitRaw);
-  final boundedItems =
-      limit == null || limit < 0
-          ? items
-          : items.take(limit).toList(growable: false);
+  final boundedItems = limit == null || limit < 0
+      ? items
+      : items.take(limit).toList(growable: false);
   return _ResolvedExpression(found: true, value: boundedItems.join(separator));
 }
 
@@ -686,34 +706,44 @@ dynamic _applyBdfdBracketFunction(
       if (rawArgs.isEmpty) {
         return null;
       }
-      final expression =
-          resolveTemplatePlaceholders(rawArgs.first, updates).trim();
+      final expression = resolveTemplatePlaceholders(
+        rawArgs.first,
+        updates,
+      ).trim();
       final result = _evaluateSimpleMathExpression(expression);
       if (result == null) {
         return null;
       }
-      return MathExpressionParser.format(result,
-          enableDecimals: _isEnableDecimals(updates));
+      return MathExpressionParser.format(
+        result,
+        enableDecimals: _isEnableDecimals(updates),
+      );
     case 'ceil':
-      final ceilValue =
-          resolvedArgs.isEmpty ? null : _coerceNum(resolvedArgs[0]);
+      final ceilValue = resolvedArgs.isEmpty
+          ? null
+          : _coerceNum(resolvedArgs[0]);
       return ceilValue?.ceil();
     case 'floor':
-      final floorValue =
-          resolvedArgs.isEmpty ? null : _coerceNum(resolvedArgs[0]);
+      final floorValue = resolvedArgs.isEmpty
+          ? null
+          : _coerceNum(resolvedArgs[0]);
       return floorValue?.floor();
     case 'round':
-      final roundValue =
-          resolvedArgs.isEmpty ? null : _coerceNum(resolvedArgs[0]);
+      final roundValue = resolvedArgs.isEmpty
+          ? null
+          : _coerceNum(resolvedArgs[0]);
       return roundValue?.round();
     case 'sqrt':
-      final sqrtValue =
-          resolvedArgs.isEmpty ? null : _coerceNum(resolvedArgs[0]);
+      final sqrtValue = resolvedArgs.isEmpty
+          ? null
+          : _coerceNum(resolvedArgs[0]);
       if (sqrtValue == null) {
         return null;
       }
-      return MathExpressionParser.format(sqrt(sqrtValue.toDouble()),
-          enableDecimals: _isEnableDecimals(updates));
+      return MathExpressionParser.format(
+        sqrt(sqrtValue.toDouble()),
+        enableDecimals: _isEnableDecimals(updates),
+      );
     case 'max':
       if (resolvedArgs.length < 2) {
         return null;
@@ -723,8 +753,10 @@ dynamic _applyBdfdBracketFunction(
       if (left == null || right == null) {
         return null;
       }
-      return MathExpressionParser.format(max(left, right),
-          enableDecimals: _isEnableDecimals(updates));
+      return MathExpressionParser.format(
+        max(left, right),
+        enableDecimals: _isEnableDecimals(updates),
+      );
     case 'min':
       if (resolvedArgs.length < 2) {
         return null;
@@ -734,8 +766,10 @@ dynamic _applyBdfdBracketFunction(
       if (left == null || right == null) {
         return null;
       }
-      return MathExpressionParser.format(min(left, right),
-          enableDecimals: _isEnableDecimals(updates));
+      return MathExpressionParser.format(
+        min(left, right),
+        enableDecimals: _isEnableDecimals(updates),
+      );
     case 'modulo':
     case 'multi':
     case 'divide':
@@ -751,17 +785,25 @@ dynamic _applyBdfdBracketFunction(
       final enableDecimals = _isEnableDecimals(updates);
       switch (name) {
         case 'modulo':
-          return MathExpressionParser.format(right != 0 ? left % right : 0,
-              enableDecimals: enableDecimals);
+          return MathExpressionParser.format(
+            right != 0 ? left % right : 0,
+            enableDecimals: enableDecimals,
+          );
         case 'multi':
-          return MathExpressionParser.format(left * right,
-              enableDecimals: enableDecimals);
+          return MathExpressionParser.format(
+            left * right,
+            enableDecimals: enableDecimals,
+          );
         case 'divide':
-          return MathExpressionParser.format(right != 0 ? left / right : 0,
-              enableDecimals: enableDecimals);
+          return MathExpressionParser.format(
+            right != 0 ? left / right : 0,
+            enableDecimals: enableDecimals,
+          );
         case 'sub':
-          return MathExpressionParser.format(left - right,
-              enableDecimals: enableDecimals);
+          return MathExpressionParser.format(
+            left - right,
+            enableDecimals: enableDecimals,
+          );
       }
       return null;
     case 'checkcondition':
@@ -779,6 +821,7 @@ dynamic _applyBdfdBracketFunction(
     case 'charcount':
     case 'linescount':
     case 'croptext':
+    case 'split':
       return _applyFunction(name, resolvedArgs, updates);
     case 'bytecount':
       if (resolvedArgs.isEmpty) {
@@ -806,7 +849,10 @@ dynamic _applyBdfdBracketFunction(
               total += numeric;
             }
           }
-          return MathExpressionParser.format(total, enableDecimals: enableDecimals);
+          return MathExpressionParser.format(
+            total,
+            enableDecimals: enableDecimals,
+          );
         }
       }
       num total = 0;
@@ -819,7 +865,9 @@ dynamic _applyBdfdBracketFunction(
         foundNumeric = true;
         total += numeric;
       }
-      return foundNumeric ? MathExpressionParser.format(total, enableDecimals: enableDecimals) : null;
+      return foundNumeric
+          ? MathExpressionParser.format(total, enableDecimals: enableDecimals)
+          : null;
     case 'random':
       if (resolvedArgs.length < 2) {
         return _random.nextBool() ? 'true' : '';
@@ -842,7 +890,9 @@ dynamic _applyBdfdBracketFunction(
       if (resolvedArgs.isEmpty) {
         return '';
       }
-      return _stringifyResolvedValue(resolvedArgs[_random.nextInt(resolvedArgs.length)]);
+      return _stringifyResolvedValue(
+        resolvedArgs[_random.nextInt(resolvedArgs.length)],
+      );
     case 'date':
       final now = DateTime.now().toUtc();
       return '${now.year}-'
@@ -869,7 +919,9 @@ dynamic _applyBdfdBracketFunction(
       }
       return 'false';
     case 'listvar':
-      final sep = resolvedArgs.isNotEmpty ? _stringifyResolvedValue(resolvedArgs[0]) : ', ';
+      final sep = resolvedArgs.isNotEmpty
+          ? _stringifyResolvedValue(resolvedArgs[0])
+          : ', ';
       final varNames = <String>{};
       for (final key in updates.keys) {
         final idx = key.indexOf('.bc_');
@@ -882,11 +934,15 @@ dynamic _applyBdfdBracketFunction(
       }
       return varNames.join(sep);
     case 'userperms':
-      var userId = resolvedArgs.isNotEmpty ? _stringifyResolvedValue(resolvedArgs[0]).trim() : '';
+      var userId = resolvedArgs.isNotEmpty
+          ? _stringifyResolvedValue(resolvedArgs[0]).trim()
+          : '';
       if (userId.isEmpty) {
         userId = _lookupVariableValue('author.id', updates) ?? '';
       }
-      final returnAmount = resolvedArgs.length > 1 ? _coerceInt(resolvedArgs[1]) ?? -1 : -1;
+      final returnAmount = resolvedArgs.length > 1
+          ? _coerceInt(resolvedArgs[1]) ?? -1
+          : -1;
       final separator = rawArgs.length > 2 ? rawArgs[2] : ', ';
 
       final authorId = _lookupVariableValue('author.id', updates) ?? '';
@@ -902,7 +958,11 @@ dynamic _applyBdfdBracketFunction(
         return '';
       }
 
-      final list = rawPerms.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
+      final list = rawPerms
+          .split(',')
+          .map((s) => s.trim())
+          .where((s) => s.isNotEmpty)
+          .toList();
       final bdfdPerms = <String>[];
       for (final p in list) {
         final bdfdName = _mapToLowercaseToBdfdPerm(p);
@@ -911,20 +971,32 @@ dynamic _applyBdfdBracketFunction(
         }
       }
 
-      final resultList = (returnAmount >= 0) ? bdfdPerms.take(returnAmount).toList() : bdfdPerms;
+      final resultList = (returnAmount >= 0)
+          ? bdfdPerms.take(returnAmount).toList()
+          : bdfdPerms;
       return resultList.join(separator);
     case 'servernames':
-      final amount = resolvedArgs.isNotEmpty ? _coerceInt(resolvedArgs[0]) ?? -1 : -1;
-      final separator = (rawArgs.length > 1 && rawArgs[1].isNotEmpty) ? rawArgs[1] : ', ';
+      final amount = resolvedArgs.isNotEmpty
+          ? _coerceInt(resolvedArgs[0]) ?? -1
+          : -1;
+      final separator = (rawArgs.length > 1 && rawArgs[1].isNotEmpty)
+          ? rawArgs[1]
+          : ', ';
       final rawNames = _lookupVariableValue('bot.guildNames', updates) ?? '';
       if (rawNames.isEmpty) {
         return '';
       }
-      final list = rawNames.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
+      final list = rawNames
+          .split(',')
+          .map((s) => s.trim())
+          .where((s) => s.isNotEmpty)
+          .toList();
       final resultList = (amount >= 0) ? list.take(amount).toList() : list;
       return resultList.join(separator);
     case 'variablescount':
-      final type = resolvedArgs.isNotEmpty ? _stringifyResolvedValue(resolvedArgs[0]).trim() : 'global';
+      final type = resolvedArgs.isNotEmpty
+          ? _stringifyResolvedValue(resolvedArgs[0]).trim()
+          : 'global';
       int count = 0;
       final lowerType = type.toLowerCase();
       for (final key in updates.keys) {
@@ -1071,12 +1143,11 @@ String _resolveItemPlaceholderValue(dynamic item, String rawPath) {
     return _stringifyResolvedValue(item);
   }
 
-  final composedPath =
-      path.startsWith(r'$')
-          ? path
-          : path.startsWith('[')
-          ? '\$$path'
-          : '\$.$path';
+  final composedPath = path.startsWith(r'$')
+      ? path
+      : path.startsWith('[')
+      ? '\$$path'
+      : '\$.$path';
   return _stringifyResolvedValue(extractJsonPathValue(item, composedPath));
 }
 
@@ -1181,8 +1252,9 @@ dynamic _applyFunction(
       if (value == null) {
         return null;
       }
-      final separator =
-          args.length >= 2 ? _stringifyResolvedValue(args[1]) : ',';
+      final separator = args.length >= 2
+          ? _stringifyResolvedValue(args[1])
+          : ',';
       return _formatNumberWithSeparator(value, separator);
     case 'split':
       if (args.length < 2) {
@@ -1190,8 +1262,9 @@ dynamic _applyFunction(
       }
       final source = _stringifyResolvedValue(args[0]);
       final separator = _stringifyResolvedValue(args[1]);
-      final parts =
-          separator.isEmpty ? source.split('') : source.split(separator);
+      final parts = separator.isEmpty
+          ? source.split('')
+          : source.split(separator);
       if (args.length < 3) {
         return parts;
       }
@@ -1248,8 +1321,9 @@ dynamic _applyFunction(
         if (maxLength < 0) {
           return null;
         }
-        final suffix =
-            args.length >= 3 ? _stringifyResolvedValue(args[2]) : '...';
+        final suffix = args.length >= 3
+            ? _stringifyResolvedValue(args[2])
+            : '...';
         if (source.length <= maxLength) {
           return source;
         }
@@ -1424,7 +1498,14 @@ _ResolvedExpression _evaluateSingleExpression(
 
   final functionCall = _parseFunctionCall(trimmed);
   if (functionCall != null) {
-    final args = _splitTopLevel(functionCall.inner, ',');
+    var delimiter = ',';
+    final hasTopLevelSemicolon =
+        _splitTopLevel(functionCall.inner, ';').length > 1;
+    final hasTopLevelComma = _splitTopLevel(functionCall.inner, ',').length > 1;
+    if (hasTopLevelSemicolon && !hasTopLevelComma) {
+      delimiter = ';';
+    }
+    final args = _splitTopLevel(functionCall.inner, delimiter);
     final resolvedArgs = <dynamic>[];
     for (final arg in args) {
       final outcome = _evaluateExpression(arg, updates);
@@ -1463,6 +1544,7 @@ _ResolvedExpression _evaluateSingleExpression(
             nameLower == 'charcount' ||
             nameLower == 'linescount' ||
             nameLower == 'croptext' ||
+            nameLower == 'split' ||
             nameLower == 'bytecount' ||
             nameLower == 'servernames' ||
             nameLower == 'checkcondition') {
@@ -1487,7 +1569,10 @@ _ResolvedExpression _evaluateSingleExpression(
     }
     // Fallback: If argument resolution or function evaluation fails,
     // check if the fully-resolved key exists directly in updates.
-    final resolvedFullKey = resolveTemplatePlaceholders(trimmed, updates).trim();
+    final resolvedFullKey = resolveTemplatePlaceholders(
+      trimmed,
+      updates,
+    ).trim();
     final directVal = _lookupVariableValue(resolvedFullKey, updates);
     if (directVal != null) {
       return _ResolvedExpression(found: true, value: directVal);
@@ -1666,8 +1751,14 @@ bool _evaluateStringCondition(String expression, Map<String, String> updates) {
   for (final entry in symbolOperators.entries) {
     final splitIndex = trimmed.indexOf(entry.key);
     if (splitIndex > 0) {
-      final left = resolveTemplatePlaceholders(trimmed.substring(0, splitIndex).trim(), updates);
-      final right = resolveTemplatePlaceholders(trimmed.substring(splitIndex + entry.key.length).trim(), updates);
+      final left = resolveTemplatePlaceholders(
+        trimmed.substring(0, splitIndex).trim(),
+        updates,
+      );
+      final right = resolveTemplatePlaceholders(
+        trimmed.substring(splitIndex + entry.key.length).trim(),
+        updates,
+      );
       return _evaluateConditionValue(left, entry.value, right);
     }
   }
@@ -1683,15 +1774,23 @@ bool _evaluateStringCondition(String expression, Map<String, String> updates) {
   for (final entry in wordOperators.entries) {
     final index = lowered.indexOf(entry.key);
     if (index >= 0) {
-      final left = resolveTemplatePlaceholders(trimmed.substring(0, index).trim(), updates);
-      final right = resolveTemplatePlaceholders(trimmed.substring(index + entry.key.trim().length).trim(), updates);
+      final left = resolveTemplatePlaceholders(
+        trimmed.substring(0, index).trim(),
+        updates,
+      );
+      final right = resolveTemplatePlaceholders(
+        trimmed.substring(index + entry.key.trim().length).trim(),
+        updates,
+      );
       return _evaluateConditionValue(left, entry.value, right);
     }
   }
 
   // If no operator, check if it's truthy (not empty and not 'false' and not '0')
   final resolved = resolveTemplatePlaceholders(trimmed, updates).trim();
-  return resolved.isNotEmpty && resolved.toLowerCase() != 'false' && resolved != '0';
+  return resolved.isNotEmpty &&
+      resolved.toLowerCase() != 'false' &&
+      resolved != '0';
 }
 
 bool _evaluateConditionValue(String left, String operator, String right) {
@@ -1729,49 +1828,92 @@ bool _evaluateConditionValue(String left, String operator, String right) {
 
 String? _mapToLowercaseToBdfdPerm(String lowercasePerm) {
   switch (lowercasePerm.trim().toLowerCase()) {
-    case 'addreactions': return 'ADD_REACTIONS';
-    case 'administrator': return 'ADMINISTRATOR';
-    case 'attachfiles': return 'ATTACH_FILES';
-    case 'banmembers': return 'BAN_MEMBERS';
-    case 'changenickname': return 'CHANGE_NICKNAME';
-    case 'connect': return 'CONNECT';
-    case 'createinstantinvite': return 'CREATE_INSTANT_INVITE';
-    case 'createprivatethreads': return 'CREATE_PRIVATE_THREADS';
-    case 'createpublicthreads': return 'CREATE_PUBLIC_THREADS';
-    case 'deafenmembers': return 'DEAFEN_MEMBERS';
-    case 'embedlinks': return 'EMBED_LINKS';
-    case 'kickmembers': return 'KICK_MEMBERS';
-    case 'managechannels': return 'MANAGE_CHANNELS';
-    case 'manageevents': return 'MANAGE_EVENTS';
-    case 'manageguild': return 'MANAGE_GUILD';
-    case 'manageguildexpressions': return 'MANAGE_GUILD_EXPRESSIONS';
-    case 'managemessages': return 'MANAGE_MESSAGES';
-    case 'managenicknames': return 'MANAGE_NICKNAMES';
-    case 'manageroles': return 'MANAGE_ROLES';
-    case 'managethreads': return 'MANAGE_THREADS';
-    case 'managewebhooks': return 'MANAGE_WEBHOOKS';
-    case 'mentioneveryone': return 'MENTION_EVERYONE';
-    case 'moderatemembers': return 'MODERATE_MEMBERS';
-    case 'movemembers': return 'MOVE_MEMBERS';
-    case 'mutemembers': return 'MUTE_MEMBERS';
-    case 'priorityspeaker': return 'PRIORITY_SPEAKER';
-    case 'readmessagehistory': return 'READ_MESSAGE_HISTORY';
-    case 'requesttospeak': return 'REQUEST_TO_SPEAK';
-    case 'sendmessages': return 'SEND_MESSAGES';
-    case 'sendmessagesinthreads': return 'SEND_MESSAGES_IN_THREADS';
-    case 'sendttsmessages': return 'SEND_TTS_MESSAGES';
-    case 'sendvoicemessages': return 'SEND_VOICE_MESSAGES';
-    case 'speak': return 'SPEAK';
-    case 'stream': return 'STREAM';
-    case 'useapplicationcommands': return 'USE_APPLICATION_COMMANDS';
-    case 'useexternalemojis': return 'USE_EXTERNAL_EMOJIS';
-    case 'useexternalstickers': return 'USE_EXTERNAL_STICKERS';
-    case 'usesoundboard': return 'USE_SOUNDBOARD';
-    case 'usevoiceactivity': return 'USE_VAD';
-    case 'viewauditlog': return 'VIEW_AUDIT_LOG';
-    case 'viewchannel': return 'VIEW_CHANNEL';
-    case 'viewguildinsights': return 'VIEW_GUILD_INSIGHTS';
-    default: return lowercasePerm.toUpperCase();
+    case 'addreactions':
+      return 'ADD_REACTIONS';
+    case 'administrator':
+      return 'ADMINISTRATOR';
+    case 'attachfiles':
+      return 'ATTACH_FILES';
+    case 'banmembers':
+      return 'BAN_MEMBERS';
+    case 'changenickname':
+      return 'CHANGE_NICKNAME';
+    case 'connect':
+      return 'CONNECT';
+    case 'createinstantinvite':
+      return 'CREATE_INSTANT_INVITE';
+    case 'createprivatethreads':
+      return 'CREATE_PRIVATE_THREADS';
+    case 'createpublicthreads':
+      return 'CREATE_PUBLIC_THREADS';
+    case 'deafenmembers':
+      return 'DEAFEN_MEMBERS';
+    case 'embedlinks':
+      return 'EMBED_LINKS';
+    case 'kickmembers':
+      return 'KICK_MEMBERS';
+    case 'managechannels':
+      return 'MANAGE_CHANNELS';
+    case 'manageevents':
+      return 'MANAGE_EVENTS';
+    case 'manageguild':
+      return 'MANAGE_GUILD';
+    case 'manageguildexpressions':
+      return 'MANAGE_GUILD_EXPRESSIONS';
+    case 'managemessages':
+      return 'MANAGE_MESSAGES';
+    case 'managenicknames':
+      return 'MANAGE_NICKNAMES';
+    case 'manageroles':
+      return 'MANAGE_ROLES';
+    case 'managethreads':
+      return 'MANAGE_THREADS';
+    case 'managewebhooks':
+      return 'MANAGE_WEBHOOKS';
+    case 'mentioneveryone':
+      return 'MENTION_EVERYONE';
+    case 'moderatemembers':
+      return 'MODERATE_MEMBERS';
+    case 'movemembers':
+      return 'MOVE_MEMBERS';
+    case 'mutemembers':
+      return 'MUTE_MEMBERS';
+    case 'priorityspeaker':
+      return 'PRIORITY_SPEAKER';
+    case 'readmessagehistory':
+      return 'READ_MESSAGE_HISTORY';
+    case 'requesttospeak':
+      return 'REQUEST_TO_SPEAK';
+    case 'sendmessages':
+      return 'SEND_MESSAGES';
+    case 'sendmessagesinthreads':
+      return 'SEND_MESSAGES_IN_THREADS';
+    case 'sendttsmessages':
+      return 'SEND_TTS_MESSAGES';
+    case 'sendvoicemessages':
+      return 'SEND_VOICE_MESSAGES';
+    case 'speak':
+      return 'SPEAK';
+    case 'stream':
+      return 'STREAM';
+    case 'useapplicationcommands':
+      return 'USE_APPLICATION_COMMANDS';
+    case 'useexternalemojis':
+      return 'USE_EXTERNAL_EMOJIS';
+    case 'useexternalstickers':
+      return 'USE_EXTERNAL_STICKERS';
+    case 'usesoundboard':
+      return 'USE_SOUNDBOARD';
+    case 'usevoiceactivity':
+      return 'USE_VAD';
+    case 'viewauditlog':
+      return 'VIEW_AUDIT_LOG';
+    case 'viewchannel':
+      return 'VIEW_CHANNEL';
+    case 'viewguildinsights':
+      return 'VIEW_GUILD_INSIGHTS';
+    default:
+      return lowercasePerm.toUpperCase();
   }
 }
 
@@ -1800,10 +1942,12 @@ void injectAlwaysAvailableVariables(
   vars['hour'] = '${now.hour}';
   vars['minute'] = '${now.minute}';
   vars['second'] = '${now.second}';
-  vars['time'] = '${now.hour.toString().padLeft(2, '0')}:'
+  vars['time'] =
+      '${now.hour.toString().padLeft(2, '0')}:'
       '${now.minute.toString().padLeft(2, '0')}:'
       '${now.second.toString().padLeft(2, '0')}';
-  vars['date'] = '${now.year}-'
+  vars['date'] =
+      '${now.year}-'
       '${now.month.toString().padLeft(2, '0')}-'
       '${now.day.toString().padLeft(2, '0')}';
 }

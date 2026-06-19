@@ -36,10 +36,7 @@ extension _BdfdAstTranspilationScopeActionBuilders
     return Action(
       type: BotCreatorActionType.sendMessage,
       payload: <String, dynamic>{
-        if (hasReply)
-          'targetType': 'reply'
-        else
-          'targetType': 'channel',
+        if (hasReply) 'targetType': 'reply' else 'targetType': 'channel',
         'channelId': channelId,
         'content': content,
         if (hasReply) 'messageId': replyToMessageId,
@@ -229,11 +226,17 @@ extension _BdfdAstTranspilationScopeActionBuilders
 
   Action _buildClearAction(BdfdFunctionCallAst node) {
     // BDFD wiki: $clear[Amount;User ID;Remove pinned messages?]
-    final amountArg = node.arguments.isNotEmpty ? _stringifyArgument(node, 0).trim() : '';
+    final amountArg = node.arguments.isNotEmpty
+        ? _stringifyArgument(node, 0).trim()
+        : '';
     final count = amountArg.isNotEmpty ? amountArg : '((message.args[0]))';
-    
-    final userIdArg = node.arguments.length > 1 ? _stringifyArgument(node, 1).trim() : '';
-    final removePinnedArg = node.arguments.length > 2 ? _stringifyArgument(node, 2).trim() : '';
+
+    final userIdArg = node.arguments.length > 1
+        ? _stringifyArgument(node, 1).trim()
+        : '';
+    final removePinnedArg = node.arguments.length > 2
+        ? _stringifyArgument(node, 2).trim()
+        : '';
 
     return Action(
       type: BotCreatorActionType.deleteMessages,
@@ -289,14 +292,10 @@ extension _BdfdAstTranspilationScopeActionBuilders
       if (roleId.isEmpty) continue;
       actions.add(
         Action(
-          type:
-              give
-                  ? BotCreatorActionType.addRole
-                  : BotCreatorActionType.removeRole,
-          payload: <String, dynamic>{
-            'userId': userId,
-            'roleId': roleId,
-          },
+          type: give
+              ? BotCreatorActionType.addRole
+              : BotCreatorActionType.removeRole,
+          payload: <String, dynamic>{'userId': userId, 'roleId': roleId},
         ),
       );
     }
@@ -327,10 +326,9 @@ extension _BdfdAstTranspilationScopeActionBuilders
       if (roleId.isEmpty) continue;
       actions.add(
         Action(
-          type:
-              isRemove
-                  ? BotCreatorActionType.removeRole
-                  : BotCreatorActionType.addRole,
+          type: isRemove
+              ? BotCreatorActionType.removeRole
+              : BotCreatorActionType.addRole,
           payload: <String, dynamic>{'userId': userId, 'roleId': roleId},
         ),
       );
@@ -618,8 +616,6 @@ extension _BdfdAstTranspilationScopeActionBuilders
       },
     );
   }
-
-
 
   Action _buildReplyInAction(BdfdFunctionCallAst node) {
     final delay = _stringifyArgument(node, 0).trim();
@@ -960,8 +956,10 @@ extension _BdfdAstTranspilationScopeActionBuilders
       );
       return null;
     }
+    final key = '_bdfd_createemoji_${_createEmojiCounter++}';
     return Action(
       type: BotCreatorActionType.createEmoji,
+      key: key,
       payload: <String, dynamic>{'name': name, 'imageUrl': imageUrl},
     );
   }
@@ -1045,8 +1043,7 @@ extension _BdfdAstTranspilationScopeActionBuilders
         modalComponents.add(item);
       } else if (item.containsKey('style')) {
         // Legacy text input – wrap in a Label.
-        final inputLabel =
-            (item['label'] ?? '').toString();
+        final inputLabel = (item['label'] ?? '').toString();
         modalComponents.add(<String, dynamic>{
           'type': 'label',
           'label': inputLabel,
@@ -1146,10 +1143,12 @@ extension _BdfdAstTranspilationScopeActionBuilders
     var contextId = '';
 
     if (scope == 'user') {
-      final gvUserId =
-          node.arguments.length > 1 ? _stringifyArgument(node, 1).trim() : '';
-      final gvGuildId =
-          node.arguments.length > 2 ? _stringifyArgument(node, 2).trim() : '';
+      final gvUserId = node.arguments.length > 1
+          ? _stringifyArgument(node, 1).trim()
+          : '';
+      final gvGuildId = node.arguments.length > 2
+          ? _stringifyArgument(node, 2).trim()
+          : '';
 
       if (gvGuildId.isNotEmpty) {
         resolvedScope = 'guildMember';
@@ -1160,17 +1159,20 @@ extension _BdfdAstTranspilationScopeActionBuilders
         contextId = gvUserId;
       }
     } else if (scope == 'guildMember') {
-      final gmvUserId =
-          node.arguments.length > 1 ? _stringifyArgument(node, 1).trim() : '';
-      final gmvGuildId =
-          node.arguments.length > 2 ? _stringifyArgument(node, 2).trim() : '';
+      final gmvUserId = node.arguments.length > 1
+          ? _stringifyArgument(node, 1).trim()
+          : '';
+      final gmvGuildId = node.arguments.length > 2
+          ? _stringifyArgument(node, 2).trim()
+          : '';
 
       final guildPart = gmvGuildId.isNotEmpty ? gmvGuildId : '((guild.id))';
       final userPart = gmvUserId.isNotEmpty ? gmvUserId : '((author.id))';
       contextId = '$guildPart:$userPart';
     } else {
-      contextId =
-          node.arguments.length > 1 ? _stringifyArgument(node, 1).trim() : '';
+      contextId = node.arguments.length > 1
+          ? _stringifyArgument(node, 1).trim()
+          : '';
     }
 
     return Action(
@@ -1476,12 +1478,11 @@ extension _BdfdAstTranspilationScopeActionBuilders
     }
 
     final commandNamesRaw = _stringifyArgument(node, 0);
-    final commandNames =
-        commandNamesRaw
-            .split(';')
-            .map((e) => e.trim())
-            .where((e) => e.isNotEmpty)
-            .toList();
+    final commandNames = commandNamesRaw
+        .split(';')
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
 
     return Action(
       type: BotCreatorActionType.registerGuildCommands,
@@ -1500,12 +1501,11 @@ extension _BdfdAstTranspilationScopeActionBuilders
     }
 
     final commandNamesRaw = _stringifyArgument(node, 0);
-    final commandNames =
-        commandNamesRaw
-            .split(';')
-            .map((e) => e.trim())
-            .where((e) => e.isNotEmpty)
-            .toList();
+    final commandNames = commandNamesRaw
+        .split(';')
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
 
     return Action(
       type: BotCreatorActionType.unregisterGuildCommands,

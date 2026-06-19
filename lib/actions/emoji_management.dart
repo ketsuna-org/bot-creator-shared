@@ -138,6 +138,7 @@ Future<Map<String, String>> createEmojiAction(
     return {
       'emojiId': emoji.id.toString(),
       'name': emoji.name ?? name,
+      'animated': ((emoji as dynamic).isAnimated == true).toString(),
       'status': 'created',
     };
   } catch (e) {

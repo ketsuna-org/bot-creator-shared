@@ -16,11 +16,12 @@ import 'package:bot_creator_shared/utils/global.dart';
 class BotSession {
   BotSession({
     required this.botId,
-    required this.token,
+    required String token,
     required this.store,
     required this.callbacks,
-    this.lavalinkConfig,
-  }) {
+    LavalinkConfig? lavalinkConfig,
+  })  : _token = token,
+        _lavalinkConfig = lavalinkConfig {
     _workflowExecutor = WorkflowExecutor(store: store, callbacks: callbacks);
     _commandExecutor = CommandExecutor(
       store: store,
@@ -38,10 +39,15 @@ class BotSession {
   }
 
   final String botId;
-  final String token;
   final BotDataStore store;
   final BotEngineCallbacks callbacks;
-  final LavalinkConfig? lavalinkConfig;
+
+  String _token;
+  LavalinkConfig? _lavalinkConfig;
+  Map<String, bool> _intentsMap = const {};
+
+  String get token => _token;
+  LavalinkConfig? get lavalinkConfig => _lavalinkConfig;
 
   late final WorkflowExecutor _workflowExecutor;
   late final CommandExecutor _commandExecutor;
@@ -71,7 +77,9 @@ class BotSession {
     if (isActive) return;
 
     final appData = await store.getApp(botId);
-    final intentsMap = Map<String, bool>.from(appData['intents'] as Map? ?? {});
+    final rawIntents = Map<String, bool>.from(appData['intents'] as Map? ?? {});
+    _intentsMap = rawIntents;
+    final intentsMap = Map<String, bool>.from(rawIntents);
 
     // Lavalink requires voice state intents — force-enable them
     if (lavalinkConfig != null) {
@@ -214,10 +222,50 @@ class BotSession {
     }
   }
 
-  /// Reloads the bot configuration (presence, commands, etc.) without reconnecting.
+  /// Reloads the bot configuration (presence, commands, etc.) without reconnecting,
+  /// unless token, intents, or lavalink presence changed.
   Future<void> reload() async {
     final appData = await store.getApp(botId);
     final config = BotConfig.fromJson(appData);
+
+    final newToken = config.token;
+    final newIntents = config.intents;
+    final newLavalinkConfig = config.lavalinkConfig;
+
+    final previousHasLavalink = _lavalinkConfig != null;
+    final newHasLavalink = newLavalinkConfig != null;
+
+    final bool intentsChanged = !_sameIntents(_intentsMap, newIntents) ||
+        (previousHasLavalink != newHasLavalink);
+
+    if (_token != newToken || intentsChanged) {
+      callbacks.onLog?.call(
+        'Lavalink/Intents/Token changed, reconnecting gateway...',
+        botId: botId,
+      );
+      _token = newToken;
+      _lavalinkConfig = newLavalinkConfig;
+      _intentsMap = newIntents;
+
+      await stop();
+      await start();
+      return;
+    }
+
+    // If no gateway reconnect is needed, check if the Lavalink config details changed
+    if (newHasLavalink && previousHasLavalink) {
+      if (_isLavalinkConfigDifferent(_lavalinkConfig, newLavalinkConfig)) {
+        callbacks.onLog?.call(
+          'Lavalink config details changed, updating service...',
+          botId: botId,
+        );
+        _lavalinkConfig = newLavalinkConfig;
+        await _reloadLavalinkService(newLavalinkConfig);
+      }
+    } else if (!newHasLavalink && previousHasLavalink) {
+      _lavalinkConfig = null;
+      await _disposeLavalink();
+    }
 
     _presenceManager?.start(
       statuses: config.statuses,
@@ -249,6 +297,8 @@ class BotSession {
       unawaited(sub.cancel());
     }
     _subscriptions.clear();
+
+    await _disposeLavalink();
 
     if (_gateway != null) {
       await _gateway!.close();
@@ -382,5 +432,74 @@ class BotSession {
     return intents == GatewayIntents.none
         ? GatewayIntents.allUnprivileged
         : intents;
+  }
+
+  bool _sameIntents(Map<String, bool> a, Map<String, bool> b) {
+    if (a.length != b.length) return false;
+    for (final entry in a.entries) {
+      if ((b[entry.key] ?? false) != entry.value) return false;
+    }
+    return true;
+  }
+
+  bool _isLavalinkConfigDifferent(LavalinkConfig? a, LavalinkConfig? b) {
+    if (a == null && b == null) return false;
+    if (a == null || b == null) return true;
+    return a.host != b.host ||
+        a.port != b.port ||
+        a.password != b.password ||
+        a.useSsl != b.useSsl;
+  }
+
+  Future<void> _reloadLavalinkService(LavalinkConfig config) async {
+    await _disposeLavalink();
+
+    callbacks.onLog?.call('Lavalink: pre-checking ${config.host}:${config.port}...', botId: botId);
+    final preCheckError = await LavalinkService.testConnection(
+      host: config.host,
+      port: config.port,
+      password: config.password,
+      useSsl: config.useSsl,
+    );
+
+    if (preCheckError != null) {
+      callbacks.onLog?.call(
+        'Lavalink pre-check failed: $preCheckError — music disabled',
+        botId: botId,
+      );
+    } else {
+      callbacks.onLog?.call('Lavalink pre-check OK, starting plugin...', botId: botId);
+      final lavalinkPlugin = LavalinkService.createPlugin(config);
+      if (lavalinkPlugin != null) {
+        _lavalinkService = LavalinkService(
+          plugin: lavalinkPlugin,
+          config: config,
+          onLog: (msg) => callbacks.onLog?.call(msg, botId: botId),
+        );
+
+        try {
+          await _lavalinkService!.waitForReady();
+          callbacks.onLog?.call('Lavalink ready — music features enabled', botId: botId);
+          _workflowExecutor.lavalinkService = _lavalinkService;
+          _lavalinkService!.monitorHealth();
+        } catch (e) {
+          callbacks.onLog?.call('Lavalink connection failed: $e — music disabled', botId: botId);
+          _lavalinkService = null;
+        }
+      }
+    }
+  }
+
+  Future<void> _disposeLavalink() async {
+    if (_lavalinkService != null) {
+      callbacks.onLog?.call('Lavalink: disposing existing service...', botId: botId);
+      try {
+        await _lavalinkService!.dispose();
+      } catch (e) {
+        callbacks.onLog?.call('Lavalink: error disposing service: $e', botId: botId);
+      }
+      _lavalinkService = null;
+      _workflowExecutor.lavalinkService = null;
+    }
   }
 }

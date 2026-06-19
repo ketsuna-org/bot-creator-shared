@@ -24,6 +24,17 @@ extension _BdfdAstTranspilationScopeInlineRuntime
       if (loopVar != null) return loopVar.toString();
     }
     switch (node.normalizedName) {
+      case 'addemoji':
+        final action = _buildAddEmojiAction(node);
+        if (action != null) {
+          _deferredInlineActions.add(action);
+        }
+        final returnEmojiRaw = _stringifyArgument(node, 2).trim().toLowerCase();
+        final returnEmoji = returnEmojiRaw == 'yes' || returnEmojiRaw == 'true';
+        if (returnEmoji && action != null) {
+          return '((${action.key}))';
+        }
+        return '';
       case 'startthread':
         final action = _buildStartThreadAction(node);
         if (action != null) {
@@ -215,7 +226,9 @@ extension _BdfdAstTranspilationScopeInlineRuntime
       case 'servernames':
         if (node.arguments.isNotEmpty) {
           final amount = _stringifyArgument(node, 0).trim();
-          final separator = node.arguments.length > 1 ? _stringifyArgument(node, 1).trim() : ', ';
+          final separator = node.arguments.length > 1
+              ? _stringifyArgument(node, 1).trim()
+              : ', ';
           return '((servernames[$amount;$separator]))';
         }
         return _inlineRuntimeVariables['servernames'];
@@ -257,7 +270,8 @@ extension _BdfdAstTranspilationScopeInlineRuntime
               'servericon' => 'icon',
               'serverdescription' => 'description',
               'serverowner' => 'ownerId',
-              'serververificationlevel' || 'serververificationlvl' => 'verificationLevel',
+              'serververificationlevel' ||
+              'serververificationlvl' => 'verificationLevel',
               'serverfeatures' => 'features',
               'servervanityurl' => 'vanityUrlCode',
               'serverbanner' => 'banner',
@@ -367,9 +381,15 @@ extension _BdfdAstTranspilationScopeInlineRuntime
         }
         return _inlineRuntimeVariables['userbanner'];
       case 'userperms':
-        final userId = node.arguments.isNotEmpty ? _stringifyArgument(node, 0).trim() : '';
-        final returnAmount = node.arguments.length > 1 ? _stringifyArgument(node, 1).trim() : '-1';
-        final separator = node.arguments.length > 2 ? _stringifyArgument(node, 2).trim() : ', ';
+        final userId = node.arguments.isNotEmpty
+            ? _stringifyArgument(node, 0).trim()
+            : '';
+        final returnAmount = node.arguments.length > 1
+            ? _stringifyArgument(node, 1).trim()
+            : '-1';
+        final separator = node.arguments.length > 2
+            ? _stringifyArgument(node, 2).trim()
+            : ', ';
         return '((userperms[$userId;$returnAmount;$separator]))';
       case 'isbot':
         if (node.arguments.isNotEmpty) {
@@ -381,7 +401,8 @@ extension _BdfdAstTranspilationScopeInlineRuntime
         return _inlineRuntimeVariables['isbot'];
       // Mentioned helper with index
       case 'mentioned':
-        final returnSelf = node.arguments.length > 1 &&
+        final returnSelf =
+            node.arguments.length > 1 &&
             _stringifyArgument(node, 1).trim().toLowerCase() == 'yes';
         if (node.arguments.isNotEmpty) {
           final indexRaw = _stringifyArgument(node, 0).trim();
@@ -488,8 +509,12 @@ extension _BdfdAstTranspilationScopeInlineRuntime
         }
         final urlMode = _stringifyArgument(node, 0).trim().toLowerCase();
         final urlText = _stringifyArgument(node, 1);
-        if (_containsRuntimePlaceholder(urlText) || _containsRuntimePlaceholder(urlMode)) {
-          return _buildRuntimeBracketExpression('url', <String>[urlMode, urlText]);
+        if (_containsRuntimePlaceholder(urlText) ||
+            _containsRuntimePlaceholder(urlMode)) {
+          return _buildRuntimeBracketExpression('url', <String>[
+            urlMode,
+            urlText,
+          ]);
         }
         try {
           if (urlMode == 'encode') {
@@ -542,64 +567,65 @@ extension _BdfdAstTranspilationScopeInlineRuntime
       // Variable getters
       case 'getuservar':
         final gvVarName = _stringifyArgument(node, 0);
-        final gvUserId =
-            node.arguments.length > 1 ? _stringifyArgument(node, 1).trim() : '';
-        final gvGuildId =
-            node.arguments.length > 2 ? _stringifyArgument(node, 2).trim() : '';
+        final gvUserId = node.arguments.length > 1
+            ? _stringifyArgument(node, 1).trim()
+            : '';
+        final gvGuildId = node.arguments.length > 2
+            ? _stringifyArgument(node, 2).trim()
+            : '';
 
         if (gvGuildId.isNotEmpty) {
-          final contextId =
-              gvUserId.isEmpty ? '$gvGuildId:((author.id))' : '$gvGuildId:$gvUserId';
-          return _scopedVariablePlaceholder('guildMember', gvVarName, contextId);
+          final contextId = gvUserId.isEmpty
+              ? '$gvGuildId:((author.id))'
+              : '$gvGuildId:$gvUserId';
+          return _scopedVariablePlaceholder(
+            'guildMember',
+            gvVarName,
+            contextId,
+          );
         }
         return _scopedVariablePlaceholder('user', gvVarName, gvUserId);
       case 'getservervar':
       case 'getguildvar':
         final gsvVarName = _stringifyArgument(node, 0);
-        final gsvGuildId =
-            node.arguments.length > 1 ? _stringifyArgument(node, 1).trim() : '';
+        final gsvGuildId = node.arguments.length > 1
+            ? _stringifyArgument(node, 1).trim()
+            : '';
         return _scopedVariablePlaceholder('guild', gsvVarName, gsvGuildId);
       case 'getchannelvar':
         final gcvVarName = _stringifyArgument(node, 0);
-        final gcvChannelId =
-            node.arguments.length > 1 ? _stringifyArgument(node, 1).trim() : '';
+        final gcvChannelId = node.arguments.length > 1
+            ? _stringifyArgument(node, 1).trim()
+            : '';
         return _scopedVariablePlaceholder('channel', gcvVarName, gcvChannelId);
       case 'getmembervar':
       case 'getguildmembervar':
         final gmvVarName = _stringifyArgument(node, 0);
-        final gmvUserId =
-            node.arguments.length > 1 ? _stringifyArgument(node, 1).trim() : '';
-        final gmvGuildId =
-            node.arguments.length > 2 ? _stringifyArgument(node, 2).trim() : '';
+        final gmvUserId = node.arguments.length > 1
+            ? _stringifyArgument(node, 1).trim()
+            : '';
+        final gmvGuildId = node.arguments.length > 2
+            ? _stringifyArgument(node, 2).trim()
+            : '';
 
         final guildPart = gmvGuildId.isNotEmpty ? gmvGuildId : '((guild.id))';
         final userPart = gmvUserId.isNotEmpty ? gmvUserId : '((author.id))';
         final contextId = '$guildPart:$userPart';
-        return _scopedVariablePlaceholder(
-          'guildMember',
-          gmvVarName,
-          contextId,
-        );
+        return _scopedVariablePlaceholder('guildMember', gmvVarName, contextId);
       case 'getmessagevar':
         final gmvVarName = _stringifyArgument(node, 0);
-        final gmvMessageId =
-            node.arguments.length > 1 ? _stringifyArgument(node, 1).trim() : '';
-        return _scopedVariablePlaceholder(
-          'message',
-          gmvVarName,
-          gmvMessageId,
-        );
+        final gmvMessageId = node.arguments.length > 1
+            ? _stringifyArgument(node, 1).trim()
+            : '';
+        return _scopedVariablePlaceholder('message', gmvVarName, gmvMessageId);
       case 'getvar':
         // BDFD wiki: $getVar[Variable name;(User ID)]
         final gvVarName = _stringifyArgument(node, 0);
-        final gvUserId =
-            node.arguments.length > 1 ? _stringifyArgument(node, 1).trim() : '';
+        final gvUserId = node.arguments.length > 1
+            ? _stringifyArgument(node, 1).trim()
+            : '';
         if (gvUserId.isNotEmpty) {
-          return _scopedVariablePlaceholder(
-            'user',
-            gvVarName,
-            gvUserId,
-          );
+          return _scopedVariablePlaceholder('user', gvVarName, gvUserId);
         }
         // Global variable lookup — uses store.getGlobalVariable via
         // ((global.<key>)) placeholder, injected by injectGlobalRuntimeVariables.
@@ -943,11 +969,17 @@ extension _BdfdAstTranspilationScopeInlineRuntime
         }
         return _buildRuntimeBracketExpression('or', orArgs);
       case 'listvar':
-        final listvarSep = node.arguments.isNotEmpty ? _stringifyArgument(node, 0) : ',';
+        final listvarSep = node.arguments.isNotEmpty
+            ? _stringifyArgument(node, 0)
+            : ',';
         return _buildRuntimeBracketExpression('listvar', <String>[listvarSep]);
       case 'variablescount':
-        final vcType = node.arguments.isNotEmpty ? _stringifyArgument(node, 0) : '';
-        return _buildRuntimeBracketExpression('variablescount', <String>[vcType]);
+        final vcType = node.arguments.isNotEmpty
+            ? _stringifyArgument(node, 0)
+            : '';
+        return _buildRuntimeBracketExpression('variablescount', <String>[
+          vcType,
+        ]);
       case 'error':
         // BDFD wiki: $error[Type] — returns specific error metadata.
         if (node.arguments.isNotEmpty) {
@@ -1002,6 +1034,7 @@ extension _BdfdAstTranspilationScopeInlineRuntime
       case 'jsonkeys':
       case 'jsonarraypop':
       case 'jsonarrayshift':
+      case 'addemoji':
       case 'startthread':
       case 'editthread':
       case 'threadaddmember':
@@ -1237,4 +1270,3 @@ extension _BdfdAstTranspilationScopeInlineRuntime
     return drained;
   }
 }
-

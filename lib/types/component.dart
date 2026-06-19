@@ -15,6 +15,7 @@ enum ComponentV2Type {
   roleSelect,
   mentionableSelect,
   channelSelect,
+  categorySelect,
   section,
   textDisplay,
   thumbnail,
@@ -60,6 +61,7 @@ abstract class ComponentNode {
       case ComponentV2Type.roleSelect:
       case ComponentV2Type.mentionableSelect:
       case ComponentV2Type.channelSelect:
+      case ComponentV2Type.categorySelect:
         return SelectMenuNode.fromJson(json);
       case ComponentV2Type.section:
         return SectionNode.fromJson(json);
@@ -261,10 +263,18 @@ class SelectMenuNode extends ComponentNode {
 
   factory SelectMenuNode.fromJson(Map<String, dynamic> json) {
     final typeStr = json['type'] as String?;
-    final resolvedType = ComponentV2Type.values.firstWhere(
+    var resolvedType = ComponentV2Type.values.firstWhere(
       (t) => t.name == typeStr,
       orElse: () => ComponentV2Type.stringSelect,
     );
+    if (typeStr == 'selectMenu') {
+      final menuType = json['menuType'] as String?;
+      if (menuType == 'channel') resolvedType = ComponentV2Type.channelSelect;
+      if (menuType == 'user') resolvedType = ComponentV2Type.userSelect;
+      if (menuType == 'role') resolvedType = ComponentV2Type.roleSelect;
+      if (menuType == 'mentionable') resolvedType = ComponentV2Type.mentionableSelect;
+      if (menuType == 'category') resolvedType = ComponentV2Type.categorySelect;
+    }
 
     // Prefer inline actions; fall back to legacy workflow for backward compat.
     List<Map<String, dynamic>> actions;
