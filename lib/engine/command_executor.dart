@@ -171,7 +171,6 @@ class CommandExecutor {
             '')
         .toString();
 
-    final jsScriptContent = (executionValue['jsScriptContent'] ?? '').toString().trim();
 
     final shouldCompileFromBdfdSource =
         executionMode == 'bdfd_script' || scriptSource.trim().isNotEmpty;

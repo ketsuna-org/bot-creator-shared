@@ -477,8 +477,6 @@ class EventDispatcher {
                   '')
               .toString();
 
-      final jsScriptContent = (executionValue['jsScriptContent'] ?? '').toString().trim();
-
       final shouldCompileFromBdfdSource =
           executionMode == 'bdfd_script' || scriptSource.trim().isNotEmpty;
 
@@ -488,7 +486,7 @@ class EventDispatcher {
           context: context,
           gateway: gateway,
           botId: botId,
-          runtimeVariables: wfVars,
+          runtimeVariables: runtimeVariables,
         );
       } else {
         await _executeEventWorkflow(
@@ -496,7 +494,7 @@ class EventDispatcher {
           context: context,
           botId: botId,
           gateway: gateway,
-          runtimeVariables: wfVars,
+          runtimeVariables: runtimeVariables,
         );
       }
     }
@@ -842,7 +840,6 @@ class EventDispatcher {
                 '')
             .toString();
 
-    final jsScriptContent = (executionValue['jsScriptContent'] ?? '').toString().trim();
 
     final shouldCompileFromBdfdSource =
         executionMode == 'bdfd_script' || scriptSource.trim().isNotEmpty;
