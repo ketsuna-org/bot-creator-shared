@@ -601,7 +601,10 @@ Future<Map<String, dynamic>> respondWithComponentV2Action(
               messageId: messageId,
             );
           }
-          return {'messageId': ?messageId, 'status': 'responded'};
+          return {
+            'messageId': messageId,
+            'status': 'responded',
+          };
         }
       } catch (e) {
         return {'error': 'Failed to send interaction response: $e'};

@@ -477,12 +477,10 @@ class EventDispatcher {
                   '')
               .toString();
 
+      final jsScriptContent = (executionValue['jsScriptContent'] ?? '').toString().trim();
+
       final shouldCompileFromBdfdSource =
           executionMode == 'bdfd_script' || scriptSource.trim().isNotEmpty;
-
-      // Apply event variable aliases for this specific workflow.
-      final wfVars = Map<String, String>.from(runtimeVariables);
-      applyEventVariableAliases(wfVars, normalized);
 
       if (shouldCompileFromBdfdSource) {
         await _executeBdfdScriptInEvent(
@@ -844,13 +842,10 @@ class EventDispatcher {
                 '')
             .toString();
 
+    final jsScriptContent = (executionValue['jsScriptContent'] ?? '').toString().trim();
+
     final shouldCompileFromBdfdSource =
         executionMode == 'bdfd_script' || scriptSource.trim().isNotEmpty;
-
-    callbacks.onDebugLog?.call(
-      'Execution mode: $executionMode, shouldCompile: $shouldCompileFromBdfdSource',
-      botId: botId,
-    );
 
     if (shouldCompileFromBdfdSource) {
       await _executeBdfdScriptInEvent(

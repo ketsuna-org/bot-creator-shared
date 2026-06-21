@@ -3,6 +3,7 @@ import 'package:bot_creator_shared/bot/bot_data_store.dart';
 import 'package:bot_creator_shared/bot/bot_config.dart';
 import 'package:bot_creator_shared/engine/bot_engine_callbacks.dart';
 import 'package:bot_creator_shared/engine/bot_session.dart';
+import 'package:bot_creator_shared/engine/command_executor.dart';
 
 /// The central entry point for the Bot Creator bot execution engine.
 /// Manages multiple bot sessions across Desktop, Mobile, or Runner environments.

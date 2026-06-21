@@ -15,7 +15,6 @@ import 'package:bot_creator_shared/utils/workflow_call.dart';
 import 'package:bot_creator_shared/engine/bot_engine_callbacks.dart';
 import 'package:bot_creator_shared/engine/workflow_executor.dart';
 
-/// Unified executor for Discord commands (Slash, Autocomplete, Component).
 class CommandExecutor {
   CommandExecutor({
     required this.store,
@@ -171,6 +170,8 @@ class CommandExecutor {
             executionValue['bdfdScript'] ??
             '')
         .toString();
+
+    final jsScriptContent = (executionValue['jsScriptContent'] ?? '').toString().trim();
 
     final shouldCompileFromBdfdSource =
         executionMode == 'bdfd_script' || scriptSource.trim().isNotEmpty;

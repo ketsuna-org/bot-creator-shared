@@ -1231,6 +1231,60 @@ Future<Map<String, String>> generateInteractionContextKeyValues(
   final channelType = channel?.type.value.toString() ?? '0';
   final channelMention = channel != null ? '<#${channel.id}>' : '';
 
+  // Additional user properties
+  final globalName = user?.globalName ?? (member?.user?.globalName);
+  final createdAt = user?.id.timestamp.toIso8601String() ?? '';
+  String bannerColor = '';
+  final accentColorRaw = user?.accentColor ?? member?.user?.accentColor;
+  if (accentColorRaw != null) {
+    bannerColor =
+        '#${accentColorRaw.value.toRadixString(16).padLeft(6, '0')}';
+  }
+  final accentColor = accentColorRaw?.value.toString() ?? '';
+  final flags = user?.flags?.value.toString() ??
+      member?.user?.flags?.value.toString() ??
+      '';
+  final publicFlags = user?.publicFlags?.value.toString() ??
+      member?.user?.publicFlags?.value.toString() ??
+      '';
+  final avatarDecorationUrl =
+      (user?.avatarDecoration ?? member?.user?.avatarDecoration)
+          ?.url
+          .toString() ??
+      '';
+  final avatarDecorationHash =
+      user?.avatarDecorationHash ??
+          member?.user?.avatarDecorationHash ??
+          '';
+  final avatarDecorationDataSkuId =
+      (user?.avatarDecorationData ?? member?.user?.avatarDecorationData)
+              ?.skuId
+              .toString() ??
+          '';
+  final avatarDecorationDataAsset =
+      (user?.avatarDecorationData ?? member?.user?.avatarDecorationData)
+          ?.asset ??
+          '';
+  final primaryGuildIdentityGuildId = (user?.primaryGuild ??
+              member?.user?.primaryGuild)
+          ?.identityGuildId
+          ?.toString() ??
+      '';
+  final primaryGuildIdentityEnabled = (user?.primaryGuild ??
+              member?.user?.primaryGuild)
+          ?.isIdentityEnabled
+          ?.toString() ??
+      'false';
+  final primaryGuildTag =
+      (user?.primaryGuild ?? member?.user?.primaryGuild)?.tag ?? '';
+  final primaryGuildBadge =
+      ((user?.primaryGuild ?? member?.user?.primaryGuild)?.badge ?? '')
+          .toString();
+  final verified = (user?.flags?.has(UserFlags.verifiedBot) ??
+          member?.user?.flags?.has(UserFlags.verifiedBot) ??
+          false)
+      .toString();
+
   return <String, String>{
     'interaction.guildId': guildId?.toString() ?? '',
     'interaction.channelId': channelId?.toString() ?? '',
@@ -1247,11 +1301,40 @@ Future<Map<String, String>> generateInteractionContextKeyValues(
     'user.tag': tag,
     'user.avatar': userAvatarUrl,
     'user.banner': userBannerUrl,
+    'user.globalName': globalName ?? '',
+    'user.createdAt': createdAt,
+    'user.bannerColor': bannerColor,
+    'user.accentColor': accentColor,
+    'user.flags': flags,
+    'user.publicFlags': publicFlags,
+    'user.avatarDecoration': avatarDecorationUrl,
+    'user.avatarDecorationHash': avatarDecorationHash,
+    'user.avatarDecorationData.skuId': avatarDecorationDataSkuId,
+    'user.avatarDecorationData.asset': avatarDecorationDataAsset,
+    'user.primaryGuild.identityGuildId': primaryGuildIdentityGuildId,
+    'user.primaryGuild.identityEnabled': primaryGuildIdentityEnabled,
+    'user.primaryGuild.tag': primaryGuildTag,
+    'user.primaryGuild.badge': primaryGuildBadge,
+    'user.verified': verified,
     'author.id': userIdText,
     'author.username': username,
     'author.tag': tag,
     'author.avatar': userAvatarUrl,
     'author.banner': userBannerUrl,
+    'author.globalName': globalName ?? '',
+    'author.bannerColor': bannerColor,
+    'author.accentColor': accentColor,
+    'author.flags': flags,
+    'author.publicFlags': publicFlags,
+    'author.avatarDecoration': avatarDecorationUrl,
+    'author.avatarDecorationHash': avatarDecorationHash,
+    'author.avatarDecorationData.skuId': avatarDecorationDataSkuId,
+    'author.avatarDecorationData.asset': avatarDecorationDataAsset,
+    'author.primaryGuild.identityGuildId': primaryGuildIdentityGuildId,
+    'author.primaryGuild.identityEnabled': primaryGuildIdentityEnabled,
+    'author.primaryGuild.tag': primaryGuildTag,
+    'author.primaryGuild.badge': primaryGuildBadge,
+    'author.verified': verified,
     'author.displayName': displayName,
     'user.displayName': displayName,
     'interaction.user.id': userIdText,

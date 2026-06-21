@@ -186,6 +186,25 @@ Map<String, String> _userExtra(User? user, {bool enrichAuthor = false}) {
     'user.banner': user.banner?.url.toString() ?? '',
     'user.createdAt': user.id.timestamp.toIso8601String(),
     'user.bannerColor': userBannerColor,
+    'user.accentColor': user.accentColor?.value.toString() ?? '',
+    'user.flags': user.flags?.value.toString() ?? '',
+    'user.publicFlags': user.publicFlags?.value.toString() ?? '',
+    'user.avatarDecoration':
+        user.avatarDecoration?.url.toString() ?? '',
+    'user.avatarDecorationHash': user.avatarDecorationHash ?? '',
+    'user.avatarDecorationData.skuId':
+        user.avatarDecorationData != null
+            ? user.avatarDecorationData!.skuId.toString()
+            : '',
+    'user.avatarDecorationData.asset':
+        user.avatarDecorationData?.asset ?? '',
+    'user.primaryGuild.identityGuildId':
+        user.primaryGuild?.identityGuildId?.toString() ?? '',
+    'user.primaryGuild.identityEnabled':
+        user.primaryGuild?.isIdentityEnabled?.toString() ?? 'false',
+    'user.primaryGuild.tag': user.primaryGuild?.tag ?? '',
+    'user.primaryGuild.badge': (user.primaryGuild?.badge ?? '').toString(),
+    'user.verified': (user.flags?.has(UserFlags.verifiedBot) ?? false).toString(),
     if (enrichAuthor) ...{
       'author.id': user.id.toString(),
       'author.username': user.username,
@@ -194,6 +213,27 @@ Map<String, String> _userExtra(User? user, {bool enrichAuthor = false}) {
       'author.avatar': userAvatarUrl,
       'author.banner': user.banner?.url.toString() ?? '',
       'author.displayName': user.globalName ?? user.username,
+      'author.bannerColor': userBannerColor,
+      'author.accentColor': user.accentColor?.value.toString() ?? '',
+      'author.flags': user.flags?.value.toString() ?? '',
+      'author.publicFlags': user.publicFlags?.value.toString() ?? '',
+      'author.avatarDecoration':
+          user.avatarDecoration?.url.toString() ?? '',
+      'author.avatarDecorationHash':
+          user.avatarDecorationHash ?? '',
+      'author.avatarDecorationData.skuId':
+          user.avatarDecorationData != null
+              ? user.avatarDecorationData!.skuId.toString()
+              : '',
+      'author.avatarDecorationData.asset':
+          user.avatarDecorationData?.asset ?? '',
+      'author.primaryGuild.identityGuildId':
+          user.primaryGuild?.identityGuildId?.toString() ?? '',
+      'author.primaryGuild.identityEnabled':
+          user.primaryGuild?.isIdentityEnabled?.toString() ?? 'false',
+      'author.primaryGuild.tag': user.primaryGuild?.tag ?? '',
+      'author.primaryGuild.badge': (user.primaryGuild?.badge ?? '').toString(),
+      'author.verified': (user.flags?.has(UserFlags.verifiedBot) ?? false).toString(),
     },
   };
 }

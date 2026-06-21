@@ -88,6 +88,13 @@ class _BdfdScanner {
         }
       }
 
+      // $$ escape: two dollar signs produce a single literal $.
+      // Must come BEFORE _isFunctionStart().
+      if (char == r'$' && !_isAtEnd && _peekNext() == r'$') {
+        _scanText();
+        continue;
+      }
+
       if (_isFunctionStart()) {
         _scanFunction();
         continue;
@@ -357,9 +364,35 @@ class _BdfdScanner {
         final next = source[_index + 1];
         if (next == r'$' || next == '[' || next == ']' || next == ';') {
           _advance(); // consume backslash
-          buffer.write(_advance()); // consume and keep the escaped char
+          final escaped = _advance(); // consume the escaped char
+          buffer.write(escaped);
+          // When escaping ] inside bracket context, maintain literal bracket
+          // balance so that the outer bracket closes correctly. Without this,
+          // a \[ … \] pair would leave literalBracketDepth permanently > 0.
+          if (escaped == ']' &&
+              _bracketStack.isNotEmpty &&
+              _bracketStack.last.literalBracketDepth > 0) {
+            _bracketStack.last.literalBracketDepth -= 1;
+          }
           continue;
         }
+      }
+
+      // Handle $$ escape: two dollar signs produce a single literal $.
+      // Must come BEFORE _isFunctionStart() so that the first $ is consumed
+      // as text and the last $ is left for _isFunctionStart() to re-enter
+      // function scanning (e.g. $$getVar[...] → literal $ + evaluated function).
+      // For three or more $, each $$ pair after the first is collapsed silently
+      // so that $$$getVar → literal $ + function $getVar (not $$ + $getVar).
+      if (_peek() == r'$' && (_index + 1) < source.length && source[_index + 1] == r'$') {
+        buffer.write(_advance()); // consume first $ and write a literal $
+        // If the second $ is followed by yet another $ (triple-$ case),
+        // consume the middle $ silently — it's part of the escape chain.
+        if ((_index + 1) < source.length && source[_index + 1] == r'$') {
+          _advance(); // consume second $ without writing
+        }
+        // Second $ stays as current char for _isFunctionStart() to pick up
+        continue;
       }
 
       if (_isFunctionStart()) {

@@ -209,6 +209,7 @@ Future<Map<String, String>> sendMessageToChannel(
           final def = ComponentV2Definition.fromJson(
             Map<String, dynamic>.from(componentsDef),
           );
+          definition = def;
           if (!def.isRichV2 && def.components.isNotEmpty) {
             components = buildComponentNodes(definition: def, resolve: r);
           }

@@ -273,6 +273,44 @@ class DiscordEntityFetcher {
     set('displayName', user.globalName ?? user.username);
     set('createdAt', user.id.timestamp.toIso8601String());
     set('isBot', user.isBot.toString());
+    set('banner', user.banner?.url.toString() ?? '');
+    set(
+      'bannerColor',
+      user.accentColor != null
+          ? '#${user.accentColor!.value.toRadixString(16).padLeft(6, '0')}'
+          : '',
+    );
+    set('accentColor', user.accentColor?.value.toString() ?? '');
+    set('flags', user.flags?.value.toString() ?? '');
+    set('publicFlags', user.publicFlags?.value.toString() ?? '');
+    set('avatarDecorationHash', user.avatarDecorationHash ?? '');
+    set(
+      'avatarDecorationData.skuId',
+      user.avatarDecorationData != null
+          ? user.avatarDecorationData!.skuId.toString()
+          : '',
+    );
+    set(
+      'avatarDecorationData.asset',
+      user.avatarDecorationData?.asset ?? '',
+    );
+    set(
+      'primaryGuild.identityGuildId',
+      user.primaryGuild?.identityGuildId?.toString() ?? '',
+    );
+    set(
+      'primaryGuild.identityEnabled',
+      user.primaryGuild?.isIdentityEnabled?.toString() ?? 'false',
+    );
+    set('primaryGuild.tag', user.primaryGuild?.tag ?? '');
+    set(
+      'primaryGuild.badge',
+      (user.primaryGuild?.badge ?? '').toString(),
+    );
+    set(
+      'verified',
+      (user.flags?.has(UserFlags.verifiedBot) ?? false).toString(),
+    );
   }
 
   // Using dynamic to avoid type issues across different library versions
