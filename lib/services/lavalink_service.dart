@@ -318,20 +318,37 @@ class LavalinkService {
       path: '/v4/info',
     );
 
+    final maskedPassword = password.isEmpty 
+        ? '[VIDE]' 
+        : (password.length > 4 ? '${password.substring(0, 2)}***${password.substring(password.length - 2)}' : '***');
+
+    print('Lavalink Connection Test: Starting...');
+    print('Lavalink Connection Test: URL = $uri');
+    print('Lavalink Connection Test: Password = $maskedPassword (length: ${password.length})');
+
     try {
       final response = await http
           .get(uri, headers: {'Authorization': password})
           .timeout(const Duration(seconds: 5));
 
+      print('Lavalink Connection Test: Response received. Status Code = ${response.statusCode}');
+      print('Lavalink Connection Test: Response Headers = ${response.headers}');
+      print('Lavalink Connection Test: Response Body = ${response.body.length > 200 ? "${response.body.substring(0, 200)}..." : response.body}');
+
       if (response.statusCode == 200) {
+        print('Lavalink Connection Test: SUCCESS');
         return null; // Success
       }
+      print('Lavalink Connection Test: FAILED with status code ${response.statusCode}');
       return 'Erreur ${response.statusCode}';
     } on http.ClientException catch (e) {
+      print('Lavalink Connection Test: ClientException (Connection Refused): ${e.message}');
       return 'Connexion refusée : ${e.message}';
     } on TimeoutException {
+      print('Lavalink Connection Test: TimeoutException (5s exceeded)');
       return 'Délai dépassé (5s)';
     } catch (e) {
+      print('Lavalink Connection Test: Unknown Error: $e');
       return e.toString();
     }
   }
