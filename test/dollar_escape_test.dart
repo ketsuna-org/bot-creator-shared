@@ -95,8 +95,6 @@ void main() {
   });
 
   group(r'\] escape — literal bracket balance', () {
-    List<BdfdToken> lex(String source) =>
-        BdfdLexer().tokenize(source).tokens;
 
     // Regression: the \] escape handler wrote ] to the buffer but did NOT
     // decrement literalBracketDepth, so a paired [ ... \] inside function

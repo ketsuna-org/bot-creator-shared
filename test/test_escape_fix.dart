@@ -1,4 +1,4 @@
-import '../lib/utils/bdfd_lexer.dart';
+import 'package:bot_creator_shared/utils/bdfd_lexer.dart';
 
 void main() {
   final source = r'**[$$getVar[daily_reward_cash]\]($getVar[botlink])**';

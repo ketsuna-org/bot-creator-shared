@@ -1,3 +1,5 @@
+// ignore_for_file: prefer_initializing_formals
+
 import 'dart:async';
 import 'package:nyxx/nyxx.dart';
 import 'package:bot_creator_shared/bot/bot_data_store.dart';
