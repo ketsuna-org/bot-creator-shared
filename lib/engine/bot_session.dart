@@ -125,6 +125,7 @@ class BotSession {
           callbacks.onLog?.call('Lavalink pre-check OK, starting plugin...', botId: botId);
           final lavalinkPlugin = LavalinkService.createPlugin(localConfig);
           if (lavalinkPlugin != null) {
+            _gateway!.registerPlugin(lavalinkPlugin);
             _lavalinkService = LavalinkService(
               plugin: lavalinkPlugin,
               config: localConfig,
@@ -473,6 +474,7 @@ class BotSession {
       callbacks.onLog?.call('Lavalink pre-check OK, starting plugin...', botId: botId);
       final lavalinkPlugin = LavalinkService.createPlugin(config);
       if (lavalinkPlugin != null) {
+        _gateway!.registerPlugin(lavalinkPlugin);
         _lavalinkService = LavalinkService(
           plugin: lavalinkPlugin,
           config: config,
