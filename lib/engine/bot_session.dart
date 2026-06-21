@@ -92,9 +92,38 @@ class BotSession {
 
     callbacks.onLog?.call('Starting bot gateway...', botId: botId);
 
-    // Build plugins list — Lavalink is connected AFTER gateway to avoid blocking
+    // Build plugins list — LavalinkPlugin MUST be included here at connection time.
+    // Its afterConnect() hook (which opens the WebSocket to the Lavalink server)
+    // is only triggered during Nyxx.connectGateway; it cannot be added afterwards.
     final localConfig = lavalinkConfig;
     final plugins = <NyxxPlugin>[logging, cliIntegration];
+
+    LavalinkPlugin? lavalinkPlugin;
+    if (localConfig != null) {
+      callbacks.onLog
+          ?.call('Lavalink: pre-checking ${localConfig.host}:${localConfig.port}...', botId: botId);
+
+      // Quick REST health check before attempting WebSocket
+      final preCheckError = await LavalinkService.testConnection(
+        host: localConfig.host,
+        port: localConfig.port,
+        password: localConfig.password,
+        useSsl: localConfig.useSsl,
+      );
+
+      if (preCheckError != null) {
+        callbacks.onLog?.call(
+          'Lavalink pre-check failed: $preCheckError — music disabled',
+          botId: botId,
+        );
+      } else {
+        callbacks.onLog?.call('Lavalink pre-check OK, starting plugin...', botId: botId);
+        lavalinkPlugin = LavalinkService.createPlugin(localConfig);
+        if (lavalinkPlugin != null) {
+          plugins.add(lavalinkPlugin);
+        }
+      }
+    }
 
     try {
       _gateway = await Nyxx.connectGateway(
@@ -103,46 +132,23 @@ class BotSession {
         options: GatewayClientOptions(plugins: plugins),
       );
 
-      // ── Lavalink: connect AFTER gateway to prevent gateway blocking ──
-      if (localConfig != null) {
-        callbacks.onLog
-            ?.call('Lavalink: pre-checking ${localConfig.host}:${localConfig.port}...', botId: botId);
-
-        // Quick REST health check before attempting WebSocket
-        final preCheckError = await LavalinkService.testConnection(
-          host: localConfig.host,
-          port: localConfig.port,
-          password: localConfig.password,
-          useSsl: localConfig.useSsl,
+      // ── Lavalink: wait for ready event now that the plugin is connected ──
+      if (lavalinkPlugin != null && localConfig != null) {
+        _lavalinkService = LavalinkService(
+          plugin: lavalinkPlugin,
+          config: localConfig,
+          onLog: (msg) => callbacks.onLog?.call(msg, botId: botId),
         );
 
-        if (preCheckError != null) {
-          callbacks.onLog?.call(
-            'Lavalink pre-check failed: $preCheckError — music disabled',
-            botId: botId,
-          );
-        } else {
-          callbacks.onLog?.call('Lavalink pre-check OK, starting plugin...', botId: botId);
-          final lavalinkPlugin = LavalinkService.createPlugin(localConfig);
-          if (lavalinkPlugin != null) {
-            _gateway!.registerPlugin(lavalinkPlugin);
-            _lavalinkService = LavalinkService(
-              plugin: lavalinkPlugin,
-              config: localConfig,
-              onLog: (msg) => callbacks.onLog?.call(msg, botId: botId),
-            );
-
-            // Fire and forget: Lavalink connects in background, timeout 10s
-            unawaited(_lavalinkService!.waitForReady().then((_) {
-              callbacks.onLog?.call('Lavalink ready — music features enabled', botId: botId);
-              _workflowExecutor.lavalinkService = _lavalinkService;
-              _lavalinkService!.monitorHealth();
-            }).catchError((e) {
-              callbacks.onLog?.call('Lavalink connection failed: $e — music disabled', botId: botId);
-              _lavalinkService = null;
-            }));
-          }
-        }
+        // Fire and forget: wait for Lavalink WS handshake in background
+        unawaited(_lavalinkService!.waitForReady().then((_) {
+          callbacks.onLog?.call('Lavalink ready — music features enabled', botId: botId);
+          _workflowExecutor.lavalinkService = _lavalinkService;
+          _lavalinkService!.monitorHealth();
+        }).catchError((e) {
+          callbacks.onLog?.call('Lavalink connection failed: $e — music disabled', botId: botId);
+          _lavalinkService = null;
+        }));
       }
 
       // Debug voice events
@@ -455,43 +461,15 @@ class BotSession {
   }
 
   Future<void> _reloadLavalinkService(LavalinkConfig config) async {
-    await _disposeLavalink();
-
-    callbacks.onLog?.call('Lavalink: pre-checking ${config.host}:${config.port}...', botId: botId);
-    final preCheckError = await LavalinkService.testConnection(
-      host: config.host,
-      port: config.port,
-      password: config.password,
-      useSsl: config.useSsl,
+    // LavalinkPlugin must be registered at gateway connection time.
+    // Since the gateway is already running, we must do a full restart
+    // to include the new plugin in GatewayClientOptions.
+    callbacks.onLog?.call(
+      'Lavalink config changed — restarting bot to apply new Lavalink settings...',
+      botId: botId,
     );
-
-    if (preCheckError != null) {
-      callbacks.onLog?.call(
-        'Lavalink pre-check failed: $preCheckError — music disabled',
-        botId: botId,
-      );
-    } else {
-      callbacks.onLog?.call('Lavalink pre-check OK, starting plugin...', botId: botId);
-      final lavalinkPlugin = LavalinkService.createPlugin(config);
-      if (lavalinkPlugin != null) {
-        _gateway!.registerPlugin(lavalinkPlugin);
-        _lavalinkService = LavalinkService(
-          plugin: lavalinkPlugin,
-          config: config,
-          onLog: (msg) => callbacks.onLog?.call(msg, botId: botId),
-        );
-
-        try {
-          await _lavalinkService!.waitForReady();
-          callbacks.onLog?.call('Lavalink ready — music features enabled', botId: botId);
-          _workflowExecutor.lavalinkService = _lavalinkService;
-          _lavalinkService!.monitorHealth();
-        } catch (e) {
-          callbacks.onLog?.call('Lavalink connection failed: $e — music disabled', botId: botId);
-          _lavalinkService = null;
-        }
-      }
-    }
+    await stop();
+    await start();
   }
 
   Future<void> _disposeLavalink() async {
