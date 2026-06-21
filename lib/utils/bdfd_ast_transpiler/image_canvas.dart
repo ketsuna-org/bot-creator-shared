@@ -224,7 +224,7 @@ extension _BdfdAstTranspilationScopeImageCanvas on _BdfdAstTranspilationScope {
   }
 
   /// Adds a progressBar operation to the deferred image block.
-  /// Signature: $canvasProgressBar[x;y;width;height;percentage;barColor;trackColor;textColor;borderWidth?;orientation?;fontSize?;container?]
+  /// Signature: $canvasProgressBar[x;y;width;height;percentage;barColor;trackColor;textColor;borderWidth?;orientation?;fontSize?;container?;borderRadius?]
   void _canvasProgressBar(BdfdFunctionCallAst node) {
     if (!_deferredImageMode) return;
     _deferredImageOps.add(<String, dynamic>{
@@ -241,6 +241,7 @@ extension _BdfdAstTranspilationScopeImageCanvas on _BdfdAstTranspilationScope {
       if (node.arguments.length > 9) 'orientation': _stringifyArgument(node, 9),
       if (node.arguments.length > 10) 'fontSize': _stringifyArgument(node, 10),
       if (node.arguments.length > 11) 'container': _stringifyArgument(node, 11),
+      if (node.arguments.length > 12) 'borderRadius': _stringifyArgument(node, 12),
     });
   }
 

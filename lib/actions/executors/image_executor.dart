@@ -1024,6 +1024,106 @@ img.Image? _opDrawLine(
   return current;
 }
 
+bool _isInsideRoundRect(int px, int py, int x, int y, int w, int h, int r) {
+  if (w <= 0 || h <= 0) return false;
+  if (r < 0) r = 0;
+  final maxR = (math.min(w, h) / 2).round();
+  if (r > maxR) r = maxR;
+
+  if (px < x || px >= x + w || py < y || py >= y + h) return false;
+
+  // Check corners
+  // Top-left
+  if (px < x + r && py < y + r) {
+    final dx = px - (x + r);
+    final dy = py - (y + r);
+    return dx * dx + dy * dy <= r * r;
+  }
+  // Top-right
+  if (px >= x + w - r && py < y + r) {
+    final dx = px - (x + w - r);
+    final dy = py - (y + r);
+    return dx * dx + dy * dy <= r * r;
+  }
+  // Bottom-left
+  if (px < x + r && py >= y + h - r) {
+    final dx = px - (x + r);
+    final dy = py - (y + h - r);
+    return dx * dx + dy * dy <= r * r;
+  }
+  // Bottom-right
+  if (px >= x + w - r && py >= y + h - r) {
+    final dx = px - (x + w - r);
+    final dy = py - (y + h - r);
+    return dx * dx + dy * dy <= r * r;
+  }
+  return true;
+}
+
+void _fillRoundRect(img.Image dst, int x, int y, int w, int h, int r, img.Color color) {
+  if (r <= 0) {
+    img.fillRect(dst, x1: x, y1: y, x2: x + w, y2: y + h, color: color);
+    return;
+  }
+  final maxR = (math.min(w, h) / 2).round();
+  if (r > maxR) r = maxR;
+
+  // Center rect
+  img.fillRect(dst, x1: x + r, y1: y, x2: x + w - r, y2: y + h, color: color);
+  // Left side rect
+  img.fillRect(dst, x1: x, y1: y + r, x2: x + r, y2: y + h - r, color: color);
+  // Right side rect
+  img.fillRect(dst, x1: x + w - r, y1: y + r, x2: x + w, y2: y + h - r, color: color);
+
+  // Four corners
+  img.fillCircle(dst, x: x + r, y: y + r, radius: r, color: color);
+  img.fillCircle(dst, x: x + w - r, y: y + r, radius: r, color: color);
+  img.fillCircle(dst, x: x + r, y: y + h - r, radius: r, color: color);
+  img.fillCircle(dst, x: x + w - r, y: y + h - r, radius: r, color: color);
+}
+
+void _fillRoundRectClipped(img.Image dst, int rx, int ry, int rw, int rh, int r,
+    int fx, int fy, int fw, int fh, img.Color color) {
+  final minX = fx;
+  final maxX = fx + fw;
+  final minY = fy;
+  final maxY = fy + fh;
+  for (var py = minY; py < maxY; py++) {
+    for (var px = minX; px < maxX; px++) {
+      if (_isInsideRoundRect(px, py, rx, ry, rw, rh, r)) {
+        dst.setPixelRgba(px, py, color.r, color.g, color.b, color.a);
+      }
+    }
+  }
+}
+
+void _drawRoundRectOutline(img.Image dst, int x, int y, int w, int h, int r, int bw, img.Color color) {
+  if (r <= 0) {
+    // Top
+    img.fillRect(dst, x1: x, y1: y, x2: x + w, y2: y + bw, color: color);
+    // Bottom
+    img.fillRect(dst, x1: x, y1: y + h - bw, x2: x + w, y2: y + h, color: color);
+    // Left
+    img.fillRect(dst, x1: x, y1: y, x2: x + bw, y2: y + h, color: color);
+    // Right
+    img.fillRect(dst, x1: x + w - bw, y1: y, x2: x + w, y2: y + h, color: color);
+    return;
+  }
+  final minX = x;
+  final maxX = x + w;
+  final minY = y;
+  final maxY = y + h;
+  for (var py = minY; py < maxY; py++) {
+    for (var px = minX; px < maxX; px++) {
+      final inOuter = _isInsideRoundRect(px, py, x, y, w, h, r);
+      final inInner = _isInsideRoundRect(px, py, x + bw, y + bw, w - 2 * bw, h - 2 * bw, r - bw);
+      if (inOuter && !inInner) {
+        dst.setPixelRgba(px, py, color.r, color.g, color.b, color.a);
+      }
+    }
+  }
+}
+
 /// Draws a progress bar.
 ///
 /// Parameters (from $canvasProgressBar):
@@ -1037,6 +1137,7 @@ img.Image? _opDrawLine(
 ///   (BDFD has no separate border-color argument)
 /// - `orientation` — `horizontal` (default) or `vertical`
 /// - `fontSize` (default 14) — percentage label size
+/// - `borderRadius` (default 0) — corners rounding radius
 img.Image? _opProgressBar(
     Map rawOp, String Function(String) resolveValue, img.Image? current) {
   if (current == null) return null;
@@ -1060,50 +1161,71 @@ img.Image? _opProgressBar(
           'vertical';
   final fontSize =
       _parseInt(rawOp['fontSize'], resolveValue, defaultValue: 14);
+  final borderRadius =
+      _parseInt(rawOp['borderRadius'], resolveValue, defaultValue: 0)
+          .clamp(0, 500);
 
   // Track (full bar area).
-  img.fillRect(current,
-      x1: x, y1: y, x2: x + width, y2: y + height, color: trackColor);
+  if (borderRadius > 0) {
+    _fillRoundRect(current, x, y, width, height, borderRadius, trackColor);
+  } else {
+    img.fillRect(current,
+        x1: x, y1: y, x2: x + width, y2: y + height, color: trackColor);
+  }
 
   // Filled portion.
   final fill = percentage / 100.0;
   if (vertical) {
     final fillH = (height * fill).round();
     if (fillH > 0) {
-      img.fillRect(current,
-          x1: x,
-          y1: y + height - fillH,
-          x2: x + width,
-          y2: y + height,
-          color: barColor);
+      if (borderRadius > 0) {
+        _fillRoundRectClipped(current, x, y, width, height, borderRadius,
+            x, y + height - fillH, width, fillH, barColor);
+      } else {
+        img.fillRect(current,
+            x1: x,
+            y1: y + height - fillH,
+            x2: x + width,
+            y2: y + height,
+            color: barColor);
+      }
     }
   } else {
     final fillW = (width * fill).round();
     if (fillW > 0) {
-      img.fillRect(current,
-          x1: x, y1: y, x2: x + fillW, y2: y + height, color: barColor);
+      if (borderRadius > 0) {
+        _fillRoundRectClipped(current, x, y, width, height, borderRadius,
+            x, y, fillW, height, barColor);
+      } else {
+        img.fillRect(current,
+            x1: x, y1: y, x2: x + fillW, y2: y + height, color: barColor);
+      }
     }
   }
 
   // Border frame (in barColor by default — BDFD has no separate border color arg).
   if (borderWidth > 0) {
-    final bw = borderWidth;
-    img.fillRect(current,
-        x1: x, y1: y, x2: x + width, y2: y + bw, color: barColor);
-    img.fillRect(current,
-        x1: x,
-        y1: y + height - bw,
-        x2: x + width,
-        y2: y + height,
-        color: barColor);
-    img.fillRect(current,
-        x1: x, y1: y, x2: x + bw, y2: y + height, color: barColor);
-    img.fillRect(current,
-        x1: x + width - bw,
-        y1: y,
-        x2: x + width,
-        y2: y + height,
-        color: barColor);
+    if (borderRadius > 0) {
+      _drawRoundRectOutline(current, x, y, width, height, borderRadius, borderWidth, barColor);
+    } else {
+      final bw = borderWidth;
+      img.fillRect(current,
+          x1: x, y1: y, x2: x + width, y2: y + bw, color: barColor);
+      img.fillRect(current,
+          x1: x,
+          y1: y + height - bw,
+          x2: x + width,
+          y2: y + height,
+          color: barColor);
+      img.fillRect(current,
+          x1: x, y1: y, x2: x + bw, y2: y + height, color: barColor);
+      img.fillRect(current,
+          x1: x + width - bw,
+          y1: y,
+          x2: x + width,
+          y2: y + height,
+          color: barColor);
+    }
   }
 
   // Percentage label, centered.
