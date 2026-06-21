@@ -91,12 +91,12 @@ class LavalinkService {
   }
 
   /// Wait for the Lavalink connection to be established, with a timeout.
-  /// Throws [TimeoutException] if the server doesn't respond within 10 seconds.
+  /// Throws [TimeoutException] if the server doesn't respond within 30 seconds.
   Future<void> waitForReady() async {
     await _plugin.onReady.first.timeout(
-      const Duration(seconds: 10),
+      const Duration(seconds: 30),
       onTimeout: () => throw TimeoutException(
-        'Lavalink server did not respond within 10s',
+        'Lavalink server did not respond within 30s',
       ),
     );
   }
@@ -193,7 +193,7 @@ class LavalinkService {
 
     onLog?.call('Lavalink: searching/loading "$identifier"...');
     final result = await _plugin.loadTrack(identifier).timeout(
-      const Duration(seconds: 10),
+      const Duration(seconds: 30),
       onTimeout: () => throw TimeoutException('Lavalink search timed out'),
     );
 
