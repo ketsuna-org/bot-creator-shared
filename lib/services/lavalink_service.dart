@@ -140,8 +140,8 @@ class LavalinkService {
     } catch (e) {
       onLog?.call('Lavalink: connect failed — $e');
       throw Exception(
-        'Impossible de se connecter au salon vocal via Lavalink. '
-        'Vérifiez que le serveur Lavalink est bien démarré.',
+        'Failed to connect to voice channel via Lavalink. '
+        'Make sure the Lavalink server is running and accessible.',
       );
     }
     final session = LavalinkSession(player: player);
@@ -210,8 +210,8 @@ class LavalinkService {
     } catch (e) {
       onLog?.call('Lavalink: loadTrack failed — $e');
       throw Exception(
-        'Le serveur Lavalink n\'a pas répondu correctement. '
-        'Vérifiez qu\'il est bien démarré et accessible.',
+        'The Lavalink server did not respond correctly. '
+        'Make sure it is running and accessible.',
       );
     }
 
