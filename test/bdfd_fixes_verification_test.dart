@@ -247,5 +247,73 @@ void main() {
         expect(component['disabled'], isFalse);
       });
     });
+
+    group(r'$addVoiceSelect Component', () {
+      test(r'compiles $addVoiceSelect to voice selectMenu', () {
+        final result = BdfdCompiler().compile(
+          r'$addVoiceSelect[voice_id;Choose voice;1;1;no]',
+        );
+        expect(result.hasErrors, isFalse);
+        expect(result.actions, hasLength(1));
+
+        final action = result.actions.single;
+        expect(action.type, BotCreatorActionType.respondWithMessage);
+
+        final items = List<Map<String, dynamic>>.from(
+          (action.payload['components'] as Map)['items'] as List,
+        );
+        expect(items, hasLength(1));
+        final component = items.first;
+        expect(component['type'], 'selectMenu');
+        expect(component['menuType'], 'voice');
+        expect(component['customId'], 'voice_id');
+        expect(component['placeholder'], 'Choose voice');
+        expect(component['minValues'], 1);
+        expect(component['maxValues'], 1);
+        expect(component['disabled'], isFalse);
+      });
+    });
+
+    group('Premium Button Style', () {
+      test(r'compiles $addButton with style premium to premium ButtonNode', () {
+        final result = BdfdCompiler().compile(
+          r'$addButton[no;123456789;Test Label;premium;no;🔥]',
+        );
+        expect(result.hasErrors, isFalse);
+        expect(result.actions, hasLength(1));
+
+        final action = result.actions.single;
+        final items = List<Map<String, dynamic>>.from(
+          (action.payload['components'] as Map)['items'] as List,
+        );
+        expect(items, hasLength(1));
+        final component = items.first;
+        expect(component['type'], 'button');
+        expect(component['style'], 'premium');
+        expect(component['skuId'], '123456789');
+        expect(component['customId'], '');
+        expect(component['url'], '');
+        expect(component['label'], '');
+        expect(component['emoji'], isNull);
+      });
+
+      test(r'compiles $editButton changing to style premium', () {
+        final result = BdfdCompiler().compile(
+          r'$addButton[no;btn_id;Normal;primary;no]$editButton[btn_id;Normal;premium;no]',
+        );
+        expect(result.hasErrors, isFalse);
+        expect(result.actions, hasLength(1));
+        final action = result.actions.single;
+        final items = List<Map<String, dynamic>>.from(
+          (action.payload['components'] as Map)['items'] as List,
+        );
+        expect(items, hasLength(1));
+        final component = items.first;
+        expect(component['type'], 'button');
+        expect(component['style'], 'premium');
+        expect(component['customId'], '');
+        expect(component['label'], '');
+      });
+    });
   });
 }

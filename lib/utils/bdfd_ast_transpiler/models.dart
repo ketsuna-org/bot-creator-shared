@@ -59,12 +59,13 @@ class _PendingResponse {
     _components.add(<String, dynamic>{
       'type': 'button',
       'newRow': newRow,
-      'customId': style != 'link' ? interactionIdOrUrl : '',
+      'customId': (style != 'link' && style != 'premium') ? interactionIdOrUrl : '',
       'url': style == 'link' ? interactionIdOrUrl : '',
-      'label': label,
+      if (style == 'premium') 'skuId': interactionIdOrUrl,
+      'label': style == 'premium' ? '' : label,
       'style': style,
       'disabled': disabled,
-      if (emoji.isNotEmpty) 'emoji': emoji,
+      if (emoji.isNotEmpty && style != 'premium') 'emoji': emoji,
       if (messageId.isNotEmpty) 'messageId': messageId,
     });
   }
@@ -132,25 +133,36 @@ class _PendingResponse {
         currentCol++;
       }
       if (currentRow == row && currentCol == col) {
-        if (label != null) component['label'] = label;
         if (style != null) component['style'] = style;
-        if (customIdOrUrl != null) {
-          final resolvedStyle = style ?? component['style']?.toString() ?? '';
-          if (resolvedStyle == 'link') {
-            component['url'] = customIdOrUrl;
-            component['customId'] = '';
-          } else {
-            component['customId'] = customIdOrUrl;
-            component['url'] = '';
+        final resolvedStyle = style ?? component['style']?.toString() ?? '';
+        if (resolvedStyle == 'premium') {
+          component['customId'] = '';
+          component['url'] = '';
+          component['label'] = '';
+          component.remove('emoji');
+          if (customIdOrUrl != null) {
+            component['skuId'] = customIdOrUrl;
           }
+        } else {
+          component.remove('skuId');
+          if (label != null) component['label'] = label;
+          if (customIdOrUrl != null) {
+            if (resolvedStyle == 'link') {
+              component['url'] = customIdOrUrl;
+              component['customId'] = '';
+            } else {
+              component['customId'] = customIdOrUrl;
+              component['url'] = '';
+            }
+          }
+          if (emoji != null) component['emoji'] = emoji;
         }
         if (disabled != null) component['disabled'] = disabled;
-        if (emoji != null) component['emoji'] = emoji;
         break;
       }
     }
   }
- 
+
   /// Edits a button identified by its custom ID or URL.
   void editButtonByIdOrUrl({
     required String buttonIdOrUrl,
@@ -162,19 +174,29 @@ class _PendingResponse {
     for (final component in _components) {
       if (component['type'] != 'button') continue;
       if (component['customId'] != buttonIdOrUrl &&
-          component['url'] != buttonIdOrUrl) {
+          component['url'] != buttonIdOrUrl &&
+          component['skuId'] != buttonIdOrUrl) {
         continue;
       }
-      if (label != null) component['label'] = label;
       if (style != null) component['style'] = style;
-      if (disabled != null) component['disabled'] = disabled;
-      if (emoji != null) {
-        if (emoji.isNotEmpty) {
-          component['emoji'] = emoji;
-        } else {
-          component.remove('emoji');
+      final resolvedStyle = style ?? component['style']?.toString() ?? '';
+      if (resolvedStyle == 'premium') {
+        component['customId'] = '';
+        component['url'] = '';
+        component['label'] = '';
+        component.remove('emoji');
+      } else {
+        component.remove('skuId');
+        if (label != null) component['label'] = label;
+        if (emoji != null) {
+          if (emoji.isNotEmpty) {
+            component['emoji'] = emoji;
+          } else {
+            component.remove('emoji');
+          }
         }
       }
+      if (disabled != null) component['disabled'] = disabled;
       break;
     }
   }

@@ -1,6 +1,6 @@
 // Component V2 and Modal type definitions for BotCreator
 
-enum BcButtonStyle { primary, secondary, success, danger, link }
+enum BcButtonStyle { primary, secondary, success, danger, link, premium }
 
 enum BcTextInputStyle { short, paragraph }
 
@@ -16,6 +16,7 @@ enum ComponentV2Type {
   mentionableSelect,
   channelSelect,
   categorySelect,
+  voiceSelect,
   section,
   textDisplay,
   thumbnail,
@@ -62,6 +63,7 @@ abstract class ComponentNode {
       case ComponentV2Type.mentionableSelect:
       case ComponentV2Type.channelSelect:
       case ComponentV2Type.categorySelect:
+      case ComponentV2Type.voiceSelect:
         return SelectMenuNode.fromJson(json);
       case ComponentV2Type.section:
         return SectionNode.fromJson(json);
@@ -125,7 +127,8 @@ class ButtonNode extends ComponentNode {
   String customId;
   String url;
   String emoji;
-  bool disabled;
+  String disabled;
+  String skuId;
   /// Inline actions that execute when this button is clicked.
   /// Replaces the legacy workflowName/workflowEntryPoint/workflowArguments.
   List<Map<String, dynamic>> actions;
@@ -136,7 +139,8 @@ class ButtonNode extends ComponentNode {
     String? customId,
     this.url = '',
     this.emoji = '',
-    this.disabled = false,
+    this.disabled = '',
+    this.skuId = '',
     this.actions = const [],
   }) : customId = customId ?? ComponentNode.generateId('btn');
 
@@ -183,7 +187,8 @@ class ButtonNode extends ComponentNode {
       customId: (json['customId'] ?? '').toString(),
       url: (json['url'] ?? '').toString(),
       emoji: (json['emoji'] ?? '').toString(),
-      disabled: json['disabled'] == true,
+      disabled: _parseDisabled(json['disabled']),
+      skuId: (json['skuId'] ?? '').toString(),
       actions: actions,
     );
   }
@@ -197,8 +202,19 @@ class ButtonNode extends ComponentNode {
     'url': url,
     'emoji': emoji,
     'disabled': disabled,
+    if (skuId.isNotEmpty) 'skuId': skuId,
     if (actions.isNotEmpty) 'actions': actions,
   };
+}
+
+/// Handles backward-compatible parsing of the `disabled` field.
+/// If it's already a String, use it directly.
+/// If it's a bool `true`, migrate to the string `'true'`.
+/// Otherwise return an empty string.
+String _parseDisabled(dynamic value) {
+  if (value is String) return value;
+  if (value == true) return 'true';
+  return '';
 }
 
 class SelectMenuOption {
@@ -245,7 +261,7 @@ class SelectMenuNode extends ComponentNode {
   List<SelectMenuOption> options;
   int minValues;
   int maxValues;
-  bool disabled;
+  String disabled;
   /// Inline actions that execute when an option is selected.
   /// Replaces the legacy workflowName/workflowEntryPoint/workflowArguments.
   List<Map<String, dynamic>> actions;
@@ -257,7 +273,7 @@ class SelectMenuNode extends ComponentNode {
     this.options = const [],
     this.minValues = 1,
     this.maxValues = 1,
-    this.disabled = false,
+    this.disabled = '',
     this.actions = const [],
   }) : customId = customId ?? ComponentNode.generateId('select');
 
@@ -274,6 +290,7 @@ class SelectMenuNode extends ComponentNode {
       if (menuType == 'role') resolvedType = ComponentV2Type.roleSelect;
       if (menuType == 'mentionable') resolvedType = ComponentV2Type.mentionableSelect;
       if (menuType == 'category') resolvedType = ComponentV2Type.categorySelect;
+      if (menuType == 'voice') resolvedType = ComponentV2Type.voiceSelect;
     }
 
     // Prefer inline actions; fall back to legacy workflow for backward compat.
@@ -322,7 +339,7 @@ class SelectMenuNode extends ComponentNode {
               .toList(),
       minValues: json['minValues'] as int? ?? 1,
       maxValues: json['maxValues'] as int? ?? 1,
-      disabled: json['disabled'] == true,
+      disabled: _parseDisabled(json['disabled']),
       actions: actions,
     );
   }

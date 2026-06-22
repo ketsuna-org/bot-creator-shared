@@ -34,6 +34,7 @@ const Set<String> allBdfdFunctions = <String>{
   'addthumbnail',
   'addtimestamp',
   'adduserselect',
+  'addvoiceselect',
   'afkchannelid',
   'afktimeout',
   'allmemberscount',

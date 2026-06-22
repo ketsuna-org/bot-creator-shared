@@ -915,6 +915,7 @@ extension _BdfdAstTranspilationScopeControlFlow on _BdfdAstTranspilationScope {
       case 'addroleselect':
       case 'addchannelselect':
       case 'addcategoryselect':
+      case 'addvoiceselect':
       case 'addstringselect':
       case 'addstringselectoption':
       case 'ephemeral':

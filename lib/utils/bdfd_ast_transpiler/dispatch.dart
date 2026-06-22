@@ -277,6 +277,23 @@ extension _BdfdAstTranspilationScopeDispatch on _BdfdAstTranspilationScope {
           'disabled': disabled,
         });
         return true;
+      case 'addvoiceselect':
+        final customId = _stringifyArgument(node, 0);
+        final placeholder = _stringifyArgument(node, 1);
+        final minValues = _stringifyArgument(node, 2);
+        final maxValues = _stringifyArgument(node, 3);
+        final disabled = _parseBooleanLike(_stringifyArgument(node, 4));
+        response._currentSelectMenuId = customId;
+        response.addComponent(<String, dynamic>{
+          'type': 'selectMenu',
+          'menuType': 'voice',
+          'customId': customId,
+          if (placeholder.isNotEmpty) 'placeholder': placeholder,
+          if (minValues.isNotEmpty) 'minValues': int.tryParse(minValues) ?? 1,
+          if (maxValues.isNotEmpty) 'maxValues': int.tryParse(maxValues) ?? 1,
+          'disabled': disabled,
+        });
+        return true;
       case 'addstringselect':
         final customId = _stringifyArgument(node, 0);
         final placeholder = _stringifyArgument(node, 1);
