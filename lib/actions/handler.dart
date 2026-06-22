@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:bot_creator_shared/actions/pin_message.dart';
 import 'package:bot_creator_shared/actions/update_automod.dart';
 import 'package:bot_creator_shared/actions/update_guild.dart';
@@ -944,9 +946,11 @@ Future<Map<String, String>> handleActions(
           if (ceResult['error'] != null) {
             throw Exception(ceResult['error']);
           }
-          results[resultKey] = ceResult['emojiId'] ?? '';
+          // Store full JSON as main result + individual keys as sub-results
+          // so ((action_1)) returns valid JSON and ((action_1.emojiId)) works.
+          results[resultKey] = jsonEncode(ceResult);
           for (final entry in ceResult.entries) {
-            variables['$resultKey.${entry.key}'] = entry.value;
+            results['$resultKey.${entry.key}'] = entry.value;
           }
           break;
 
@@ -960,9 +964,9 @@ Future<Map<String, String>> handleActions(
           if (ueResult['error'] != null) {
             throw Exception(ueResult['error']);
           }
-          results[resultKey] = ueResult['emojiId'] ?? '';
+          results[resultKey] = jsonEncode(ueResult);
           for (final entry in ueResult.entries) {
-            variables['$resultKey.${entry.key}'] = entry.value;
+            results['$resultKey.${entry.key}'] = entry.value;
           }
           break;
 
@@ -976,7 +980,10 @@ Future<Map<String, String>> handleActions(
           if (deResult['error'] != null) {
             throw Exception(deResult['error']);
           }
-          results[resultKey] = deResult['status'] ?? 'deleted';
+          results[resultKey] = jsonEncode(deResult);
+          for (final entry in deResult.entries) {
+            results['$resultKey.${entry.key}'] = entry.value;
+          }
           break;
 
         // ─── AutoMod management ───────────────────────────────────────────
