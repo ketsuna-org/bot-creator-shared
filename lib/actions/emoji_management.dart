@@ -140,6 +140,9 @@ Future<Map<String, String>> createEmojiAction(
       'name': emoji.name ?? name,
       'animated': ((emoji as dynamic).isAnimated == true).toString(),
       'status': 'created',
+      'tag': ((emoji as dynamic).isAnimated == true)
+          ? '<a:${emoji.name ?? name}:${emoji.id}>'
+          : '<:${emoji.name ?? name}:${emoji.id}>',
     };
   } catch (e) {
     return {'error': 'Failed to create emoji: $e'};

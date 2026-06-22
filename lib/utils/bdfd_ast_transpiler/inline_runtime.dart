@@ -32,7 +32,7 @@ extension _BdfdAstTranspilationScopeInlineRuntime
         final returnEmojiRaw = _stringifyArgument(node, 2).trim().toLowerCase();
         final returnEmoji = returnEmojiRaw == 'yes' || returnEmojiRaw == 'true';
         if (returnEmoji && action != null) {
-          return '((${action.key}))';
+          return '((${action.key}.tag))';
         }
         return '';
       case 'startthread':
