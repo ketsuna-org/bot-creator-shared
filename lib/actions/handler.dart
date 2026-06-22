@@ -1276,7 +1276,7 @@ Future<Map<String, String>> handleActions(
     // Mirror results to positional key so ((action_0.emojiId)) works
     // even when the action has an explicit key (e.g. _bdfd_createemoji_0).
     if (action.key != null && action.key!.isNotEmpty && resultKey != 'action_$i') {
-      final allKeys = results.keys.where((k) => k == resultKey || k.startsWith('$resultKey.'));
+      final allKeys = results.keys.where((k) => k == resultKey || k.startsWith('$resultKey.')).toList();
       for (final key in allKeys) {
         final positionalSuffix = key.substring(resultKey.length);
         final value = results[key];
