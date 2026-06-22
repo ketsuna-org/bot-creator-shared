@@ -203,6 +203,80 @@ void main() {
       expect(variables['interaction.messageId'], '300');
     });
 
+    test('resolves interaction.<customId>.value(s) and .option for select menus', () {
+      final variables = buildInteractionRuntimeVariables(
+        _FakeInteraction(
+              data: _FakeComponentData(
+                customId: 'color',
+                values: ['red', 'blue'],
+              ),
+              user: _FakeUser('42'),
+              type: InteractionType.messageComponent,
+            )
+            as Interaction<dynamic>,
+      );
+
+      expect(variables['interaction.color.customId'], 'color');
+      expect(variables['interaction.color.value'], 'red');
+      expect(variables['interaction.color.values'], 'red,blue');
+      expect(variables['interaction.color.option'], 'red');
+    });
+
+    test('resolves interaction.<customId>.value for buttons (customId is value)', () {
+      final variables = buildInteractionRuntimeVariables(
+        _FakeInteraction(
+              data: _FakeComponentData(
+                customId: 'confirm',
+                values: const <String>[],
+              ),
+              user: _FakeUser('42'),
+              type: InteractionType.messageComponent,
+            )
+            as Interaction<dynamic>,
+      );
+
+      expect(variables['interaction.confirm.customId'], 'confirm');
+      expect(variables['interaction.confirm.value'], 'confirm');
+      expect(variables['interaction.confirm.option'], 'confirm');
+    });
+
+    test('does not pollute the map with interaction..* when customId is empty', () {
+      final variables = buildInteractionRuntimeVariables(
+        _FakeInteraction(
+              data: _FakeComponentData(
+                customId: '',
+                values: const <String>[],
+              ),
+              user: _FakeUser('42'),
+              type: InteractionType.messageComponent,
+            )
+            as Interaction<dynamic>,
+      );
+
+      expect(variables.containsKey('interaction..value'), isFalse);
+      expect(variables.containsKey('interaction..customId'), isFalse);
+      expect(variables.containsKey('interaction..option'), isFalse);
+    });
+
+    test('handles customId containing dots', () {
+      final variables = buildInteractionRuntimeVariables(
+        _FakeInteraction(
+              data: _FakeComponentData(
+                customId: 'my.menu.id',
+                values: ['one', 'two'],
+              ),
+              user: _FakeUser('42'),
+              type: InteractionType.messageComponent,
+            )
+            as Interaction<dynamic>,
+      );
+
+      expect(variables['interaction.my.menu.id.customId'], 'my.menu.id');
+      expect(variables['interaction.my.menu.id.value'], 'one');
+      expect(variables['interaction.my.menu.id.values'], 'one,two');
+      expect(variables['interaction.my.menu.id.option'], 'one');
+    });
+
     test('extracts string select aliases with BDFD-compatible access', () {
       final variables = buildInteractionRuntimeVariables(
         _FakeInteraction(

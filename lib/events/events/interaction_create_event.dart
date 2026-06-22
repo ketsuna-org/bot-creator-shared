@@ -241,7 +241,7 @@ Map<String, String> buildInteractionRuntimeVariables(Interaction interaction) {
           ? 'autocomplete'
           : interaction.type.toString();
 
-  return <String, String>{
+  final variables = <String, String>{
     'interaction.kind': kind,
     'interaction.customId': customId,
     'interaction.values': values.join(','),
@@ -257,6 +257,31 @@ Map<String, String> buildInteractionRuntimeVariables(Interaction interaction) {
     ..._buildSelectInteractionVariables(data, values),
     ...modalInputPairs,
   };
+
+  // Dynamic per-component customId resolution for inline component interactions
+  // (buttons + select menus). Mirrors the modal.<inputCustomId> pattern so that
+  // ((interaction.<customId>.value)), .values and .option resolve.
+  // We rely on interaction.type == messageComponent rather than an `is
+  // MessageComponentInteraction` check so this also works with duck-typed data
+  // sources; Discord guarantees the type field matches the interaction class.
+  if (interaction.type == InteractionType.messageComponent &&
+      customId.isNotEmpty) {
+    variables['interaction.$customId.customId'] = customId;
+    if (values.isNotEmpty) {
+      // Select menu: expose selected value(s).
+      final firstValue = values.first;
+      variables['interaction.$customId.value'] = firstValue;
+      variables['interaction.$customId.values'] = values.join(',');
+      // BDFD compatibility: BDFD uses "option" terminology for selected values.
+      variables['interaction.$customId.option'] = firstValue;
+    } else {
+      // Button: no values, the customId itself is the meaningful payload.
+      variables['interaction.$customId.value'] = customId;
+      variables['interaction.$customId.option'] = customId;
+    }
+  }
+
+  return variables;
 }
 
 EventExecutionContext buildInteractionCreateEventContext(
