@@ -178,12 +178,11 @@ packages:
     source: hosted
     version: "4.12.0"
   lavalink:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
-      name: lavalink
-      sha256: b5e548f98912958558828d5b7297d3e6b884744e338d74a6d9a58c64ac5e16f2
-      url: "https://pub.dev"
-    source: hosted
+      path: "local_dependencies/lavalink"
+      relative: true
+    source: path
     version: "1.1.0"
   lints:
     dependency: "direct dev"

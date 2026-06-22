@@ -16,6 +16,8 @@ dependencies:
   nyxx_lavalink: ^4.1.0
 
 dependency_overrides:
+  lavalink:
+    path: ./local_dependencies/lavalink
   meta: 1.18.0
   _fe_analyzer_shared: 99.0.0
   analyzer: 12.1.0
