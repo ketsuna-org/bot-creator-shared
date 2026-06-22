@@ -109,19 +109,14 @@ Future<Map<String, String>> handleActions(
   );
 
   String resolveValue(String value) {
-    // Try template resolution first (variables, interaction context, etc.)
-    String result = resolveTemplate(value);
-
-    // Fall back to local action results for any remaining ((...)) patterns.
-    // Uses replaceAllMapped instead of anchored ^...$ regex so mixed content
-    // like "ID: ((action_0.emojiId)) | Name: ((action_0.name))" is resolved.
-    // Results are keyed by action.key (e.g. 'translation', 'action_0.emojiId'),
-    // but placeholders may use 'action.<key>' format — strip the prefix.
-    result = result.replaceAllMapped(
+    // Resolve action result placeholders FIRST (e.g. ((_bdfd_createemoji_0.tag)))
+    // before the template resolver, because resolveTemplatePlaceholders replaces
+    // unknown ((...)) with empty strings, leaving nothing for fallback matching.
+    String result = value.replaceAllMapped(
       RegExp(r'\(\(([^)]+)\)\)'),
       (match) {
         var key = match.group(1)!;
-        // Direct match (e.g. legacy action_message style, or action_0.emojiId)
+        // Direct match (e.g. legacy action_message style, or _bdfd_createemoji_0.tag)
         if (results.containsKey(key)) {
           return results[key]!;
         }
@@ -135,6 +130,9 @@ Future<Map<String, String>> handleActions(
         return match.group(0)!; // Keep original if not found
       },
     );
+
+    // Then resolve template variables (runtimeVariables, interaction context, etc.)
+    result = resolveTemplate(result);
 
     return result;
   }
