@@ -61,7 +61,7 @@ class LavalinkConnection extends Stream<LavalinkMessage> {
             'Authorization': client.password,
             'User-Id': client.userId,
             'Client-Name': client.clientName,
-            if (_sessionId != null) 'Session-Id': _sessionId!,
+            'Session-Id': ?_sessionId,
           },
         );
 

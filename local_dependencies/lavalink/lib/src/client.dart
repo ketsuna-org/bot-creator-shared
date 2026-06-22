@@ -201,8 +201,8 @@ class LavalinkClient extends HttpLavalinkClient {
           'track': {if (!identical(encodedTrack, _sentinelString)) 'encoded': encodedTrack, 'identifier': ?identifier, 'userData': ?userData},
           if (position != null) 'position': position.inMilliseconds,
           if (!identical(endTime, _sentinelDuration)) 'endTime': endTime?.inMilliseconds,
-          if (volume != null) 'volume': volume,
-          if (isPaused != null) 'paused': isPaused,
+          'volume': ?volume,
+          'paused': ?isPaused,
           if (filters != null) 'filters': filters.toJson(),
           if (voice != null) 'voice': voice.toJson(),
         },
@@ -224,7 +224,7 @@ class LavalinkClient extends HttpLavalinkClient {
               await executeSafe(
                 'PATCH',
                 '/v4/sessions/${connection.sessionId}',
-                body: {if (resuming != null) 'resuming': resuming, if (timeout != null) 'timeout': timeout.inSeconds},
+                body: {'resuming': ?resuming, 'timeout': ?timeout?.inSeconds},
               ),
             )
             as Map<String, Object?>;
