@@ -131,10 +131,19 @@ class LavalinkService {
     }
 
     onLog?.call('Lavalink: connecting to voice channel $channelId in guild $guildId...');
-    final player = await _plugin.connect(client, channelId, guildId).timeout(
-      const Duration(seconds: 15),
-      onTimeout: () => throw TimeoutException('Lavalink voice connection timed out'),
-    );
+    final LavalinkPlayer player;
+    try {
+      player = await _plugin.connect(client, channelId, guildId).timeout(
+        const Duration(seconds: 15),
+        onTimeout: () => throw TimeoutException('Lavalink voice connection timed out'),
+      );
+    } catch (e) {
+      onLog?.call('Lavalink: connect failed — $e');
+      throw Exception(
+        'Impossible de se connecter au salon vocal via Lavalink. '
+        'Vérifiez que le serveur Lavalink est bien démarré.',
+      );
+    }
     final session = LavalinkSession(player: player);
 
     // Auto-advance queue on track end
@@ -192,10 +201,19 @@ class LavalinkService {
     }
 
     onLog?.call('Lavalink: searching/loading "$identifier"...');
-    final result = await _plugin.loadTrack(identifier).timeout(
-      const Duration(seconds: 30),
-      onTimeout: () => throw TimeoutException('Lavalink search timed out'),
-    );
+    final result;
+    try {
+      result = await _plugin.loadTrack(identifier).timeout(
+        const Duration(seconds: 30),
+        onTimeout: () => throw TimeoutException('Lavalink search timed out'),
+      );
+    } catch (e) {
+      onLog?.call('Lavalink: loadTrack failed — $e');
+      throw Exception(
+        'Le serveur Lavalink n\'a pas répondu correctement. '
+        'Vérifiez qu\'il est bien démarré et accessible.',
+      );
+    }
 
     if (result is TrackLoadResult) {
       onLog?.call('Lavalink: found single track: ${result.data.info.title}');
