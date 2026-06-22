@@ -4,8 +4,6 @@
 /// queue management and track info used by actions and BDFD functions.
 library;
 
-// ignore_for_file: prefer_typing_uninitialized_variables
-
 import 'dart:async';
 
 import 'package:bot_creator_shared/bot/bot_config.dart';
@@ -133,19 +131,16 @@ class LavalinkService {
     }
 
     onLog?.call('Lavalink: connecting to voice channel $channelId in guild $guildId...');
-    final LavalinkPlayer player;
-    try {
-      player = await _plugin.connect(client, channelId, guildId).timeout(
-        const Duration(seconds: 15),
-        onTimeout: () => throw TimeoutException('Lavalink voice connection timed out'),
-      );
-    } catch (e) {
+    final player = await _plugin.connect(client, channelId, guildId).timeout(
+      const Duration(seconds: 15),
+      onTimeout: () => throw TimeoutException('Lavalink voice connection timed out'),
+    ).catchError((e) {
       onLog?.call('Lavalink: connect failed — $e');
       throw Exception(
         'Failed to connect to voice channel via Lavalink. '
         'Make sure the Lavalink server is running and accessible.',
       );
-    }
+    });
     final session = LavalinkSession(player: player);
 
     // Auto-advance queue on track end
@@ -203,19 +198,16 @@ class LavalinkService {
     }
 
     onLog?.call('Lavalink: searching/loading "$identifier"...');
-    final result;
-    try {
-      result = await _plugin.loadTrack(identifier).timeout(
-        const Duration(seconds: 30),
-        onTimeout: () => throw TimeoutException('Lavalink search timed out'),
-      );
-    } catch (e) {
+    final result = await _plugin.loadTrack(identifier).timeout(
+      const Duration(seconds: 30),
+      onTimeout: () => throw TimeoutException('Lavalink search timed out'),
+    ).catchError((e) {
       onLog?.call('Lavalink: loadTrack failed — $e');
       throw Exception(
         'The Lavalink server did not respond correctly. '
         'Make sure it is running and accessible.',
       );
-    }
+    });
 
     if (result is TrackLoadResult) {
       onLog?.call('Lavalink: found single track: ${result.data.info.title}');
