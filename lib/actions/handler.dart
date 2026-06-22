@@ -1272,6 +1272,19 @@ Future<Map<String, String>> handleActions(
         !(results[resultKey]?.startsWith('Error:') ?? false)) {
       recordTrace();
     }
+
+    // Mirror results to positional key so ((action_0.emojiId)) works
+    // even when the action has an explicit key (e.g. _bdfd_createemoji_0).
+    if (action.key != null && action.key!.isNotEmpty && resultKey != 'action_$i') {
+      final allKeys = results.keys.where((k) => k == resultKey || k.startsWith('$resultKey.'));
+      for (final key in allKeys) {
+        final positionalSuffix = key.substring(resultKey.length);
+        final value = results[key];
+        if (value != null) {
+          results['action_$i$positionalSuffix'] = value;
+        }
+      }
+    }
   }
 
   // Send debug profiling embed if $debug was used
