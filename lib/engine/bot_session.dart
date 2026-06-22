@@ -9,6 +9,7 @@ import 'package:bot_creator_shared/engine/presence_manager.dart';
 import 'package:bot_creator_shared/engine/event_dispatcher.dart';
 import 'package:bot_creator_shared/engine/command_executor.dart';
 import 'package:bot_creator_shared/engine/workflow_executor.dart';
+import 'package:nyxx_lavalink/nyxx_lavalink.dart';
 import 'package:bot_creator_shared/services/lavalink_service.dart';
 import 'package:bot_creator_shared/utils/interaction_listener_registry.dart';
 import 'package:bot_creator_shared/utils/template_resolver.dart';
