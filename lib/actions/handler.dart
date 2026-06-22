@@ -110,27 +110,33 @@ Future<Map<String, String>> handleActions(
 
   String resolveValue(String value) {
     // Try template resolution first (variables, interaction context, etc.)
-    final resolved = resolveTemplate(value);
-    if (resolved != value) return resolved;
-    // Fall back to local action results (e.g. ((action.translation)) during execution).
-    // Results are keyed by action.key (e.g. 'translation'), but placeholders use
-    // 'action.<key>' format, so strip the 'action.' prefix when looking up.
-    final match = RegExp(r'^\(\((.+)\)\)$').firstMatch(value.trim());
-    if (match != null) {
-      var key = match.group(1)!;
-      // Direct match (e.g. legacy action_message style)
-      if (results.containsKey(key)) {
-        return results[key]!;
-      }
-      // Strip 'action.' prefix to match results keyed by action.key
-      if (key.startsWith('action.')) {
-        final stripped = key.substring('action.'.length);
-        if (results.containsKey(stripped)) {
-          return results[stripped]!;
+    String result = resolveTemplate(value);
+
+    // Fall back to local action results for any remaining ((...)) patterns.
+    // Uses replaceAllMapped instead of anchored ^...$ regex so mixed content
+    // like "ID: ((action_0.emojiId)) | Name: ((action_0.name))" is resolved.
+    // Results are keyed by action.key (e.g. 'translation', 'action_0.emojiId'),
+    // but placeholders may use 'action.<key>' format — strip the prefix.
+    result = result.replaceAllMapped(
+      RegExp(r'\(\(([^)]+)\)\)'),
+      (match) {
+        var key = match.group(1)!;
+        // Direct match (e.g. legacy action_message style, or action_0.emojiId)
+        if (results.containsKey(key)) {
+          return results[key]!;
         }
-      }
-    }
-    return resolved;
+        // Strip 'action.' prefix to match results keyed by action.key
+        if (key.startsWith('action.')) {
+          final stripped = key.substring('action.'.length);
+          if (results.containsKey(stripped)) {
+            return results[stripped]!;
+          }
+        }
+        return match.group(0)!; // Keep original if not found
+      },
+    );
+
+    return result;
   }
 
 
