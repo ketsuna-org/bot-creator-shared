@@ -923,6 +923,19 @@ class VariableCatalog {
         VariableSuggestion(name: 'poll.vote.userId', kind: VariableSuggestionKind.numeric, category: VariableCategory.other),
         VariableSuggestion(name: 'poll.vote.channelId', kind: VariableSuggestionKind.numeric, category: VariableCategory.other),
         VariableSuggestion(name: 'poll.vote.guildId', kind: VariableSuggestionKind.numeric, category: VariableCategory.other),
+        // ── Member fields (messagePollVoteAdd only, when member present) ──
+        VariableSuggestion(name: 'member.id', kind: VariableSuggestionKind.numeric, category: VariableCategory.member),
+        VariableSuggestion(name: 'member.nick', kind: VariableSuggestionKind.nonNumeric, category: VariableCategory.member),
+        VariableSuggestion(name: 'member.displayName', kind: VariableSuggestionKind.nonNumeric, category: VariableCategory.member),
+        VariableSuggestion(name: 'member.avatar', kind: VariableSuggestionKind.nonNumeric, category: VariableCategory.member),
+        VariableSuggestion(name: 'member.joinedAt', kind: VariableSuggestionKind.nonNumeric, category: VariableCategory.member),
+        VariableSuggestion(name: 'member.roles', kind: VariableSuggestionKind.nonNumeric, category: VariableCategory.member),
+        VariableSuggestion(name: 'member.roles.count', kind: VariableSuggestionKind.numeric, category: VariableCategory.member),
+        VariableSuggestion(name: 'member.roles[0]', kind: VariableSuggestionKind.numeric, category: VariableCategory.member),
+        VariableSuggestion(name: 'member.roles[1]', kind: VariableSuggestionKind.numeric, category: VariableCategory.member),
+        VariableSuggestion(name: 'member.isBooster', kind: VariableSuggestionKind.nonNumeric, category: VariableCategory.member),
+        VariableSuggestion(name: 'member.isAdmin', kind: VariableSuggestionKind.nonNumeric, category: VariableCategory.member),
+        VariableSuggestion(name: 'member.permissions', kind: VariableSuggestionKind.nonNumeric, category: VariableCategory.member),
       ]);
 
     // ═══════════════════════════════════════════════════════════════════
