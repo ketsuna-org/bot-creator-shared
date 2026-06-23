@@ -8,6 +8,8 @@ part 'events/channel_delete_event.dart';
 part 'events/channel_pins_update_event.dart';
 part 'events/channel_update_event.dart';
 part 'events/guild_audit_log_create_event.dart';
+part 'events/guild_ban_add_event.dart';
+part 'events/guild_ban_remove_event.dart';
 part 'events/guild_create_event.dart';
 part 'events/guild_delete_event.dart';
 part 'events/guild_member_add_event.dart';

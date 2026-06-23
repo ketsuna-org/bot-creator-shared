@@ -3,7 +3,6 @@ part of '../event_contexts.dart';
 EventExecutionContext buildMessagePollVoteAddEventContext(
   MessagePollVoteAddEvent event,
 ) {
-  final raw = event as dynamic;
   final extra = <String, String>{
     ..._pollVoteExtra(
       messageId: event.messageId,
@@ -12,7 +11,6 @@ EventExecutionContext buildMessagePollVoteAddEventContext(
       channelId: event.channelId,
       guildId: event.guildId,
     ),
-    if (raw.member is Member) ..._memberExtra(raw.member as Member),
   };
   return _baseEventContext(
     eventName: 'messagePollVoteAdd',

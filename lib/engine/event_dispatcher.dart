@@ -171,6 +171,18 @@ class EventDispatcher {
       buildGuildMemberRemoveEventContext,
     );
 
+    // Bans
+    reg(
+      'guildBanAdd',
+      gateway.onGuildBanAdd,
+      buildGuildBanAddEventContext,
+    );
+    reg(
+      'guildBanRemove',
+      gateway.onGuildBanRemove,
+      buildGuildBanRemoveEventContext,
+    );
+
     // Roles
     reg(
       'guildRoleCreate',
