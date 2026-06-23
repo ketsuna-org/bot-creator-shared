@@ -261,6 +261,8 @@ Map<String, String> _memberExtra(Member? member, {String prefix = 'member'}) {
     '$prefix.joinedAt': member.joinedAt.toIso8601String(),
     '$prefix.roles': member.roleIds.map((id) => id.toString()).join(','),
     '$prefix.roles.count': member.roleIds.length.toString(),
+    for (var idx = 0; idx < member.roleIds.length && idx < 10; idx++)
+      '$prefix.roles[$idx]': member.roleIds[idx].toString(),
     '$prefix.isBooster': (member.premiumSince != null).toString(),
     '$prefix.isAdmin': member.permissions?.has(Permissions.administrator) == true
         ? 'true'
@@ -311,6 +313,8 @@ Map<String, String> _messageExtra(Message? message, {String prefix = 'message'})
     '$prefix.embeds.count': message.embeds.length.toString(),
     '$prefix.roleMentions': roleMentionIds.join(','),
     '$prefix.roleMentions.count': roleMentionIds.length.toString(),
+    for (var idx = 0; idx < roleMentionIds.length && idx < 10; idx++)
+      '$prefix.roleMentions[$idx]': roleMentionIds[idx],
     '$prefix.mentionsEveryone': message.mentionsEveryone.toString(),
   };
 
