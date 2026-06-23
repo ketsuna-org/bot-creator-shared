@@ -241,6 +241,7 @@ void main() {
         '$key.emojiId': '9876543210',
         '$key.name': 'myEmoji',
         '$key.animated': 'false',
+        '$key.tag': '<:myEmoji:9876543210>',
       });
       expect(resolvedStatic, 'Added emoji: <:myEmoji:9876543210>');
 
@@ -248,6 +249,7 @@ void main() {
         '$key.emojiId': '9876543210',
         '$key.name': 'myEmoji',
         '$key.animated': 'true',
+        '$key.tag': '<a:myEmoji:9876543210>',
       });
       expect(resolvedAnimated, 'Added emoji: <a:myEmoji:9876543210>');
     });
