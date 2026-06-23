@@ -414,8 +414,28 @@ class EventDispatcher {
     final matching =
         workflows.where((w) {
           final trigger = Map<String, dynamic>.from(w['eventTrigger'] ?? {});
-          return trigger['event']?.toString().toLowerCase() ==
-              eventName.toLowerCase();
+          if (trigger['event']?.toString().toLowerCase() !=
+              eventName.toLowerCase()) {
+            return false;
+          }
+          final customIdFilter = trigger['customIdFilter']?.toString().trim();
+          if (customIdFilter != null && customIdFilter.isNotEmpty) {
+            if (event is InteractionCreateEvent) {
+              final interaction = event.interaction;
+              String? customId;
+              if (interaction is MessageComponentInteraction) {
+                customId = interaction.data.customId;
+              } else if (interaction is ModalSubmitInteraction) {
+                customId = interaction.data.customId;
+              }
+              if (customId != customIdFilter) {
+                return false;
+              }
+            } else {
+              return false;
+            }
+          }
+          return true;
         }).toList();
 
     callbacks.onDebugLog?.call(
