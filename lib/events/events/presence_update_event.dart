@@ -7,19 +7,8 @@ EventExecutionContext buildPresenceUpdateEventContext(
   final fullUser = user is User ? user : null;
   final activities = event.activities ?? const <Activity>[];
   final extra = <String, String>{
-    'user.id': user?.id.toString() ?? '',
+    if (fullUser != null) ..._userExtra(fullUser),
     'user.name': fullUser?.username ?? '',
-    'user.username': fullUser?.username ?? '',
-    'user.tag': fullUser?.discriminator ?? '',
-    'user.avatar': fullUser != null
-        ? makeAvatarUrl(
-          fullUser.id.toString(),
-          avatarId: fullUser.avatar.hash,
-          isAnimated: fullUser.avatar.isAnimated,
-          legacyFormat: 'webp',
-          discriminator: fullUser.discriminator,
-        )
-        : '',
     'presence.status': event.status?.value.toString() ?? '',
     'presence.activity.count': activities.length.toString(),
     'presence.client.desktop':
