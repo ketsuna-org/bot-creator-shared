@@ -896,7 +896,7 @@ class VariableCatalog {
         VariableSuggestion(name: 'reaction.emoji.id', kind: VariableSuggestionKind.numeric, category: VariableCategory.other),
         VariableSuggestion(name: 'reaction.emoji.animated', kind: VariableSuggestionKind.nonNumeric, category: VariableCategory.other),
         VariableSuggestion(name: 'user.id', kind: VariableSuggestionKind.numeric, category: VariableCategory.user),
-        // ── Member fields (messageReactionAdd only, when member present) ──
+        // ── Member fields (messageReactionAdd from API; Remove/RemoveAll/RemoveEmoji resolved via cache/fetch hydration) ──
         VariableSuggestion(name: 'member.id', kind: VariableSuggestionKind.numeric, category: VariableCategory.member),
         VariableSuggestion(name: 'member.nick', kind: VariableSuggestionKind.nonNumeric, category: VariableCategory.member),
         VariableSuggestion(name: 'member.displayName', kind: VariableSuggestionKind.nonNumeric, category: VariableCategory.member),
@@ -909,6 +909,15 @@ class VariableCatalog {
         VariableSuggestion(name: 'member.isBooster', kind: VariableSuggestionKind.nonNumeric, category: VariableCategory.member),
         VariableSuggestion(name: 'member.isAdmin', kind: VariableSuggestionKind.nonNumeric, category: VariableCategory.member),
         VariableSuggestion(name: 'member.permissions', kind: VariableSuggestionKind.nonNumeric, category: VariableCategory.member),
+        // ── User fields (resolved via cache/fetch hydration) ──
+        VariableSuggestion(name: 'user.username', kind: VariableSuggestionKind.nonNumeric, category: VariableCategory.user),
+        VariableSuggestion(name: 'user.globalName', kind: VariableSuggestionKind.nonNumeric, category: VariableCategory.user),
+        VariableSuggestion(name: 'user.displayName', kind: VariableSuggestionKind.nonNumeric, category: VariableCategory.user),
+        VariableSuggestion(name: 'user.tag', kind: VariableSuggestionKind.nonNumeric, category: VariableCategory.user),
+        VariableSuggestion(name: 'user.avatar', kind: VariableSuggestionKind.nonNumeric, category: VariableCategory.user),
+        VariableSuggestion(name: 'user.banner', kind: VariableSuggestionKind.nonNumeric, category: VariableCategory.user),
+        VariableSuggestion(name: 'user.createdAt', kind: VariableSuggestionKind.nonNumeric, category: VariableCategory.user),
+        VariableSuggestion(name: 'user.mention', kind: VariableSuggestionKind.nonNumeric, category: VariableCategory.user),
       ]);
 
     // ═══════════════════════════════════════════════════════════════════
@@ -923,6 +932,25 @@ class VariableCatalog {
         VariableSuggestion(name: 'poll.vote.userId', kind: VariableSuggestionKind.numeric, category: VariableCategory.other),
         VariableSuggestion(name: 'poll.vote.channelId', kind: VariableSuggestionKind.numeric, category: VariableCategory.other),
         VariableSuggestion(name: 'poll.vote.guildId', kind: VariableSuggestionKind.numeric, category: VariableCategory.other),
+        // ── Member fields (resolved via cache/fetch hydration) ──
+        VariableSuggestion(name: 'member.id', kind: VariableSuggestionKind.numeric, category: VariableCategory.member),
+        VariableSuggestion(name: 'member.nick', kind: VariableSuggestionKind.nonNumeric, category: VariableCategory.member),
+        VariableSuggestion(name: 'member.displayName', kind: VariableSuggestionKind.nonNumeric, category: VariableCategory.member),
+        VariableSuggestion(name: 'member.joinedAt', kind: VariableSuggestionKind.nonNumeric, category: VariableCategory.member),
+        VariableSuggestion(name: 'member.roles', kind: VariableSuggestionKind.nonNumeric, category: VariableCategory.member),
+        VariableSuggestion(name: 'member.roles.count', kind: VariableSuggestionKind.numeric, category: VariableCategory.member),
+        VariableSuggestion(name: 'member.isBooster', kind: VariableSuggestionKind.nonNumeric, category: VariableCategory.member),
+        VariableSuggestion(name: 'member.isAdmin', kind: VariableSuggestionKind.nonNumeric, category: VariableCategory.member),
+        // ── User fields (resolved via cache/fetch hydration) ──
+        VariableSuggestion(name: 'user.id', kind: VariableSuggestionKind.numeric, category: VariableCategory.user),
+        VariableSuggestion(name: 'user.username', kind: VariableSuggestionKind.nonNumeric, category: VariableCategory.user),
+        VariableSuggestion(name: 'user.globalName', kind: VariableSuggestionKind.nonNumeric, category: VariableCategory.user),
+        VariableSuggestion(name: 'user.displayName', kind: VariableSuggestionKind.nonNumeric, category: VariableCategory.user),
+        VariableSuggestion(name: 'user.tag', kind: VariableSuggestionKind.nonNumeric, category: VariableCategory.user),
+        VariableSuggestion(name: 'user.avatar', kind: VariableSuggestionKind.nonNumeric, category: VariableCategory.user),
+        VariableSuggestion(name: 'user.banner', kind: VariableSuggestionKind.nonNumeric, category: VariableCategory.user),
+        VariableSuggestion(name: 'user.createdAt', kind: VariableSuggestionKind.nonNumeric, category: VariableCategory.user),
+        VariableSuggestion(name: 'user.mention', kind: VariableSuggestionKind.nonNumeric, category: VariableCategory.user),
       ]);
 
     // ═══════════════════════════════════════════════════════════════════
@@ -1014,6 +1042,25 @@ class VariableCatalog {
       list.addAll([
         VariableSuggestion(name: 'voice.effect.emoji', kind: VariableSuggestionKind.nonNumeric, category: VariableCategory.other),
         VariableSuggestion(name: 'voice.effect.soundId', kind: VariableSuggestionKind.numeric, category: VariableCategory.other),
+        // ── Member fields (resolved via cache/fetch hydration) ──
+        VariableSuggestion(name: 'member.id', kind: VariableSuggestionKind.numeric, category: VariableCategory.member),
+        VariableSuggestion(name: 'member.nick', kind: VariableSuggestionKind.nonNumeric, category: VariableCategory.member),
+        VariableSuggestion(name: 'member.displayName', kind: VariableSuggestionKind.nonNumeric, category: VariableCategory.member),
+        VariableSuggestion(name: 'member.joinedAt', kind: VariableSuggestionKind.nonNumeric, category: VariableCategory.member),
+        VariableSuggestion(name: 'member.roles', kind: VariableSuggestionKind.nonNumeric, category: VariableCategory.member),
+        VariableSuggestion(name: 'member.roles.count', kind: VariableSuggestionKind.numeric, category: VariableCategory.member),
+        VariableSuggestion(name: 'member.isBooster', kind: VariableSuggestionKind.nonNumeric, category: VariableCategory.member),
+        VariableSuggestion(name: 'member.isAdmin', kind: VariableSuggestionKind.nonNumeric, category: VariableCategory.member),
+        // ── User fields (resolved via cache/fetch hydration) ──
+        VariableSuggestion(name: 'user.id', kind: VariableSuggestionKind.numeric, category: VariableCategory.user),
+        VariableSuggestion(name: 'user.username', kind: VariableSuggestionKind.nonNumeric, category: VariableCategory.user),
+        VariableSuggestion(name: 'user.globalName', kind: VariableSuggestionKind.nonNumeric, category: VariableCategory.user),
+        VariableSuggestion(name: 'user.displayName', kind: VariableSuggestionKind.nonNumeric, category: VariableCategory.user),
+        VariableSuggestion(name: 'user.tag', kind: VariableSuggestionKind.nonNumeric, category: VariableCategory.user),
+        VariableSuggestion(name: 'user.avatar', kind: VariableSuggestionKind.nonNumeric, category: VariableCategory.user),
+        VariableSuggestion(name: 'user.banner', kind: VariableSuggestionKind.nonNumeric, category: VariableCategory.user),
+        VariableSuggestion(name: 'user.createdAt', kind: VariableSuggestionKind.nonNumeric, category: VariableCategory.user),
+        VariableSuggestion(name: 'user.mention', kind: VariableSuggestionKind.nonNumeric, category: VariableCategory.user),
       ]);
 
     // ═══════════════════════════════════════════════════════════════════
