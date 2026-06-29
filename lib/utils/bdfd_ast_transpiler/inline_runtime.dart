@@ -4,9 +4,15 @@ extension _BdfdAstTranspilationScopeInlineRuntime
     on _BdfdAstTranspilationScope {
   String? _stringifyInlineFunction(BdfdFunctionCallAst node) {
     // Runtime loop variable placeholders (e.g. $i → ((_loop.var.i))).
+    // Also handle $jsonKey[]/$jsonValue[]/$jsonIndex[] whose empty brackets
+    // produce a single empty argument rather than zero arguments.
+    final hasEmptyBrackets = node.arguments.length == 1 &&
+        node.arguments.first.isEmpty;
+    final isEffectivelyEmptyArgs = node.arguments.isEmpty || hasEmptyBrackets;
+
     if (_runtimeLoopVarNames != null &&
         _loopDepth > 0 &&
-        node.arguments.isEmpty) {
+        isEffectivelyEmptyArgs) {
       final name = node.normalizedName;
       if (_runtimeLoopVarNames!.contains(name)) {
         return '((_loop.var.$name))';
@@ -19,9 +25,14 @@ extension _BdfdAstTranspilationScopeInlineRuntime
       }
     }
     // C-style loop variables take precedence (e.g. $i, $j in a for loop).
-    if (_loopDepth > 0 && node.arguments.isEmpty) {
+    if (_loopDepth > 0 && isEffectivelyEmptyArgs) {
       final loopVar = _loopVariables[node.normalizedName];
       if (loopVar != null) return loopVar.toString();
+    }
+    // List iteration string variables (e.g. $item in $for[item;a;b;c]).
+    if (_loopDepth > 0 && isEffectivelyEmptyArgs) {
+      final stringVar = _loopStringVariables[node.normalizedName];
+      if (stringVar != null) return stringVar;
     }
     switch (node.normalizedName) {
       case 'addemoji':
@@ -538,9 +549,44 @@ extension _BdfdAstTranspilationScopeInlineRuntime
     }
 
     switch (node.normalizedName) {
+      // ── User-defined functions ──
+      case 'funcarg':
+        final paramName = _stringifyArgument(node, 0).trim().toLowerCase();
+        return _funcArgScope[paramName] ?? '';
+      case 'funcreturn':
+        _funcReturnValue = _stringifyArgument(node, 0);
+        return '';
+      case 'funccall':
+        return _expandUserFunction(node);
       // JSON functions
       case 'json':
         return _jsonGet(node);
+      case 'jsonvalue':
+        // Inside a $jsonForEach block, the runtime loop variable check at the
+        // top of this function already handles $jsonValue[] (empty brackets).
+        // Here we handle $jsonValue[path] used outside jsonForEach — it reads
+        // from the JSON context just like $json[path].
+        if (_runtimeLoopVarNames != null &&
+            _runtimeLoopVarNames!.contains('jsonvalue') &&
+            _loopDepth > 0) {
+          return '((_loop.var.jsonvalue))';
+        }
+        return _jsonGet(node);
+      case 'jsonkey':
+        // $jsonKey is only meaningful inside $jsonForEach. Outside, return ''.
+        if (_runtimeLoopVarNames != null &&
+            _runtimeLoopVarNames!.contains('jsonkey') &&
+            _loopDepth > 0) {
+          return '((_loop.var.jsonkey))';
+        }
+        return '';
+      case 'jsonindex':
+        if (_runtimeLoopVarNames != null &&
+            _runtimeLoopVarNames!.contains('jsonindex') &&
+            _loopDepth > 0) {
+          return '((_loop.var.jsonindex))';
+        }
+        return '';
       case 'jsonexists':
         return _jsonExists(node);
       case 'jsonstringify':
@@ -1004,6 +1050,79 @@ extension _BdfdAstTranspilationScopeInlineRuntime
     }
   }
 
+  /// Expands a user-defined function call ($funcCall[name;args...]).
+  /// The function body is processed with parameters substituted, and the
+  /// return value (from $funcReturn or the body text content) is returned.
+  String _expandUserFunction(BdfdFunctionCallAst node) {
+    final funcName = _stringifyArgument(node, 0).trim().toLowerCase();
+    final funcDef = _userFunctions[funcName];
+    if (funcDef == null) {
+      _diagnostics.add(
+        BdfdTranspileDiagnostic(
+          message:
+              '${r'$funcCall'} references undefined function "$funcName".',
+          start: node.start,
+          end: node.end,
+          functionName: node.name,
+        ),
+      );
+      return '';
+    }
+
+    // Prevent infinite recursion.
+    if (_funcCallDepth >= 10) {
+      _diagnostics.add(
+        BdfdTranspileDiagnostic(
+          message:
+              'Function call depth limit exceeded for "$funcName" (possible recursion).',
+          severity: BdfdTranspileDiagnosticSeverity.warning,
+          start: node.start,
+          end: node.end,
+          functionName: node.name,
+        ),
+      );
+      return '';
+    }
+
+    // Save and set up parameter scope.
+    final previousArgScope = Map<String, String>.from(_funcArgScope);
+    final previousReturnValue = _funcReturnValue;
+
+    // Compute argument values in the CALLING scope (where $funcArg from
+    // the outer context is still available) BEFORE switching to the
+    // function's own scope.
+    final argValues = <String>[];
+    for (var i = 0; i < funcDef.paramNames.length; i++) {
+      final argValue = i + 1 < node.arguments.length
+          ? _stringifyArgument(node, i + 1)
+          : '';
+      argValues.add(argValue);
+    }
+
+    _funcArgScope = <String, String>{};
+    for (var i = 0; i < funcDef.paramNames.length; i++) {
+      _funcArgScope[funcDef.paramNames[i]] = argValues[i];
+    }
+
+    _funcReturnValue = null;
+    _funcCallDepth += 1;
+
+    // Process the body: stringify all nodes (text + inline functions).
+    // The text content becomes the default return value.
+    final textContent = _stringifyNodes(funcDef.bodyNodes);
+
+    _funcCallDepth -= 1;
+
+    // If $funcReturn was called, use that; otherwise use text content.
+    final result = _funcReturnValue ?? textContent;
+
+    // Restore scope.
+    _funcArgScope = previousArgScope;
+    _funcReturnValue = previousReturnValue;
+
+    return result;
+  }
+
   String? _inlineRuntimePlaceholder(BdfdFunctionCallAst node) {
     return _inlineRuntimeVariables[node.normalizedName];
   }
@@ -1019,12 +1138,18 @@ extension _BdfdAstTranspilationScopeInlineRuntime
     if (_loopDepth > 0 && _loopVariables.containsKey(normalizedName)) {
       return true;
     }
+    if (_loopDepth > 0 && _loopStringVariables.containsKey(normalizedName)) {
+      return true;
+    }
     if (_runtimeLoopVarNames != null &&
         _runtimeLoopVarNames!.contains(normalizedName)) {
       return true;
     }
     switch (normalizedName) {
       case 'json':
+      case 'jsonvalue':
+      case 'jsonkey':
+      case 'jsonindex':
       case 'jsonexists':
       case 'jsonstringify':
       case 'jsonpretty':
@@ -1065,6 +1190,10 @@ extension _BdfdAstTranspilationScopeInlineRuntime
       case 'getleaderboardposition':
       case 'getleaderboardvalue':
       case 'getcooldown':
+      // User-defined function helpers
+      case 'funcarg':
+      case 'funcreturn':
+      case 'funccall':
       // Text manipulation
       case 'replacetext':
       case 'url':

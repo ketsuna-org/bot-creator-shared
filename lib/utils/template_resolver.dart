@@ -184,11 +184,14 @@ String? _lookupVariableValue(String key, Map<String, String> updates) {
   }
 
   // Dynamic time variables resolved at template evaluation time.
-  if (loweredKey == 'gettimestamp') {
+  if (loweredKey == 'gettimestamp' || loweredKey == 'timestamp') {
     return (DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000).toString();
   }
-  if (loweredKey == 'gettimestampms') {
+  if (loweredKey == 'gettimestampms' || loweredKey == 'timestampms') {
     return DateTime.now().toUtc().millisecondsSinceEpoch.toString();
+  }
+  if (loweredKey == 'actualtime') {
+    return DateTime.now().toUtc().toIso8601String();
   }
   if (loweredKey == 'day') {
     return DateTime.now().toUtc().day.toString();
@@ -1935,7 +1938,10 @@ void injectAlwaysAvailableVariables(
   vars.putIfAbsent('bot.uptime', () => '$uptimeMs');
   vars.putIfAbsent('bot.ping', () => '$pingMs');
   vars['getTimestamp'] = '${now.millisecondsSinceEpoch ~/ 1000}';
+  vars['timestamp'] = '${now.millisecondsSinceEpoch ~/ 1000}';
   vars['getTimestampMs'] = '${now.millisecondsSinceEpoch}';
+  vars['timestampMs'] = '${now.millisecondsSinceEpoch}';
+  vars['actualTime'] = now.toIso8601String();
   vars['day'] = '${now.day}';
   vars['month'] = '${now.month}';
   vars['year'] = '${now.year}';

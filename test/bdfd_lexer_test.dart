@@ -245,24 +245,27 @@ void main() {
       expect(summarizeTokens(result), [r'text:Hello \ World', 'eof:']);
     });
 
-    test('greedy prefix-matching for functions concatenated with text', () {
+    test('identifier with function prefix is not split', () {
+      // $replysfdsfsdf should be tokenized as a single unknown identifier,
+      // NOT split into $reply + sfdsfsdf. This prevents bugs like $item
+      // being split into $i + tem.
       final result = BdfdLexer().tokenize(r'$replysfdsfsdf');
 
       expect(result.diagnostics, isEmpty);
       expect(summarizeTokens(result), [
-        r'function:$reply',
-        'text:sfdsfsdf',
+        r'function:$replysfdsfsdf',
         'eof:',
       ]);
     });
 
-    test('greedy matching prefers longest valid function name', () {
+    test('identifier with function prefix is not split (multi-word)', () {
+      // $getBotInvitetext should be tokenized as a single unknown identifier,
+      // NOT split into $getBotInvite + text.
       final result = BdfdLexer().tokenize(r'$getBotInvitetext');
 
       expect(result.diagnostics, isEmpty);
       expect(summarizeTokens(result), [
-        r'function:$getBotInvite',
-        'text:text',
+        r'function:$getBotInvitetext',
         'eof:',
       ]);
     });

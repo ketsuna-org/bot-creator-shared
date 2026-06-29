@@ -93,7 +93,15 @@ class _BdfdAstTranspilationScope {
   int _loopIterationIndex = 0;
   int _loopDepth = 0;
   Map<String, int> _loopVariables = <String, int>{};
+  Map<String, String> _loopStringVariables = <String, String>{};
   Set<String>? _runtimeLoopVarNames;
+
+  // ── User-defined functions ($func[...]...$funcEnd) ───────────────────────
+  final Map<String, _BdfdUserFunction> _userFunctions =
+      <String, _BdfdUserFunction>{};
+  Map<String, String> _funcArgScope = <String, String>{};
+  String? _funcReturnValue;
+  int _funcCallDepth = 0;
   final List<Map<String, dynamic>> _pendingModalComponents =
       <Map<String, dynamic>>[];
 
@@ -219,6 +227,57 @@ class _BdfdAstTranspilationScope {
             continue;
           }
 
+          if (consumed.isRuntimeListIteration) {
+            final runtimeListDeferredJson = _flushDeferredJson();
+            if (runtimeListDeferredJson != null) {
+              actions.add(runtimeListDeferredJson);
+            }
+            if (pendingResponse.hasPendingContent) {
+              final flushed = pendingResponse.buildAction(
+                channelId: _useChannelId,
+              );
+              if (flushed != null) {
+                actions.add(flushed);
+                _consumeStickyFlags();
+              }
+            }
+            actions.add(_buildRuntimeListForLoopAction(consumed));
+            index = consumed.nextIndex;
+            continue;
+          }
+
+          if (consumed.isListIteration) {
+            final extraNames = <String>{consumed.listVarName!};
+            if (_isResponseOnlyLoopBody(
+              consumed.bodyNodes,
+              extraInlineNames: extraNames,
+            )) {
+              _applyListIterationLoopBodyToResponse(
+                bodyNodes: consumed.bodyNodes,
+                varName: consumed.listVarName!,
+                values: consumed.listValues!,
+                response: pendingResponse,
+              );
+            } else {
+              final flushed = pendingResponse.buildAction(
+                channelId: _useChannelId,
+              );
+              if (flushed != null) {
+                actions.add(flushed);
+                _consumeStickyFlags();
+              }
+              actions.addAll(
+                _transpileListIterationLoop(
+                  bodyNodes: consumed.bodyNodes,
+                  varName: consumed.listVarName!,
+                  values: consumed.listValues!,
+                ),
+              );
+            }
+            index = consumed.nextIndex;
+            continue;
+          }
+
           if (consumed.isCStyleLoop) {
             final extraNames = consumed.cStyleInit!.keys.toSet();
             if (_isResponseOnlyLoopBody(
@@ -330,6 +389,13 @@ class _BdfdAstTranspilationScope {
           continue;
         }
 
+        // $func[name;params...] ... $funcEnd — user-defined function.
+        if (_isBlockFuncSignature(node)) {
+          final consumed = _consumeFuncBlock(nodes: nodes, startIndex: index);
+          index = consumed.nextIndex;
+          continue;
+        }
+
         if (_isStandaloneIfDelimiter(node.normalizedName)) {
           _diagnostics.add(
             BdfdTranspileDiagnostic(
@@ -384,6 +450,36 @@ class _BdfdAstTranspilationScope {
           );
           index += 1;
           continue;
+        }
+
+        if (_isStandaloneFuncEndDelimiter(node)) {
+          _diagnostics.add(
+            BdfdTranspileDiagnostic(
+              message:
+                  'Unexpected ${node.name} without a matching surrounding ${r'$func'}[] block.',
+              start: node.start,
+              end: node.end,
+              functionName: node.name,
+            ),
+          );
+          index += 1;
+          continue;
+        }
+
+        // Inside a list-iteration loop, loop string variables (e.g. $item in
+        // $for[item;a;b;c]) shadow any BDFD function of the same name (such as
+        // $color, $title, etc.). Resolve them BEFORE response mutation checks.
+        if (_loopDepth > 0 &&
+            _loopStringVariables.containsKey(node.normalizedName)) {
+          final isEffectivelyEmptyArgs = node.arguments.isEmpty ||
+              (node.arguments.length == 1 &&
+                  node.arguments.first.isEmpty);
+          if (isEffectivelyEmptyArgs) {
+            pendingResponse
+                .appendContent(_loopStringVariables[node.normalizedName]!);
+            index += 1;
+            continue;
+          }
         }
 
         if (_applyResponseMutation(node, pendingResponse)) {
@@ -542,8 +638,10 @@ class _BdfdAstTranspilationScope {
   }
 
   bool _isBlockLoopSignature(BdfdFunctionCallAst node) {
-    return (node.normalizedName == 'for' || node.normalizedName == 'loop') &&
-        (node.arguments.length <= 1 || node.arguments.length == 3);
+    // Accept $for / $loop with any argument count. The specific form
+    // (simple count, C-style, or list iteration) is disambiguated in
+    // _buildConsumedLoop.
+    return node.normalizedName == 'for' || node.normalizedName == 'loop';
   }
 
   bool _isStandaloneLoopDelimiter(String normalizedName) {
@@ -569,5 +667,88 @@ class _BdfdAstTranspilationScope {
       return node.arguments.isEmpty;
     }
     return name == 'catch' || name == 'endtry';
+  }
+
+  bool _isBlockFuncSignature(BdfdFunctionCallAst node) {
+    return node.normalizedName == 'func' && node.arguments.isNotEmpty;
+  }
+
+  bool _isStandaloneFuncEndDelimiter(BdfdFunctionCallAst node) {
+    return node.normalizedName == 'funcend';
+  }
+
+  /// Consumes a `$func[name;param1;param2;...] ... $funcEnd` block.
+  /// Stores the function definition and produces no actions.
+  _ConsumedFuncBlock _consumeFuncBlock({
+    required List<BdfdAstNode> nodes,
+    required int startIndex,
+  }) {
+    final funcNode = nodes[startIndex] as BdfdFunctionCallAst;
+    final funcName = _stringifyArgument(funcNode, 0).trim().toLowerCase();
+    final paramNames = <String>[];
+    for (var i = 1; i < funcNode.arguments.length; i++) {
+      final param = _stringifyArgument(funcNode, i).trim().toLowerCase();
+      if (param.isNotEmpty) {
+        paramNames.add(param);
+      }
+    }
+
+    final bodyNodes = <BdfdAstNode>[];
+    var nestingDepth = 0;
+
+    for (var cursor = startIndex + 1; cursor < nodes.length; cursor++) {
+      final currentNode = nodes[cursor];
+
+      if (currentNode is BdfdFunctionCallAst) {
+        final name = currentNode.normalizedName;
+
+        if (_isBlockFuncSignature(currentNode)) {
+          nestingDepth += 1;
+          bodyNodes.add(currentNode);
+          continue;
+        }
+
+        if (name == 'funcend') {
+          if (nestingDepth > 0) {
+            nestingDepth -= 1;
+            bodyNodes.add(currentNode);
+            continue;
+          }
+
+          // End of function definition — store it.
+          if (funcName.isNotEmpty) {
+            _userFunctions[funcName] = _BdfdUserFunction(
+              name: funcName,
+              paramNames: paramNames,
+              bodyNodes: List<BdfdAstNode>.unmodifiable(bodyNodes),
+            );
+          }
+
+          return _ConsumedFuncBlock(nextIndex: cursor + 1);
+        }
+      }
+
+      bodyNodes.add(currentNode);
+    }
+
+    // No $funcEnd found — diagnostic + store anyway.
+    _diagnostics.add(
+      BdfdTranspileDiagnostic(
+        message: '${funcNode.name} not closed with ${r'$funcEnd'}.',
+        start: funcNode.start,
+        end: funcNode.end,
+        functionName: funcNode.name,
+      ),
+    );
+
+    if (funcName.isNotEmpty) {
+      _userFunctions[funcName] = _BdfdUserFunction(
+        name: funcName,
+        paramNames: paramNames,
+        bodyNodes: List<BdfdAstNode>.unmodifiable(bodyNodes),
+      );
+    }
+
+    return _ConsumedFuncBlock(nextIndex: nodes.length);
   }
 }

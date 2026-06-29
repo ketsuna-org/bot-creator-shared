@@ -216,6 +216,26 @@ class _BdfdScanner {
     }
 
     if (match != null) {
+      // If the match is followed by more identifier characters, the match is
+      // likely a false positive (e.g., $i inside $item, or $for inside
+      // $format). In that case, treat the full identifier as an unknown
+      // function/variable rather than splitting it.
+      if (match.length < fullId.length &&
+          _isIdentifierPart(fullId.substring(match.length, match.length + 1))) {
+        _tokens.add(
+          BdfdToken(
+            type: BdfdTokenType.function,
+            lexeme: r'$' + fullId,
+            start: start,
+            end: _index,
+            line: startLine,
+            column: startColumn,
+          ),
+        );
+        _mayOpenArgumentList = true;
+        return;
+      }
+
       // Found a valid function! 
       // If we overshot (greedy identifier scan), backtrack.
       final overshot = fullId.length - match.length;

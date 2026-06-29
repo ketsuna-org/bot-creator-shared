@@ -553,6 +553,10 @@ class _ConsumedLoopBlock {
     this.runtimeCondition,
     this.runtimeUpdate,
     this.runtimeVarNames,
+    this.listVarName,
+    this.listValues,
+    this.isListIteration = false,
+    this.isRuntimeListIteration = false,
   });
 
   /// Pre-computed actions (used by try/catch blocks that reuse this class).
@@ -576,6 +580,12 @@ class _ConsumedLoopBlock {
   final String? runtimeUpdate;
   final Set<String>? runtimeVarNames;
   bool get isRuntimeCStyleLoop => runtimeInit != null;
+
+  /// List iteration fields (for $for[varName;val1;val2;...]).
+  final String? listVarName;
+  final List<String>? listValues;
+  final bool isListIteration;
+  final bool isRuntimeListIteration;
 }
 
 class _ConsumedJsonForEachBlock {
@@ -584,6 +594,25 @@ class _ConsumedJsonForEachBlock {
     required this.nextIndex,
   });
   final Action action;
+  final int nextIndex;
+}
+
+/// A user-defined BDFD function collected via `$func[name;params...]...$funcEnd`.
+class _BdfdUserFunction {
+  const _BdfdUserFunction({
+    required this.name,
+    required this.paramNames,
+    required this.bodyNodes,
+  });
+
+  final String name;
+  final List<String> paramNames;
+  final List<BdfdAstNode> bodyNodes;
+}
+
+/// Result of consuming a `$func[...]...$funcEnd` block.
+class _ConsumedFuncBlock {
+  const _ConsumedFuncBlock({required this.nextIndex});
   final int nextIndex;
 }
 

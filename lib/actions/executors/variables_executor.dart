@@ -2178,7 +2178,20 @@ void _executeRuntimeJsonBlock({
         break;
 
       case 'initArray':
-        jsonCtx = _rtJsonSetPath(jsonCtx, resolvedPath, <dynamic>[]);
+        // BDFD wiki: $jsonArray[key;separator?] splits the existing string
+        // value by the separator and stores the resulting array.
+        final arraySeparator = (rawOp['separator'] ?? ',').toString();
+        final existingVal = _rtJsonGetPath(jsonCtx, resolvedPath);
+        if (existingVal is String && existingVal.isNotEmpty) {
+          final parts = arraySeparator.isEmpty
+              ? <dynamic>[existingVal]
+              : existingVal.split(arraySeparator);
+          jsonCtx = _rtJsonSetPath(jsonCtx, resolvedPath, parts);
+        } else if (existingVal is List) {
+          // Already an array — keep as-is.
+        } else {
+          jsonCtx = _rtJsonSetPath(jsonCtx, resolvedPath, <dynamic>[]);
+        }
         break;
 
       case 'arrayAppend':
@@ -2222,14 +2235,21 @@ void _executeRuntimeJsonBlock({
         break;
 
       case 'arraySort':
-        final list = _rtJsonEnsureArray(jsonCtx, resolvedPath);
-        list.sort((a, b) {
+        final sortDescending = rawOp['descending'] == true;
+        final sortList = _rtJsonEnsureArray(jsonCtx, resolvedPath);
+        sortList.sort((a, b) {
           final aNum = a is num ? a : num.tryParse(a.toString());
           final bNum = b is num ? b : num.tryParse(b.toString());
-          if (aNum != null && bNum != null) return aNum.compareTo(bNum);
-          if (aNum != null) return -1;
-          if (bNum != null) return 1;
-          return a.toString().compareTo(b.toString());
+          if (aNum != null && bNum != null) {
+            return sortDescending
+                ? bNum.compareTo(aNum)
+                : aNum.compareTo(bNum);
+          }
+          if (aNum != null) return sortDescending ? 1 : -1;
+          if (bNum != null) return sortDescending ? -1 : 1;
+          return sortDescending
+              ? b.toString().compareTo(a.toString())
+              : a.toString().compareTo(b.toString());
         });
         break;
 

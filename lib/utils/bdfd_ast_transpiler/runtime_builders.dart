@@ -194,6 +194,36 @@ extension _BdfdAstTranspilationScopeRuntimeBuilders
   }
 
   String _jsonGet(BdfdFunctionCallAst node) {
+    // BDFD wiki: $json[value?] creates/initializes a JSON object.
+    // - $json[] (empty) → initialize empty {} if no context exists
+    // - $json[raw_json] where raw_json starts with { or [ and no context
+    //   exists → parse and initialize (like $jsonParse)
+    // - $json[path] (path doesn't look like raw JSON) → read from context
+    final hasEmptyBrackets = node.arguments.isEmpty ||
+        (node.arguments.length == 1 && node.arguments.first.isEmpty);
+    if (hasEmptyBrackets && !_hasJsonContext && !_deferredJsonMode) {
+      _jsonContext = <String, dynamic>{};
+      _hasJsonContext = true;
+      _lastDeferredJsonResultKeyPrefix = null;
+      // Initialization produces no text output.
+      return '';
+    } else if (!_hasJsonContext &&
+        !_deferredJsonMode &&
+        node.arguments.length == 1) {
+      final raw = _stringifyArgument(node, 0).trim();
+      if ((raw.startsWith('{') || raw.startsWith('[')) && !raw.contains('((')) {
+        try {
+          _jsonContext = jsonDecode(raw);
+          _hasJsonContext = true;
+          _lastDeferredJsonResultKeyPrefix = null;
+          // Initialization produces no text output.
+          return '';
+        } catch (_) {
+          // Not valid JSON — fall through to normal reading (returns '').
+        }
+      }
+    }
+
     if (_deferredJsonMode || _resumeDeferredJsonFromLastRuntimeContext()) {
       final segments = _jsonPathSegmentsRaw(node);
       final readIndex = _deferredJsonReadCounter++;
@@ -328,16 +358,40 @@ extension _BdfdAstTranspilationScopeRuntimeBuilders
   }
 
   void _jsonArray(BdfdFunctionCallAst node) {
+    // BDFD wiki: $jsonArray[key;separator?] splits the existing string value
+    // at the given key by the separator and stores the resulting array.
+    // The separator is the LAST argument; the path is everything before it.
+    final hasSeparator = node.arguments.length >= 2;
+    final separator = hasSeparator
+        ? _stringifyArgument(node, node.arguments.length - 1)
+        : ',';
+    final pathEnd = hasSeparator ? node.arguments.length - 1 : node.arguments.length;
+
     if (_deferredJsonMode || _resumeDeferredJsonFromLastRuntimeContext()) {
-      final segments = _jsonPathSegmentsRaw(node);
+      final segments = _jsonPathSegmentsRaw(node, endExclusive: pathEnd);
       _deferredJsonOps.add(<String, dynamic>{
         'op': 'initArray',
         'path': segments,
+        'separator': separator,
       });
       return;
     }
-    final segments = _jsonPathSegments(node);
-    _jsonSetPathValue(segments, <dynamic>[]);
+    final segments = _jsonPathSegments(node, endExclusive: pathEnd);
+
+    // BDFD wiki: "The key must already exist and contain a string value."
+    // Try to split the existing value; if none exists or it's not a string,
+    // fall back to creating an empty array.
+    final existing = _jsonGetPathValue(segments);
+    if (existing is String && existing.isNotEmpty) {
+      final parts = separator.isEmpty
+          ? <dynamic>[existing]
+          : existing.split(separator);
+      _jsonSetPathValue(segments, parts);
+    } else if (existing is List) {
+      // Already an array — keep as-is.
+    } else {
+      _jsonSetPathValue(segments, <dynamic>[]);
+    }
   }
 
   String _jsonArrayCount(BdfdFunctionCallAst node) {
@@ -515,28 +569,44 @@ extension _BdfdAstTranspilationScopeRuntimeBuilders
   }
 
   void _jsonArraySort(BdfdFunctionCallAst node) {
+    // BDFD wiki: $jsonArraySort[key;order?] where order is "asc" or "desc".
+    // The order is the LAST argument; the path is everything before it.
+    final hasOrder = node.arguments.length >= 2;
+    final orderRaw = hasOrder
+        ? _stringifyArgument(node, node.arguments.length - 1).trim().toLowerCase()
+        : 'asc';
+    final descending = orderRaw == 'desc';
+    final pathEnd = hasOrder ? node.arguments.length - 1 : node.arguments.length;
+
     if (_deferredJsonMode || _resumeDeferredJsonFromLastRuntimeContext()) {
-      final segments = _jsonPathSegmentsRaw(node);
+      final segments = _jsonPathSegmentsRaw(node, endExclusive: pathEnd);
       _deferredJsonOps.add(<String, dynamic>{
         'op': 'arraySort',
         'path': segments,
+        'descending': descending,
       });
       return;
     }
-    final list = _jsonEnsureArray(_jsonPathSegments(node));
+    final list = _jsonEnsureArray(
+      _jsonPathSegments(node, endExclusive: pathEnd),
+    );
     list.sort((left, right) {
       final leftNumber = left is num ? left : num.tryParse(left.toString());
       final rightNumber = right is num ? right : num.tryParse(right.toString());
       if (leftNumber != null && rightNumber != null) {
-        return leftNumber.compareTo(rightNumber);
+        return descending
+            ? rightNumber.compareTo(leftNumber)
+            : leftNumber.compareTo(rightNumber);
       }
       if (leftNumber != null) {
-        return -1;
+        return descending ? 1 : -1;
       }
       if (rightNumber != null) {
-        return 1;
+        return descending ? -1 : 1;
       }
-      return left.toString().compareTo(right.toString());
+      return descending
+          ? right.toString().compareTo(left.toString())
+          : left.toString().compareTo(right.toString());
     });
   }
 

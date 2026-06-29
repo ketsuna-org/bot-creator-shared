@@ -563,6 +563,18 @@ Future<bool> executeControlFlowAction({
         );
       }
 
+      if (mode == 'list') {
+        return _executeListForLoop(
+          payload: payload,
+          resultKey: resultKey,
+          results: results,
+          variables: variables,
+          resolveValue: resolveValue,
+          executeActions: executeActions,
+          maxIterations: maxIterations,
+        );
+      }
+
       // Simple runtime loop: iterations is a template string.
       final rawIterations =
           resolveValue((payload['iterations'] ?? '0').toString()).trim();
@@ -649,17 +661,39 @@ Future<bool> executeControlFlowAction({
         }
       }
 
-      if (jsonCtx is! Map) {
+      // BDFD wiki: $jsonForEach supports both objects and arrays.
+      // - Object: $jsonKey = key, $jsonValue = value
+      // - Array: $jsonIndex = 0-based index, $jsonValue = element
+      final isObject = jsonCtx is Map;
+      final isArray = jsonCtx is List;
+
+      if (!isObject && !isArray) {
         results[resultKey] = 'JSONFE_0';
         return true;
       }
 
-      final keys = jsonCtx.keys.toList();
-      final capped2 = keys.length > maxIterations ? maxIterations : keys.length;
+      final int itemCount;
+      if (isObject) {
+        itemCount = (jsonCtx as Map).length;
+      } else {
+        itemCount = (jsonCtx as List).length;
+      }
+      final capped2 = itemCount > maxIterations ? maxIterations : itemCount;
 
       for (var i = 0; i < capped2; i++) {
-        final key = keys[i].toString();
-        final value = _jsonStringifyForEach(jsonCtx[keys[i]]);
+        String key;
+        String value;
+        if (isObject) {
+          final map = jsonCtx as Map;
+          key = map.keys.elementAt(i).toString();
+          value = _jsonStringifyForEach(map[map.keys.elementAt(i)]);
+        } else {
+          final list = jsonCtx as List;
+          // For arrays, jsonKey returns the index as a string so that
+          // $jsonKey and $jsonIndex are consistent.
+          key = i.toString();
+          value = _jsonStringifyForEach(list[i]);
+        }
         variables['_loop.var.jsonkey'] = key;
         variables['_loop.var.jsonvalue'] = value;
         variables['_loop.var.jsonindex'] = i.toString();
@@ -849,6 +883,59 @@ String _resolveLoopExpression(
     );
   }
   return resolveValue(result);
+}
+
+/// Executes a list-iteration runtime for loop ($for[varName;val1;val2;...]).
+Future<bool> _executeListForLoop({
+  required Map<String, dynamic> payload,
+  required String resultKey,
+  required Map<String, String> results,
+  required Map<String, String> variables,
+  required String Function(String input) resolveValue,
+  required Future<Map<String, String>> Function(List<Action> actions)
+      executeActions,
+  required int maxIterations,
+}) async {
+  final varName =
+      (payload['varName'] ?? 'item').toString().toLowerCase();
+  final rawValues = payload['values'];
+  final bodyActionsRaw = payload['bodyActions'];
+  final templateActions = _decodeActionList(bodyActionsRaw);
+
+  if (templateActions.isEmpty) {
+    results[resultKey] = 'LOOP_0';
+    return true;
+  }
+
+  // Resolve each value at runtime.
+  final values = <String>[];
+  if (rawValues is List) {
+    for (final v in rawValues) {
+      values.add(resolveValue(v.toString()));
+    }
+  }
+
+  final capped = values.length > maxIterations ? maxIterations : values.length;
+
+  for (var i = 0; i < capped; i++) {
+    variables['_loop.var.$varName'] = values[i];
+    variables['_loop.index'] = i.toString();
+    variables['_loop.count'] = (i + 1).toString();
+
+    final iterResults = await executeActions(templateActions);
+    for (final entry in iterResults.entries) {
+      results['$resultKey.iter$i.${entry.key}'] = entry.value;
+    }
+    if (iterResults.containsKey('__stopped__')) {
+      results['__stopped__'] = 'true';
+      break;
+    }
+  }
+  variables.remove('_loop.var.$varName');
+  variables.remove('_loop.index');
+  variables.remove('_loop.count');
+  results[resultKey] = 'LOOP_$capped';
+  return true;
 }
 
 bool _evaluateSimpleCondition(String resolved) {

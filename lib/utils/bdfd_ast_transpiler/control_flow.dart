@@ -354,31 +354,78 @@ extension _BdfdAstTranspilationScopeControlFlow on _BdfdAstTranspilationScope {
       );
     }
 
-    // Simple for: $for[n]
-    final rawIterations = _stringifyArgument(loopNode, 0).trim();
-    if (rawIterations.contains('((')) {
+    // Simple for: $for[n] (0-1 args, no var name)
+    if (loopNode.arguments.length <= 1) {
+      final rawIterations = _stringifyArgument(loopNode, 0).trim();
+      if (rawIterations.contains('((')) {
+        return _ConsumedLoopBlock(
+          nextIndex: nextIndex,
+          bodyNodes: bodyNodes,
+          iterations: 0,
+          isRuntimeLoop: true,
+          runtimeIterations: rawIterations,
+        );
+      }
+
+      final iterations = _parseLoopIterations(loopNode);
+      if (iterations == null) {
+        return _ConsumedLoopBlock(
+          nextIndex: nextIndex,
+          bodyNodes: bodyNodes,
+          iterations: 0,
+        );
+      }
+
       return _ConsumedLoopBlock(
         nextIndex: nextIndex,
         bodyNodes: bodyNodes,
-        iterations: 0,
-        isRuntimeLoop: true,
-        runtimeIterations: rawIterations,
+        iterations: iterations,
       );
     }
 
-    final iterations = _parseLoopIterations(loopNode);
-    if (iterations == null) {
+    // List iteration: $for[varName;val1;val2;...]
+    final varName = _stringifyArgument(loopNode, 0).trim().toLowerCase();
+    if (varName.isEmpty) {
+      _diagnostics.add(
+        BdfdTranspileDiagnostic(
+          message: '${loopNode.name} requires an iterator variable name.',
+          start: loopNode.start,
+          end: loopNode.end,
+          functionName: loopNode.name,
+        ),
+      );
       return _ConsumedLoopBlock(
         nextIndex: nextIndex,
         bodyNodes: bodyNodes,
         iterations: 0,
+      );
+    }
+
+    final values = <String>[];
+    for (var i = 1; i < loopNode.arguments.length; i++) {
+      values.add(_stringifyArgument(loopNode, i));
+    }
+
+    // Check if any value contains runtime placeholders.
+    final hasRuntime = values.any((v) => v.contains('(('));
+    if (hasRuntime) {
+      return _ConsumedLoopBlock(
+        nextIndex: nextIndex,
+        bodyNodes: bodyNodes,
+        iterations: 0,
+        listVarName: varName,
+        listValues: values,
+        isRuntimeListIteration: true,
       );
     }
 
     return _ConsumedLoopBlock(
       nextIndex: nextIndex,
       bodyNodes: bodyNodes,
-      iterations: iterations,
+      iterations: values.length,
+      listVarName: varName,
+      listValues: values,
+      isListIteration: true,
     );
   }
 
@@ -739,6 +786,141 @@ extension _BdfdAstTranspilationScopeControlFlow on _BdfdAstTranspilationScope {
     }
 
     return Action(type: BotCreatorActionType.forLoop, payload: payload);
+  }
+
+  // ── List iteration runtime loop ───────────────────────────────────────
+
+  /// Builds a runtime [BotCreatorActionType.forLoop] action whose body is
+  /// transpiled with the iterator variable emitted as a
+  /// `((_loop.var.{name}))` placeholder.
+  Action _buildRuntimeListForLoopAction(_ConsumedLoopBlock consumed) {
+    final varName = consumed.listVarName!;
+    final values = consumed.listValues!;
+
+    final previousIndex = _loopIterationIndex;
+    final previousDepth = _loopDepth;
+    final previousRuntimeVarNames = _runtimeLoopVarNames;
+    final previousStringVars = Map<String, String>.from(_loopStringVariables);
+
+    _loopDepth += 1;
+    _runtimeLoopVarNames = <String>{varName};
+    _loopStringVariables = <String, String>{};
+    _loopStringVariables[varName] = '((_loop.var.$varName))';
+
+    final savedDeferredKey = _lastDeferredJsonResultKeyPrefix;
+    final bodyActions = _transpileNodesPreservingTempVariables(
+      consumed.bodyNodes,
+    );
+    _lastDeferredJsonResultKeyPrefix = savedDeferredKey;
+
+    _runtimeLoopVarNames = previousRuntimeVarNames;
+    _loopDepth = previousDepth;
+    _loopIterationIndex = previousIndex;
+    _loopStringVariables = previousStringVars;
+
+    return Action(
+      type: BotCreatorActionType.forLoop,
+      payload: <String, dynamic>{
+        'mode': 'list',
+        'varName': varName,
+        'values': values,
+        'bodyActions': bodyActions.map((action) => action.toJson()).toList(),
+        'maxIterations': _maxSupportedLoopIterations,
+      },
+    );
+  }
+
+  /// Unrolls a compile-time list iteration loop, substituting the iterator
+  /// variable with each concrete value.
+  List<Action> _transpileListIterationLoop({
+    required List<BdfdAstNode> bodyNodes,
+    required String varName,
+    required List<String> values,
+  }) {
+    if (values.isEmpty || bodyNodes.isEmpty) {
+      return const <Action>[];
+    }
+
+    final previousIndex = _loopIterationIndex;
+    final previousDepth = _loopDepth;
+    final previousStringVars = Map<String, String>.from(_loopStringVariables);
+    _loopDepth += 1;
+
+    final actions = <Action>[];
+    for (var index = 0; index < values.length; index++) {
+      _loopIterationIndex = index;
+      _loopStringVariables = Map<String, String>.from(previousStringVars);
+      _loopStringVariables[varName] = values[index];
+
+      final iterActions = _transpileNodes(bodyNodes);
+      for (final a in iterActions) {
+        a.payload['_debugLoopDepth'] = _loopDepth;
+        a.payload['_debugLoopIteration'] = index;
+      }
+      actions.addAll(iterActions);
+    }
+
+    _loopDepth = previousDepth;
+    _loopIterationIndex = previousIndex;
+    _loopStringVariables = previousStringVars;
+    return actions;
+  }
+
+  /// Applies list iteration loop body mutations directly to [response].
+  void _applyListIterationLoopBodyToResponse({
+    required List<BdfdAstNode> bodyNodes,
+    required String varName,
+    required List<String> values,
+    required _PendingResponse response,
+  }) {
+    if (values.isEmpty || bodyNodes.isEmpty) return;
+
+    final previousIndex = _loopIterationIndex;
+    final previousDepth = _loopDepth;
+    final previousStringVars = Map<String, String>.from(_loopStringVariables);
+    _loopDepth += 1;
+
+    for (var index = 0; index < values.length; index++) {
+      _loopIterationIndex = index;
+      _loopStringVariables = Map<String, String>.from(previousStringVars);
+      _loopStringVariables[varName] = values[index];
+
+      for (final node in bodyNodes) {
+        if (node is BdfdTextAst) {
+          response.appendContent(node.value);
+          continue;
+        }
+        if (node is! BdfdFunctionCallAst) continue;
+        // Loop string variables shadow BDFD functions — check first.
+        if (_loopStringVariables.containsKey(node.normalizedName)) {
+          final isEffectivelyEmptyArgs = node.arguments.isEmpty ||
+              (node.arguments.length == 1 &&
+                  node.arguments.first.isEmpty);
+          if (isEffectivelyEmptyArgs) {
+            response.appendContent(
+              _loopStringVariables[node.normalizedName]!,
+            );
+            continue;
+          }
+        }
+        if (_applyResponseMutation(node, response)) continue;
+        final inlineResult = _stringifyInlineFunction(node);
+        if (inlineResult != null) {
+          response.appendContent(inlineResult);
+          continue;
+        }
+        final placeholder = _inlineRuntimePlaceholder(node);
+        if (placeholder != null) {
+          response.appendContent(placeholder);
+          continue;
+        }
+        _transpileStandaloneFunction(node, pendingResponse: response);
+      }
+    }
+
+    _loopDepth = previousDepth;
+    _loopIterationIndex = previousIndex;
+    _loopStringVariables = previousStringVars;
   }
 
   // ── $jsonForEach / $endJsonForEach ──────────────────────────────────────
