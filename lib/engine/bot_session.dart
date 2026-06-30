@@ -395,53 +395,22 @@ class BotSession {
   }
 
   Flags<GatewayIntents> _buildGatewayIntents(Map<String, bool> intentsMap) {
-    Flags<GatewayIntents> intents = GatewayIntents.none;
-    if (intentsMap['Guild Presence'] == true) {
-      intents |= GatewayIntents.guildPresences;
-    }
+    // Start with all non-privileged intents (everything except guildMembers,
+    // guildPresences, and messageContent).
+    Flags<GatewayIntents> intents = GatewayIntents.allUnprivileged;
+
+    // Privileged intents — only if approved by Discord app flags.
     if (intentsMap['Guild Members'] == true) {
       intents |= GatewayIntents.guildMembers;
     }
-    if (intentsMap['Voice States'] == true) {
-      intents |= GatewayIntents.guildVoiceStates;
+    if (intentsMap['Guild Presence'] == true) {
+      intents |= GatewayIntents.guildPresences;
     }
     if (intentsMap['Message Content'] == true) {
       intents |= GatewayIntents.messageContent;
     }
-    if (intentsMap['Direct Messages'] == true) {
-      intents |= GatewayIntents.directMessages;
-    }
-    if (intentsMap['Guilds'] == true) {
-      intents |= GatewayIntents.guilds;
-    }
-    if (intentsMap['Guild Messages'] == true) {
-      intents |= GatewayIntents.guildMessages;
-    }
-    if (intentsMap['Guild Message Reactions'] == true) {
-      intents |= GatewayIntents.guildMessageReactions;
-    }
-    if (intentsMap['Direct Message Reactions'] == true) {
-      intents |= GatewayIntents.directMessageReactions;
-    }
-    if (intentsMap['Guild Message Typing'] == true) {
-      intents |= GatewayIntents.guildMessageTyping;
-    }
-    if (intentsMap['Direct Message Typing'] == true) {
-      intents |= GatewayIntents.directMessageTyping;
-    }
-    if (intentsMap['Guild Scheduled Events'] == true) {
-      intents |= GatewayIntents.guildScheduledEvents;
-    }
-    if (intentsMap['Auto Moderation Configuration'] == true) {
-      intents |= GatewayIntents.autoModerationConfiguration;
-    }
-    if (intentsMap['Auto Moderation Execution'] == true) {
-      intents |= GatewayIntents.autoModerationExecution;
-    }
 
-    return intents == GatewayIntents.none
-        ? GatewayIntents.allUnprivileged
-        : intents;
+    return intents;
   }
 
   bool _sameIntents(Map<String, bool> a, Map<String, bool> b) {

@@ -674,9 +674,9 @@ Future<bool> executeControlFlowAction({
 
       final int itemCount;
       if (isObject) {
-        itemCount = (jsonCtx as Map).length;
+        itemCount = jsonCtx.length;
       } else {
-        itemCount = (jsonCtx as List).length;
+        itemCount = jsonCtx.length;
       }
       final capped2 = itemCount > maxIterations ? maxIterations : itemCount;
 
@@ -684,11 +684,11 @@ Future<bool> executeControlFlowAction({
         String key;
         String value;
         if (isObject) {
-          final map = jsonCtx as Map;
+          final map = jsonCtx;
           key = map.keys.elementAt(i).toString();
           value = _jsonStringifyForEach(map[map.keys.elementAt(i)]);
         } else {
-          final list = jsonCtx as List;
+          final list = jsonCtx;
           // For arrays, jsonKey returns the index as a string so that
           // $jsonKey and $jsonIndex are consistent.
           key = i.toString();
