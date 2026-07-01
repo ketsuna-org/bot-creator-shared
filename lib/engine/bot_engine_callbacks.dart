@@ -7,7 +7,13 @@ class BotEngineCallbacks {
     this.onMetrics,
     this.onReplayCaptured,
     this.isDebugReplayCapturing,
+    this.onDisconnected,
   });
+
+  /// Emitted when a bot permanently disconnects from Discord
+  /// (e.g., token invalidated, fatal gateway close code).
+  /// The [reason] describes why the disconnect occurred.
+  final void Function(String reason, {required String botId})? onDisconnected;
 
   /// Emitted for general bot logs.
   final void Function(String message, {required String botId})? onLog;

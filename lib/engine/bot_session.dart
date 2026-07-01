@@ -170,6 +170,18 @@ class BotSession {
       _startedAt = DateTime.now();
       botStartTimes[botId] = _startedAt!;
 
+      // Listen for permanent disconnection (token invalidated, fatal close codes).
+      // This detects Discord close codes 4004 (auth failed), 4010-4014, etc.
+      // and automatically stops the session so the runner reports it as disconnected.
+      final shardMessageSub = _gateway!.gateway.messages.listen((msg) {
+        if (msg is Disconnecting) {
+          callbacks.onDisconnected
+              ?.call(msg.reason, botId: botId);
+          stop();
+        }
+      });
+      _subscriptions.add(shardMessageSub);
+
       // Cache metadata
       try {
         final app =
