@@ -4,6 +4,7 @@ import '../types/component.dart';
 import '../utils/component_workflow_bindings.dart';
 import '../utils/embed_fields.dart';
 import '../utils/allowed_mentions_parser.dart';
+import '../utils/embed_timestamp.dart';
 import 'send_component_v2.dart';
 import 'package:bot_creator_shared/utils/custom_message_update_builder.dart';
 
@@ -74,18 +75,7 @@ Future<Map<String, String>> editMessageAction(
         final timestampRaw =
             resolve?.call((embedJson['timestamp'] ?? '').toString()) ??
             (embedJson['timestamp'] ?? '').toString();
-        DateTime? timestamp;
-        if (timestampRaw == 'now') {
-          timestamp = DateTime.now().toUtc();
-        } else {
-          timestamp = DateTime.tryParse(timestampRaw);
-          if (timestamp == null) {
-            final ms = int.tryParse(timestampRaw);
-            if (ms != null) {
-              timestamp = DateTime.fromMillisecondsSinceEpoch(ms, isUtc: true);
-            }
-          }
-        }
+        final timestamp = parseEmbedTimestamp(timestampRaw);
         if (timestamp != null) {
           embed.timestamp = timestamp;
         }

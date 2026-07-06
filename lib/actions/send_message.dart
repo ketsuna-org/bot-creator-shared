@@ -4,6 +4,7 @@ import '../types/component.dart';
 import '../utils/component_workflow_bindings.dart';
 import '../utils/embed_fields.dart';
 import '../utils/allowed_mentions_parser.dart';
+import '../utils/embed_timestamp.dart';
 import 'send_component_v2.dart';
 
 Snowflake? _toSnowflake(dynamic value) {
@@ -113,19 +114,9 @@ Future<Map<String, String>> sendMessageToChannel(
           if (description.isNotEmpty) embed.description = description;
           if (url.isNotEmpty) embed.url = Uri.tryParse(url);
 
-          final timestampRaw = (embedJson['timestamp'] ?? '').toString();
-          DateTime? timestamp;
-          if (timestampRaw == 'now') {
-            timestamp = DateTime.now().toUtc();
-          } else {
-            timestamp = DateTime.tryParse(timestampRaw);
-            if (timestamp == null) {
-              final ms = int.tryParse(timestampRaw);
-              if (ms != null) {
-                timestamp = DateTime.fromMillisecondsSinceEpoch(ms, isUtc: true);
-              }
-            }
-          }
+          final timestamp = parseEmbedTimestamp(
+            r((embedJson['timestamp'] ?? '').toString()),
+          );
           if (timestamp != null) embed.timestamp = timestamp;
 
           final colorRaw = (embedJson['color'] ?? '').toString();

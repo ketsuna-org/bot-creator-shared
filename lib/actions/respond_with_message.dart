@@ -6,6 +6,7 @@ import 'package:bot_creator_shared/actions/send_component_v2.dart';
 import 'package:bot_creator_shared/utils/component_workflow_bindings.dart';
 import 'package:bot_creator_shared/utils/embed_fields.dart';
 import 'package:bot_creator_shared/utils/allowed_mentions_parser.dart';
+import 'package:bot_creator_shared/utils/embed_timestamp.dart';
 
 import 'package:bot_creator_shared/actions/send_message.dart';
 import 'package:bot_creator_shared/utils/interaction_ack_state.dart';
@@ -121,19 +122,9 @@ Future<Map<String, dynamic>> respondWithMessageAction(
       if (description.isNotEmpty) embed.description = description;
       if (url.isNotEmpty) embed.url = Uri.tryParse(url);
 
-      final timestampRaw = resolve((embedJson['timestamp'] ?? '').toString());
-      DateTime? timestamp;
-      if (timestampRaw == 'now') {
-        timestamp = DateTime.now().toUtc();
-      } else {
-        timestamp = DateTime.tryParse(timestampRaw);
-        if (timestamp == null) {
-          final ms = int.tryParse(timestampRaw);
-          if (ms != null) {
-            timestamp = DateTime.fromMillisecondsSinceEpoch(ms, isUtc: true);
-          }
-        }
-      }
+      final timestamp = parseEmbedTimestamp(
+        resolve((embedJson['timestamp'] ?? '').toString()),
+      );
       if (timestamp != null) {
         embed.timestamp = timestamp;
       }

@@ -5,6 +5,7 @@ import 'package:bot_creator_shared/actions/send_component_v2.dart';
 import 'package:bot_creator_shared/utils/embed_fields.dart';
 import 'package:bot_creator_shared/utils/interaction_ack_state.dart';
 import 'package:bot_creator_shared/utils/custom_message_update_builder.dart';
+import 'package:bot_creator_shared/utils/embed_timestamp.dart';
 
 /// Edit the original/deferred interaction response.
 /// Can update content, and/or components.
@@ -53,19 +54,9 @@ Future<Map<String, dynamic>> editInteractionMessageAction(
         if (description.isNotEmpty) embed.description = description;
         if (url.isNotEmpty) embed.url = Uri.tryParse(url);
 
-        final timestampRaw = resolve((embedJson['timestamp'] ?? '').toString());
-        DateTime? timestamp;
-        if (timestampRaw == 'now') {
-          timestamp = DateTime.now().toUtc();
-        } else {
-          timestamp = DateTime.tryParse(timestampRaw);
-          if (timestamp == null) {
-            final ms = int.tryParse(timestampRaw);
-            if (ms != null) {
-              timestamp = DateTime.fromMillisecondsSinceEpoch(ms, isUtc: true);
-            }
-          }
-        }
+        final timestamp = parseEmbedTimestamp(
+          resolve((embedJson['timestamp'] ?? '').toString()),
+        );
         if (timestamp != null) {
           embed.timestamp = timestamp;
         }

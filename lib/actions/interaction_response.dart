@@ -7,6 +7,7 @@ import '../utils/component_workflow_bindings.dart';
 import '../utils/interaction_listener_registry.dart';
 import '../utils/interaction_ack_state.dart';
 import 'package:bot_creator_shared/utils/custom_message_update_builder.dart';
+import 'package:bot_creator_shared/utils/embed_timestamp.dart';
 import 'send_component_v2.dart';
 
 /// Shared logic to determine and send the final response of a workflow execution.
@@ -351,11 +352,11 @@ Future<void> sendWorkflowResponse({
       if (description.isNotEmpty) embed.description = description;
       if (embedUrl != null) embed.url = embedUrl;
 
-      final timestamp = DateTime.tryParse(
+      final timestamp = parseEmbedTimestamp(
         resolveTemplatePlaceholders(
           (embedJson['timestamp'] ?? '').toString(),
           runtimeVariables,
-        ).trim(),
+        ),
       );
       if (timestamp != null) embed.timestamp = timestamp;
 
