@@ -36,7 +36,7 @@ Never throwIfDiscordTokenUnauthorized(Object error, {String? context}) {
 
   final prefix = context == null || context.isEmpty ? '' : '$context: ';
   throw DiscordTokenUnauthorizedException(
-    '${prefix}${error.toString()}',
+    '$prefix$error',
     cause: error,
   );
 }
