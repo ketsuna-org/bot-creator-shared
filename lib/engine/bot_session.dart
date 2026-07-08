@@ -14,6 +14,7 @@ import 'package:bot_creator_shared/services/lavalink_service.dart';
 import 'package:bot_creator_shared/utils/interaction_listener_registry.dart';
 import 'package:bot_creator_shared/utils/template_resolver.dart';
 import 'package:bot_creator_shared/utils/application_intent_sync.dart';
+import 'package:bot_creator_shared/utils/discord_auth_errors.dart';
 import 'package:bot_creator_shared/utils/global.dart';
 
 /// Represents an active bot session with its gateway connection and managers.
@@ -93,7 +94,13 @@ class BotSession {
       } finally {
         await restClient.close();
       }
-    } catch (_) {
+    } catch (error) {
+      if (isDiscordTokenUnauthorized(error)) {
+        throw DiscordTokenUnauthorizedException(
+          'Discord bot token is invalid or unauthorized while resolving intents',
+          cause: error,
+        );
+      }
       return buildSafeFallbackIntentsMap(
         config: config,
         warnings: warnings,
@@ -266,7 +273,14 @@ class BotSession {
       callbacks.onLifecycleChange?.call('started', botId: botId);
       callbacks.onLog?.call('Bot gateway connected.', botId: botId);
     } catch (error, stackTrace) {
-      callbacks.onLog?.call('Failed to start bot: $error', botId: botId);
+      if (isDiscordTokenUnauthorized(error)) {
+        callbacks.onLog?.call(
+          'Failed to start bot: invalid Discord token ($error)',
+          botId: botId,
+        );
+      } else {
+        callbacks.onLog?.call('Failed to start bot: $error', botId: botId);
+      }
       callbacks.onDebugLog?.call(
         'Start error stack: $stackTrace',
         botId: botId,
