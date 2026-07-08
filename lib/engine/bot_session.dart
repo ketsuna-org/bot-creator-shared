@@ -13,6 +13,7 @@ import 'package:nyxx_lavalink/nyxx_lavalink.dart';
 import 'package:bot_creator_shared/services/lavalink_service.dart';
 import 'package:bot_creator_shared/utils/interaction_listener_registry.dart';
 import 'package:bot_creator_shared/utils/template_resolver.dart';
+import 'package:bot_creator_shared/utils/application_intent_sync.dart';
 import 'package:bot_creator_shared/utils/global.dart';
 
 /// Represents an active bot session with its gateway connection and managers.
@@ -75,21 +76,51 @@ class BotSession {
 
   bool get isActive => _gateway != null;
 
+  Future<Map<String, bool>> _resolveEffectiveIntents(
+    BotConfig config, {
+    List<String>? warnings,
+  }) async {
+    try {
+      final restClient = await Nyxx.connectRest(_token);
+      try {
+        final app = await restClient.applications.fetchCurrentApplication();
+        return buildEffectiveIntentsMap(
+          config: config,
+          portalEnabledPrivileged:
+              portalEnabledPrivilegedIntentsFromApplication(app),
+          warnings: warnings,
+        );
+      } finally {
+        await restClient.close();
+      }
+    } catch (_) {
+      return buildSafeFallbackIntentsMap(
+        config: config,
+        warnings: warnings,
+      );
+    }
+  }
+
   /// Starts the bot gateway connection and initializes all managers.
   Future<void> start() async {
     if (isActive) return;
 
     final appData = await store.getApp(botId);
-    final rawIntents = Map<String, bool>.from(appData['intents'] as Map? ?? {});
-    _intentsMap = rawIntents;
-    final intentsMap = Map<String, bool>.from(rawIntents);
+    final config = BotConfig.fromJson(appData);
 
-    // Lavalink requires voice state intents — force-enable them
-    if (lavalinkConfig != null) {
-      intentsMap['Voice States'] = true;
+    final intentWarnings = <String>[];
+    final effectiveIntents = await _resolveEffectiveIntents(
+      config,
+      warnings: intentWarnings,
+    );
+
+    _intentsMap = effectiveIntents;
+
+    for (final warning in intentWarnings) {
+      callbacks.onLog?.call('Intent warning: $warning', botId: botId);
     }
 
-    final intents = _buildGatewayIntents(intentsMap);
+    final intents = buildGatewayIntents(effectiveIntents);
 
     callbacks.onLog?.call('Starting bot gateway...', botId: botId);
 
@@ -251,13 +282,13 @@ class BotSession {
     final config = BotConfig.fromJson(appData);
 
     final newToken = config.token;
-    final newIntents = config.intents;
     final newLavalinkConfig = config.lavalinkConfig;
 
     final previousHasLavalink = _lavalinkConfig != null;
     final newHasLavalink = newLavalinkConfig != null;
 
-    final bool intentsChanged = !_sameIntents(_intentsMap, newIntents) ||
+    final newEffectiveIntents = await _resolveEffectiveIntents(config);
+    final bool intentsChanged = !_sameIntents(_intentsMap, newEffectiveIntents) ||
         (previousHasLavalink != newHasLavalink);
 
     if (_token != newToken || intentsChanged) {
@@ -267,7 +298,7 @@ class BotSession {
       );
       _token = newToken;
       _lavalinkConfig = newLavalinkConfig;
-      _intentsMap = newIntents;
+      _intentsMap = newEffectiveIntents;
 
       await stop();
       await start();
@@ -404,25 +435,6 @@ class BotSession {
     }
 
     callbacks.onMetrics?.call(metrics, botId: botId);
-  }
-
-  Flags<GatewayIntents> _buildGatewayIntents(Map<String, bool> intentsMap) {
-    // Start with all non-privileged intents (everything except guildMembers,
-    // guildPresences, and messageContent).
-    Flags<GatewayIntents> intents = GatewayIntents.allUnprivileged;
-
-    // Privileged intents — only if approved by Discord app flags.
-    if (intentsMap['Guild Members'] == true) {
-      intents |= GatewayIntents.guildMembers;
-    }
-    if (intentsMap['Guild Presence'] == true) {
-      intents |= GatewayIntents.guildPresences;
-    }
-    if (intentsMap['Message Content'] == true) {
-      intents |= GatewayIntents.messageContent;
-    }
-
-    return intents;
   }
 
   bool _sameIntents(Map<String, bool> a, Map<String, bool> b) {

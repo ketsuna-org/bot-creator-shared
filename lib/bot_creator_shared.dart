@@ -8,6 +8,7 @@ export 'package:bot_creator_shared/utils/bdfd_ast_transpiler.dart';
 export 'package:bot_creator_shared/utils/bdfd_compiler.dart';
 export 'package:bot_creator_shared/utils/workflow_call.dart';
 export 'package:bot_creator_shared/utils/intent_resolver.dart';
+export 'package:bot_creator_shared/utils/application_intent_sync.dart';
 export 'package:bot_creator_shared/utils/interaction_listener_registry.dart';
 export 'package:bot_creator_shared/utils/global.dart';
 export 'package:bot_creator_shared/utils/component_workflow_bindings.dart';
