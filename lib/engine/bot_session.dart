@@ -77,23 +77,25 @@ class BotSession {
 
   bool get isActive => _gateway != null;
 
+  static const Duration _portalIntentTimeout = Duration(seconds: 15);
+
   Future<Map<String, bool>> _resolveEffectiveIntents(
     BotConfig config, {
     List<String>? warnings,
   }) async {
     try {
-      final restClient = await Nyxx.connectRest(_token);
-      try {
-        final app = await restClient.applications.fetchCurrentApplication();
-        return buildEffectiveIntentsMap(
-          config: config,
-          portalEnabledPrivileged:
-              portalEnabledPrivilegedIntentsFromApplication(app),
-          warnings: warnings,
-        );
-      } finally {
-        await restClient.close();
-      }
+      return await _fetchPortalEffectiveIntents(
+        config,
+        warnings: warnings,
+      ).timeout(_portalIntentTimeout);
+    } on TimeoutException {
+      warnings?.add(
+        'Portal intent sync timed out — using safe fallback intents',
+      );
+      return buildSafeFallbackIntentsMap(
+        config: config,
+        warnings: warnings,
+      );
     } catch (error) {
       if (isDiscordTokenUnauthorized(error)) {
         throw DiscordTokenUnauthorizedException(
@@ -105,6 +107,24 @@ class BotSession {
         config: config,
         warnings: warnings,
       );
+    }
+  }
+
+  Future<Map<String, bool>> _fetchPortalEffectiveIntents(
+    BotConfig config, {
+    List<String>? warnings,
+  }) async {
+    final restClient = await Nyxx.connectRest(_token);
+    try {
+      final app = await restClient.applications.fetchCurrentApplication();
+      return buildEffectiveIntentsMap(
+        config: config,
+        portalEnabledPrivileged:
+            portalEnabledPrivilegedIntentsFromApplication(app),
+        warnings: warnings,
+      );
+    } finally {
+      await restClient.close();
     }
   }
 

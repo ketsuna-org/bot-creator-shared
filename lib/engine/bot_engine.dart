@@ -36,6 +36,11 @@ class BotEngine {
       return;
     }
 
+    final staleSession = _sessions.remove(botId);
+    if (staleSession != null) {
+      await staleSession.stop();
+    }
+
     // Resolve Lavalink config from app data
     final appData = await store.getApp(botId);
     LavalinkConfig? lavalinkConfig;
@@ -61,7 +66,13 @@ class BotEngine {
     );
 
     _sessions[botId] = session;
-    await session.start();
+    try {
+      await session.start();
+    } catch (error) {
+      _sessions.remove(botId);
+      await session.stop();
+      rethrow;
+    }
   }
 
   /// Stops a specific bot session.
