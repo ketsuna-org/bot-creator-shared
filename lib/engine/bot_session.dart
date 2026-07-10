@@ -25,8 +25,8 @@ class BotSession {
     required this.store,
     required this.callbacks,
     LavalinkConfig? lavalinkConfig,
-  })  : _token = token,
-        _lavalinkConfig = lavalinkConfig {
+  }) : _token = token,
+       _lavalinkConfig = lavalinkConfig {
     _workflowExecutor = WorkflowExecutor(store: store, callbacks: callbacks);
     _commandExecutor = CommandExecutor(
       store: store,
@@ -92,10 +92,7 @@ class BotSession {
       warnings?.add(
         'Portal intent sync timed out — using safe fallback intents',
       );
-      return buildSafeFallbackIntentsMap(
-        config: config,
-        warnings: warnings,
-      );
+      return buildSafeFallbackIntentsMap(config: config, warnings: warnings);
     } catch (error) {
       if (isDiscordTokenUnauthorized(error)) {
         throw DiscordTokenUnauthorizedException(
@@ -103,10 +100,7 @@ class BotSession {
           cause: error,
         );
       }
-      return buildSafeFallbackIntentsMap(
-        config: config,
-        warnings: warnings,
-      );
+      return buildSafeFallbackIntentsMap(config: config, warnings: warnings);
     }
   }
 
@@ -115,14 +109,48 @@ class BotSession {
     List<String>? warnings,
   }) async {
     final restClient = await Nyxx.connectRest(_token);
+
     try {
-      final app = await restClient.applications.fetchCurrentApplication();
+      var currentApp = await restClient.applications.fetchCurrentApplication();
+
+      // Si les 3 intents limités ne sont pas encore tous activés
+      if (portalEnabledPrivilegedIntentsFromApplication(currentApp).length <
+          3) {
+        final botUser = await restClient.user.fetch();
+        final isVerified = botUser.flags?.has(UserFlags.verifiedBot) ?? false;
+
+        if (!isVerified) {
+          warnings?.add(
+            'Bot is not Verified — some privileged intents may be unavailable',
+          );
+        }
+
+        // On combine en toute sécurité avec l'existant pour ne rien écraser d'autre
+        final newFlags =
+            (currentApp.flags) |
+            ApplicationFlags.gatewayGuildMembersLimited |
+            ApplicationFlags.gatewayPresenceLimited |
+            ApplicationFlags.gatewayMessageContentLimited;
+
+        final appBuilder = ApplicationUpdateBuilder(flags: newFlags);
+
+        // Mise à jour via l'API (autorisée pour les versions _LIMITED)
+        currentApp = await restClient.applications.updateCurrentApplication(
+          appBuilder,
+        );
+      }
+
+      // Retour unique et propre
       return buildEffectiveIntentsMap(
         config: config,
-        portalEnabledPrivileged:
-            portalEnabledPrivilegedIntentsFromApplication(app),
+        portalEnabledPrivileged: portalEnabledPrivilegedIntentsFromApplication(
+          currentApp,
+        ),
         warnings: warnings,
       );
+    } catch (e) {
+      // Loggez l'erreur ici si la mise à jour échoue de manière inattendue
+      rethrow;
     } finally {
       await restClient.close();
     }
@@ -159,8 +187,10 @@ class BotSession {
 
     LavalinkPlugin? lavalinkPlugin;
     if (localConfig != null) {
-      callbacks.onLog
-          ?.call('Lavalink: pre-checking ${localConfig.host}:${localConfig.port}...', botId: botId);
+      callbacks.onLog?.call(
+        'Lavalink: pre-checking ${localConfig.host}:${localConfig.port}...',
+        botId: botId,
+      );
 
       // Quick REST health check before attempting WebSocket
       final preCheckError = await LavalinkService.testConnection(
@@ -176,7 +206,10 @@ class BotSession {
           botId: botId,
         );
       } else {
-        callbacks.onLog?.call('Lavalink pre-check OK, starting plugin...', botId: botId);
+        callbacks.onLog?.call(
+          'Lavalink pre-check OK, starting plugin...',
+          botId: botId,
+        );
         lavalinkPlugin = LavalinkService.createPlugin(localConfig);
         if (lavalinkPlugin != null) {
           plugins.add(lavalinkPlugin);
@@ -200,14 +233,25 @@ class BotSession {
         );
 
         // Fire and forget: wait for Lavalink WS handshake in background
-        unawaited(_lavalinkService!.waitForReady().then((_) {
-          callbacks.onLog?.call('Lavalink ready — music features enabled', botId: botId);
-          _workflowExecutor.lavalinkService = _lavalinkService;
-          _lavalinkService!.monitorHealth();
-        }).catchError((e) {
-          callbacks.onLog?.call('Lavalink connection failed: $e — music disabled', botId: botId);
-          _lavalinkService = null;
-        }));
+        unawaited(
+          _lavalinkService!
+              .waitForReady()
+              .then((_) {
+                callbacks.onLog?.call(
+                  'Lavalink ready — music features enabled',
+                  botId: botId,
+                );
+                _workflowExecutor.lavalinkService = _lavalinkService;
+                _lavalinkService!.monitorHealth();
+              })
+              .catchError((e) {
+                callbacks.onLog?.call(
+                  'Lavalink connection failed: $e — music disabled',
+                  botId: botId,
+                );
+                _lavalinkService = null;
+              }),
+        );
       }
 
       // Debug voice events
@@ -218,7 +262,9 @@ class BotSession {
         );
       });
       _gateway!.onVoiceServerUpdate.listen((event) {
-        final tokenSnippet = event.token.length > 5 ? event.token.substring(0, 5) : event.token;
+        final tokenSnippet = event.token.length > 5
+            ? event.token.substring(0, 5)
+            : event.token;
         callbacks.onLog?.call(
           'DEBUG VOICE SERVER: guildId=${event.guildId}, endpoint=${event.endpoint}, token=$tokenSnippet...',
           botId: botId,
@@ -233,8 +279,7 @@ class BotSession {
       // and automatically stops the session so the runner reports it as disconnected.
       final shardMessageSub = _gateway!.gateway.messages.listen((msg) {
         if (msg is Disconnecting) {
-          callbacks.onDisconnected
-              ?.call(msg.reason, botId: botId);
+          callbacks.onDisconnected?.call(msg.reason, botId: botId);
           stop();
         }
       });
@@ -242,9 +287,8 @@ class BotSession {
 
       // Cache metadata
       try {
-        final app =
-            await (_gateway! as NyxxRest).applications
-                .fetchCurrentApplication();
+        final app = await (_gateway! as NyxxRest).applications
+            .fetchCurrentApplication();
         _ownerId = (app.team?.ownerId.toString() ?? app.owner?.id.toString())!;
       } catch (_) {}
 
@@ -264,7 +308,9 @@ class BotSession {
             vars,
             botId: botId,
             guildCount: _gateway!.guilds.cache.length,
-            uptimeMs: DateTime.now().difference(_startedAt ?? DateTime.now()).inMilliseconds,
+            uptimeMs: DateTime.now()
+                .difference(_startedAt ?? DateTime.now())
+                .inMilliseconds,
           );
           return resolveTemplatePlaceholders(input, vars);
         },
@@ -322,7 +368,8 @@ class BotSession {
     final newHasLavalink = newLavalinkConfig != null;
 
     final newEffectiveIntents = await _resolveEffectiveIntents(config);
-    final bool intentsChanged = !_sameIntents(_intentsMap, newEffectiveIntents) ||
+    final bool intentsChanged =
+        !_sameIntents(_intentsMap, newEffectiveIntents) ||
         (previousHasLavalink != newHasLavalink);
 
     if (_token != newToken || intentsChanged) {
@@ -402,8 +449,10 @@ class BotSession {
     variables['bot.commandsCount'] = _commandCount.toString();
     variables['bot.slashCommandsCount'] = _commandCount.toString();
     if (_startedAt != null) {
-      variables['bot.uptime'] =
-          DateTime.now().difference(_startedAt!).inMilliseconds.toString();
+      variables['bot.uptime'] = DateTime.now()
+          .difference(_startedAt!)
+          .inMilliseconds
+          .toString();
     }
   }
 
@@ -441,16 +490,14 @@ class BotSession {
       metrics = BotRuntimeMetrics(
         guildCount: gateway.guilds.cache.length,
         shardsCount: shards?.length ?? 1,
-        latencyMs:
-            (shards != null && shards.isNotEmpty)
-                ? ((shards.first as dynamic).latency as Duration?)
-                        ?.inMilliseconds ??
-                    0
-                : 0,
-        uptimeSeconds:
-            _startedAt != null
-                ? DateTime.now().difference(_startedAt!).inSeconds
-                : 0,
+        latencyMs: (shards != null && shards.isNotEmpty)
+            ? ((shards.first as dynamic).latency as Duration?)
+                      ?.inMilliseconds ??
+                  0
+            : 0,
+        uptimeSeconds: _startedAt != null
+            ? DateTime.now().difference(_startedAt!).inSeconds
+            : 0,
         memoryUsageBytes: 0,
         cpuUsagePercent: 0.0,
       );
@@ -459,10 +506,9 @@ class BotSession {
         guildCount: gateway.guilds.cache.length,
         shardsCount: 1,
         latencyMs: 0,
-        uptimeSeconds:
-            _startedAt != null
-                ? DateTime.now().difference(_startedAt!).inSeconds
-                : 0,
+        uptimeSeconds: _startedAt != null
+            ? DateTime.now().difference(_startedAt!).inSeconds
+            : 0,
         memoryUsageBytes: 0,
         cpuUsagePercent: 0.0,
       );
@@ -502,11 +548,17 @@ class BotSession {
 
   Future<void> _disposeLavalink() async {
     if (_lavalinkService != null) {
-      callbacks.onLog?.call('Lavalink: disposing existing service...', botId: botId);
+      callbacks.onLog?.call(
+        'Lavalink: disposing existing service...',
+        botId: botId,
+      );
       try {
         await _lavalinkService!.dispose();
       } catch (e) {
-        callbacks.onLog?.call('Lavalink: error disposing service: $e', botId: botId);
+        callbacks.onLog?.call(
+          'Lavalink: error disposing service: $e',
+          botId: botId,
+        );
       }
       _lavalinkService = null;
       _workflowExecutor.lavalinkService = null;
